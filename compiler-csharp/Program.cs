@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MethodOverloading
+namespace Compiler
 {
   class Program
   {
