@@ -1,0 +1,6 @@
+# IDE files and directories
+.vscode
+
+# Files and directories
+[Oo]bj/
+[Bb]in/
