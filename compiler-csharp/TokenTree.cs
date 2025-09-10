@@ -13,7 +13,7 @@ namespace Lexer.TokenTree {
 		array_type,
 		// Assignment
 		type_assignment,
-		colon,
+		bare_assignment,
 		is_assignment,
 		// Separators
 		dot,
