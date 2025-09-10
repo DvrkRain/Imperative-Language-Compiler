@@ -152,4 +152,20 @@ namespace Lexer.FSM
             return LexerState.Error;
         }
     }
+
+    public class NumberState : State
+    {
+        public override LexerState HandleSymbol(char symbol)
+        {
+            if (char.IsDigit(symbol))
+            {
+                data += symbol;
+                return LexerState.Number;
+            }
+
+            //...
+
+            return LexerState.Error;
+        }
+    }
 }
