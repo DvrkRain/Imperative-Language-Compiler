@@ -65,17 +65,64 @@ namespace Lexer.FSM
         Error
     }
 
+    public class FSM
+    {
+        private State currentState;
+        private LexerState currentLexerState;
+        private readonly Dictionary<LexerState, State> states = new Dictionary<LexerState, State>();
+
+        public FSM()
+        {
+            // Fill start 
+            this.currentState = new StartState();
+            this.currentLexerState = LexerState.Start;
+
+            // Initialize states
+            states.Add(LexerState.Start, new StartState());
+            // states.Add(LexerState.Identifier, new IdentifierState());
+            // states.Add(LexerState.Number, new NumberState());
+            // states.Add(LexerState.Decimal, new DecimalState());
+            // states.Add(LexerState.AssignmentOrColon, new AssignmentOrColonState());
+            // states.Add(LexerState.DotOrRange, new DotOrRangeState());
+            // states.Add(LexerState.Less, new LessState());
+            // states.Add(LexerState.Greater, new GreaterState());
+            // states.Add(LexerState.NotEqual, new NotEqualState());
+            // states.Add(LexerState.String, new StringState());
+            // states.Add(LexerState.Comment, new CommentState());
+            // states.Add(LexerState.Error, new ErrorState());
+        }
+
+        public void ProcessChar(char c)
+        {
+            LexerState nextLexerState = this.currentState.HandleSymbol(c);
+
+            while (nextLexerState != this.currentLexerState) // State changed
+            {
+                // If state changed, then state data keeps the same without adding `c`
+                // Take data and tokenize it
+                string data = this.currentState.data;
+                // tokenize
+
+                // Switch states
+                this.currentState = this.states[nextLexerState];
+                this.currentLexerState = nextLexerState;
+
+                if (this.currentLexerState == LexerState.Error) throw new Exception("Error happened(");
+
+                // Handle character
+                nextLexerState = this.currentState.HandleSymbol(c);
+            }
+
+            // If state keeps the same (e.g. state `Number` handles '1' and keeps `Number`), chill :3
+
+        }
+    }
+
     public abstract class State
     {
         public string data { get; protected set; } = "";
 
-        protected State(char? symbol = null)
-        {
-            if (symbol != null)
-            {
-                data += symbol;
-            }
-        }
+        protected State() { }
 
         public abstract LexerState HandleSymbol(char symbol);
     }
