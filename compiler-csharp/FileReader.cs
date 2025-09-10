@@ -29,11 +29,13 @@ namespace Lexer.IO
             return this._filename;
         }
 
-        public char? GetNextChar()
+		public bool Empty() {
+			return _fileStream.Peek() == -1;
+		}
+
+        public char GetNextChar()
         {
-            int nextChar = this._fileStream.Read();
-            if (nextChar == -1) return null; // End of file
-            return (char)nextChar;
+			return (char)_fileStream.Read();
         }
 
     }

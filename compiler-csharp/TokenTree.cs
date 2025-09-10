@@ -7,14 +7,16 @@ namespace Lexer.TokenTree {
 		integer_type,
 		real_type,
 		boolean_type,
+		true_const,
+		false_const,
 		record_type,
 		array_type,
 		// Assignment
 		type_assignment,
-		declaration_assignment,
-		bare_assignment,
+		colon,
+		is_assignment,
 		// Separators
-		field_access,
+		dot,
 		comma_separator,
 		// Delimeters
 		left_parenthesis,
@@ -30,8 +32,10 @@ namespace Lexer.TokenTree {
 		while_statement,
 		for_statement,
 		in_range_statement,
+		range,
 		reverse_order_statement,
 		// Routines
+		print_routine,
 		routine_declaration,
 		one_line_body,
 		end_of_body,
@@ -52,10 +56,12 @@ namespace Lexer.TokenTree {
 		difference,
 		multiplication,
 		division,
-		int_division
+		int_division,
 	}
 
 	public abstract class Token { }
+
+	public class Mock : Token { }
 
 	public class Identifier : Token {
 		public string identifier;
@@ -73,20 +79,10 @@ namespace Lexer.TokenTree {
 		}
 	}
 
-	public abstract class Literal : Token { }
-
-	public class Integer : Literal {
+	public class Integer : Token {
 		public int value;
 
 		public Integer(int val) : base() {
-			this.value = val;
-		}
-	}
-
-	public class Real : Literal {
-		public float value;
-
-		public Real(float val) : base() {
 			this.value = val;
 		}
 	}
