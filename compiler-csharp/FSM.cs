@@ -1,6 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Lexer.TokenTree;
+using Lexer.IO;
 
 /*
 Start -- [буква] --> Identifier
@@ -37,139 +36,407 @@ Greater -- [другой] --> завершение > -> Start
 
 NotEqual -- [=] --> завершение /= -> Start
 NotEqual -- [другой] --> завершение / -> Start
-
-String -- ["] --> завершение строки -> Start
-String -- [\] --> экранирование следующего символа -> String
-String -- [другой] --> String
-
-Comment -- [конец строки] --> завершение комментария -> Start
-Comment -- [другой] --> Comment
 */
 
 namespace Lexer.FSM
 {
     // Enum is needed to easy check state switching
-    public enum LexerState
+    public enum StateCode
     {
         Start,
+		Separator,
         Identifier,
-        Number,
-        Decimal,
-        AssignmentOrColon,
-        DotOrRange,
+        Integer,
         Less,
         Greater,
-        NotEqual,
-        String,
-        Comment,
+		EqualOrOneliner,
+        ColonOrAssignment,
+        DotOrRange,
+        DivOrNotEqual,
         Error
     }
 
-    public class FSM
+    public class Lexer
     {
         private State currentState;
-        private LexerState currentLexerState;
-        private readonly Dictionary<LexerState, State> states = new Dictionary<LexerState, State>();
+        private StateCode currentStateCode;
+		public Queue<Token> TokenStream {get; set;}
+		public FileReader reader;
 
-        public FSM()
-        {
-            // Fill start 
+		private static List<char> separators =
+			new List<char>() {',', '(', ')', '[', ']', '+', '-', '*', '%'};
+
+		public Lexer(FileReader reader, Queue<Token> stream) {
             this.currentState = new StartState();
-            this.currentLexerState = LexerState.Start;
+            this.currentStateCode = StateCode.Start;
+			this.TokenStream = stream;
+			this.reader = reader;
+		}
 
-            // Initialize states
-            states.Add(LexerState.Start, new StartState());
-            // states.Add(LexerState.Identifier, new IdentifierState());
-            // states.Add(LexerState.Number, new NumberState());
-            // states.Add(LexerState.Decimal, new DecimalState());
-            // states.Add(LexerState.AssignmentOrColon, new AssignmentOrColonState());
-            // states.Add(LexerState.DotOrRange, new DotOrRangeState());
-            // states.Add(LexerState.Less, new LessState());
-            // states.Add(LexerState.Greater, new GreaterState());
-            // states.Add(LexerState.NotEqual, new NotEqualState());
-            // states.Add(LexerState.String, new StringState());
-            // states.Add(LexerState.Comment, new CommentState());
-            // states.Add(LexerState.Error, new ErrorState());
-        }
-
-        public void ProcessChar(char c)
+        public void ParseFile()
         {
-            LexerState nextLexerState = this.currentState.HandleSymbol(c);
+			while(!reader.Empty()) {
+				char nextChar = reader.GetNextChar();
+				StateCode nextLexerState = StateCode.Start;
 
-            while (nextLexerState != this.currentLexerState) // State changed
-            {
-                if (nextLexerState == LexerState.Start)
-                {
-                    // If state changed, then state data keeps the same without handling `c`
-                    // Take data and tokenize it
-                    string data = this.currentState.data;
-                    
-                    // tokenize
-                }
+				if(separators.Contains(nextChar)) {
+					TokenStream.Enqueue(this.currentState.CreateToken());
 
-                // Switch states
-                this.currentState = this.states[nextLexerState];
-                this.currentLexerState = nextLexerState;
+					Token separatorToken = new Mock();
+					switch (nextChar) {
+						case ',':
+							separatorToken = new Dedicated(DedicatedWord.comma_separator);
+							break;
 
-                if (this.currentLexerState == LexerState.Error) throw new Exception("Error happened(");
+						case '(':
+							separatorToken = new Dedicated(DedicatedWord.right_parenthesis);
+							break;
 
-                // Handle character
-                nextLexerState = this.currentState.HandleSymbol(c);
-            }
+						case ')':
+							separatorToken = new Dedicated(DedicatedWord.left_parenthesis);
+							break;
 
-            // If state keeps the same (e.g. state `Number` handles '1' and keeps `Number`), chill :3
+						case '[':
+							separatorToken = new Dedicated(DedicatedWord.right_bracket);
+							break;
 
+						case ']':
+							separatorToken = new Dedicated(DedicatedWord.left_bracket);
+							break;
+
+						case '+':
+							separatorToken = new Dedicated(DedicatedWord.summation);
+							break;
+
+						case '-':
+							separatorToken = new Dedicated(DedicatedWord.difference);
+							break;
+
+						case '*':
+							separatorToken = new Dedicated(DedicatedWord.multiplication);
+							break;
+
+						case '%':
+							separatorToken = new Dedicated(DedicatedWord.int_division);
+							break;
+					}
+					TokenStream.Enqueue(separatorToken);
+
+				} else if (char.IsWhiteSpace(nextChar))
+					TokenStream.Enqueue(this.currentState.CreateToken());
+
+				else if (nextChar == ':') {
+					TokenStream.Enqueue(this.currentState.CreateToken());
+					nextLexerState = StateCode.ColonOrAssignment;
+
+				} else if (nextChar == '/') {
+					TokenStream.Enqueue(this.currentState.CreateToken());
+					nextLexerState = StateCode.DivOrNotEqual;
+
+				} else if (nextChar == '.') {
+					TokenStream.Enqueue(this.currentState.CreateToken());
+					nextLexerState = StateCode.DotOrRange;
+
+				} else
+					nextLexerState = this.currentState.ProccessSymbol(nextChar);
+
+				if (nextLexerState != this.currentStateCode) {
+					TokenStream.Enqueue(this.currentState.CreateToken());
+
+					switch(nextLexerState) {
+						case StateCode.Start:
+							this.currentState = new StartState();
+							break;
+
+						case StateCode.Separator:
+							this.currentState = new StartState();
+							break;
+
+						case StateCode.Identifier:
+							this.currentState = new IdentifierState(nextChar);
+							break;
+
+						case StateCode.Integer:
+							this.currentState = new IntegerState(nextChar);
+							break;
+
+						case StateCode.Less:
+							this.currentState = new LessState();
+							break;
+
+						case StateCode.Greater:
+							this.currentState = new GreaterState();
+							break;
+
+						case StateCode.EqualOrOneliner:
+							this.currentState = new EqualState();
+							break;
+
+						case StateCode.DotOrRange:
+							this.currentState = new DotOrRangeState();
+							break;
+
+						case StateCode.ColonOrAssignment:
+							this.currentState = new ColonOrAssignmentState();
+							break;
+
+						case StateCode.DivOrNotEqual:
+							this.currentState = new DivOrNotEqualState();
+							break;
+
+						case StateCode.Error:
+							this.currentState = new StartState();
+							throw new Exception("Unrecognizable Token");
+					}
+				}
+			}
         }
     }
 
-    public abstract class State
-    {
-        public string data { get; protected set; } = "";
-
-        protected State() { }
-
-        public abstract LexerState HandleSymbol(char symbol);
+    public abstract class State {
+        public abstract StateCode ProccessSymbol(char symbol);
+		public abstract Token CreateToken();
     }
 
-    public class StartState : State
-    {
-        public override LexerState HandleSymbol(char symbol)
-        {
-            if (char.IsWhiteSpace(symbol)) return LexerState.Start;
+    public class StartState : State {
+        public override StateCode ProccessSymbol(char symbol) {
+			if (char.IsLetter(symbol)) return StateCode.Identifier;
 
-            if (char.IsDigit(symbol)) return LexerState.Number;
+			if (char.IsDigit(symbol)) return StateCode.Integer;
 
-            if (char.IsLetter(symbol)) return LexerState.Identifier; // Need to check
+			if (symbol == '<') return StateCode.Less;
+			if (symbol == '>') return StateCode.Greater;
+			if (symbol == '=') return StateCode.EqualOrOneliner;
 
-            if (symbol == ':') return LexerState.AssignmentOrColon;
-
-            if (symbol == '.') return LexerState.DotOrRange;
-
-            if (symbol == '<') return LexerState.Less;
-
-            if (symbol == '>') return LexerState.Greater;
-
-            if (symbol == '/') return LexerState.NotEqual;
-
-            // ...
-
-            return LexerState.Error;
+            return StateCode.Error;
         }
+
+		public override Token CreateToken() {
+			return new Mock();
+		}
     }
 
-    public class NumberState : State
-    {
-        public override LexerState HandleSymbol(char symbol)
-        {
-            if (char.IsDigit(symbol))
-            {
-                data += symbol;
-                return LexerState.Number;
-            }
+	public abstract class StoringState : State {
+		protected string data;
+		protected StoringState() => this.data = "";
+	}
+	
+	public class IdentifierState : StoringState {
+		public IdentifierState(char symbol) : base() => this.data += symbol;
 
-            //...
+		protected Dictionary<string,DedicatedWord> dedicatedWords =
+			new Dictionary<string,DedicatedWord>() {
+				{"var",		DedicatedWord.variable_declaration},
+				{"is",		DedicatedWord.is_assignment},
+				{"type",	DedicatedWord.type_assignment},
+				{"integer", DedicatedWord.integer_type},
+				{"real",	DedicatedWord.real_type},
+				{"boolean", DedicatedWord.boolean_type},
+				{"true",	DedicatedWord.true_const},
+				{"false",	DedicatedWord.false_const},
+				{"record",	DedicatedWord.record_type},
+				{"array",	DedicatedWord.array_type},
+				{"end",		DedicatedWord.end_of_body},
+				{"if",		DedicatedWord.if_statement},
+				{"then",	DedicatedWord.then_branch},
+				{"else",	DedicatedWord.else_branch},
+				{"loop",	DedicatedWord.loop_start},
+				{"while",	DedicatedWord.while_statement},
+				{"for",		DedicatedWord.for_statement},
+				{"in",		DedicatedWord.in_range_statement},
+				{"reverse",	DedicatedWord.reverse_order_statement},
+				{"print",	DedicatedWord.print_routine},
+				{"routnine",DedicatedWord.routine_declaration},
+				{"and",		DedicatedWord.logical_and},
+				{"or",		DedicatedWord.logical_or},
+				{"xor",		DedicatedWord.logical_xor},
+				{"not",		DedicatedWord.logical_not},
+			};
 
-            return LexerState.Error;
-        }
-    }
+        public override StateCode ProccessSymbol(char symbol) {
+			if(char.IsLetter(symbol) || char.IsDigit(symbol) || symbol == '_') {
+				this.data += symbol;
+				return StateCode.Identifier;
+			}
+
+			if (symbol == '<') return StateCode.Less;
+			if (symbol == '>') return StateCode.Greater;
+			if (symbol == '=') return StateCode.EqualOrOneliner;
+
+			return StateCode.Error;
+		}
+
+		public override Token CreateToken() {
+			if (dedicatedWords.Keys.Contains(data))
+				return new Dedicated(dedicatedWords[data]);
+			return new Identifier(data);
+		}
+	}
+
+	public class IntegerState : StoringState {
+		public IntegerState(char symbol) : base() => this.data += symbol;
+
+		public override StateCode ProccessSymbol(char symbol) {
+			if (char.IsDigit(symbol)) {
+				this.data += symbol;
+				return StateCode.Integer;
+			}
+
+			if (char.IsLetter(symbol)) return StateCode.Identifier;
+
+			if (symbol == '<') return StateCode.Less;
+			if (symbol == '>') return StateCode.Greater;
+			if (symbol == '=') return StateCode.EqualOrOneliner;
+
+			return StateCode.Error;
+		}
+
+		public override Token CreateToken() {
+			return new Integer(int.Parse(data));
+		}
+	}
+
+	public abstract class ChoosingState : State {
+		protected bool single;
+		protected ChoosingState() => this.single = true;
+	}
+
+	public class LessState : ChoosingState {
+		public override StateCode ProccessSymbol(char symbol) {
+			if (symbol == '=') {
+				this.single = false;
+				return StateCode.Start;
+			}
+			if (char.IsDigit(symbol)) return StateCode.Integer;
+
+			if (char.IsLetter(symbol)) return StateCode.Identifier;
+
+			if (symbol == '<') return StateCode.Less;
+			if (symbol == '>') return StateCode.Greater;
+
+			return StateCode.Error;
+		}
+
+		public override Token CreateToken() {
+			if (single)
+				return new Dedicated(DedicatedWord.less);
+			return new Dedicated(DedicatedWord.less_equal);
+		}
+	}
+
+	public class GreaterState : ChoosingState {
+		public override StateCode ProccessSymbol(char symbol) {
+			if (symbol == '=') {
+				this.single = false;
+				return StateCode.Start;
+			}
+			if (char.IsDigit(symbol)) return StateCode.Integer;
+
+			if (char.IsLetter(symbol)) return StateCode.Identifier;
+
+			if (symbol == '<') return StateCode.Less;
+			if (symbol == '>') return StateCode.Greater;
+
+			return StateCode.Error;
+		}
+
+		public override Token CreateToken() {
+			if (single)
+				return new Dedicated(DedicatedWord.greater);
+			return new Dedicated(DedicatedWord.greater_equal);
+		}
+	}
+
+	public class EqualState : ChoosingState {
+		public override StateCode ProccessSymbol(char symbol) {
+			if (symbol == '>') {
+				this.single = false;
+				return StateCode.Start;
+			}
+			if (symbol == '=') return StateCode.Start;
+			if (char.IsDigit(symbol)) return StateCode.Integer;
+
+			if (char.IsLetter(symbol)) return StateCode.Identifier;
+
+			if (symbol == '<') return StateCode.Less;
+
+			return StateCode.Error;
+		}
+
+		public override Token CreateToken() {
+			if (single)
+				return new Dedicated(DedicatedWord.equal);
+			return new Dedicated(DedicatedWord.one_line_body);
+		}
+	}
+
+	public class DivOrNotEqualState : ChoosingState {
+		public override StateCode ProccessSymbol(char symbol) {
+			if (symbol == '=') {
+				this.single = false;
+				return StateCode.Start;
+			}
+			if (char.IsDigit(symbol)) return StateCode.Integer;
+
+			if (char.IsLetter(symbol)) return StateCode.Identifier;
+
+			if (symbol == '<') return StateCode.Less;
+			if (symbol == '>') return StateCode.Greater;
+
+			return StateCode.Error;
+		}
+
+		public override Token CreateToken() {
+			if (single)
+				return new Dedicated(DedicatedWord.division);
+			return new Dedicated(DedicatedWord.not_equal);
+		}
+	}
+
+	public class ColonOrAssignmentState : ChoosingState {
+		public override StateCode ProccessSymbol(char symbol) {
+			if (symbol == '=') {
+				this.single = false;
+				return StateCode.Start;
+			}
+			if (char.IsDigit(symbol)) return StateCode.Integer;
+
+			if (char.IsLetter(symbol)) return StateCode.Identifier;
+
+			if (symbol == '<') return StateCode.Less;
+			if (symbol == '>') return StateCode.Greater;
+
+			return StateCode.Error;
+		}
+
+		public override Token CreateToken() {
+			if (single)
+				return new Dedicated(DedicatedWord.type_assignment);
+			return new Dedicated(DedicatedWord.bare_assignment);
+		}
+	}
+
+	public class DotOrRangeState : ChoosingState {
+		public override StateCode ProccessSymbol(char symbol) {
+			if (symbol == '.') {
+				this.single = false;
+				return StateCode.Start;
+			}
+			if (char.IsDigit(symbol)) return StateCode.Integer;
+
+			if (char.IsLetter(symbol)) return StateCode.Identifier;
+
+			if (symbol == '=') return StateCode.EqualOrOneliner;
+			if (symbol == '<') return StateCode.Less;
+			if (symbol == '>') return StateCode.Greater;
+
+			return StateCode.Error;
+		}
+
+		public override Token CreateToken() {
+			if (single)
+				return new Dedicated(DedicatedWord.dot);
+			return new Dedicated(DedicatedWord.range);
+		}
+	}
 }
