@@ -13,8 +13,7 @@ namespace Lexer.IO
             // Check if file exists
             if (!File.Exists(filepath))
             {
-                Console.WriteLine("File not found: " + filepath);
-                return;
+                throw new FileNotFoundException("File not found: " + filepath);
             }
 
             // Remember filename
