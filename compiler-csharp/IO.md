@@ -11,7 +11,7 @@
 ### Accepted arguments
 - **filepath** (string) - the path to the file to be read. The constructor checks the existence of the file and initializes the stream for reading.
 
-## Class methods
+### Class methods
 - **`public FileReader(string filepath)`** - constructor, which checks file existence and initializes the `StreamReader' to read the file
 - **`public string getFileName()`** - returns the name of the current file
 - **`public char? GetNextChar()`** - reads following character from the file, returns `null` when EOF, `char` otherwise
