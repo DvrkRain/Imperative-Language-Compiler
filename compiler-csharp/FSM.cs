@@ -98,10 +98,14 @@ namespace Lexer.FSM
 
             while (nextLexerState != this.currentLexerState) // State changed
             {
-                // If state changed, then state data keeps the same without adding `c`
-                // Take data and tokenize it
-                string data = this.currentState.data;
-                // tokenize
+                if (nextLexerState == LexerState.Start)
+                {
+                    // If state changed, then state data keeps the same without handling `c`
+                    // Take data and tokenize it
+                    string data = this.currentState.data;
+                    
+                    // tokenize
+                }
 
                 // Switch states
                 this.currentState = this.states[nextLexerState];
