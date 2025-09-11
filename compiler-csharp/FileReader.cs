@@ -1,12 +1,11 @@
-using System;
-using System.IO;
-
-namespace Lexer.IO
+using System.Text;
+namespace LexicalAnalyzer.IO
 {
     public class FileReader
     {
         private string _filename;
         private StreamReader _fileStream;
+		public string filename => _filename;
 
         public FileReader(string filepath)
         {
@@ -20,12 +19,7 @@ namespace Lexer.IO
             this._filename = Path.GetFileName(filepath);
 
             // Read file content and process it
-            this._fileStream = new StreamReader(filepath);
-        }
-
-        public string GetFilename()
-        {
-            return this._filename;
+            this._fileStream = new StreamReader(filepath, Encoding.ASCII);
         }
 
 		public bool Empty() {
@@ -34,7 +28,10 @@ namespace Lexer.IO
 
         public char GetNextChar()
         {
-			return (char)_fileStream.Read();
+			int code = _fileStream.Read();
+			if(code == 10) return '\n';
+			char symbol = (char)code;
+			return symbol;
         }
 
     }
