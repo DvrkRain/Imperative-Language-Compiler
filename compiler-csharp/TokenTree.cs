@@ -1,4 +1,4 @@
-namespace Lexer.TokenTree {
+namespace LexicalAnalyzer.TokenTree {
 	public enum DedicatedWord {
 		// Variable declaration
 		variable_declaration,
@@ -18,6 +18,7 @@ namespace Lexer.TokenTree {
 		// Separators
 		dot,
 		comma_separator,
+		end_of_line,
 		// Delimeters
 		left_parenthesis,
 		right_parenthesis,
@@ -59,31 +60,61 @@ namespace Lexer.TokenTree {
 		int_division,
 	}
 
-	public abstract class Token { }
+	public struct Position {
+		public Position(int x, int y) {
+			this.row = x;
+			this.col = y;
+		}
+		public int row {get; set;}
+		public int col {get; set;}
+	}
 
-	public class Mock : Token { }
+	public abstract class Token {
+		protected Position pos{get;}
+		protected Token(int x, int y) =>
+			pos = new Position(x,y);
+		protected Token(Position pos) =>
+			this.pos = pos;
+
+		public abstract void PrintInfo();
+	}
+
+	public class Mock : Token {
+		public Mock() : base(0,0) {}
+		public override void PrintInfo() =>
+			Console.WriteLine("Mock token");
+	}
 
 	public class Identifier : Token {
-		public string identifier;
+		protected string identifier{get;}
 
-		public Identifier(string identifier) : base() {
+		public Identifier(Position pos, string identifier) : base(pos) {
 			this.identifier = identifier;
 		}
+
+		public override void PrintInfo() =>
+			Console.WriteLine($"Identifier token at {this.pos.row},{this.pos.col}. Identifier is {this.identifier}.");
 	}
 
 	public class Dedicated : Token {
-		public DedicatedWord code;
+		protected DedicatedWord code{get;}
 
-		public Dedicated(DedicatedWord code) : base() {
+		public Dedicated(Position pos, DedicatedWord code) : base(pos) {
 			this.code = code;
 		}
+
+		public override void PrintInfo() =>
+			Console.WriteLine($"Dedicated word token at {this.pos.row},{this.pos.col}. Keyword is {this.code}.");
 	}
 
 	public class Integer : Token {
-		public int value;
+		protected int value{get;}
 
-		public Integer(int val) : base() {
+		public Integer(Position pos, int val) : base(pos) {
 			this.value = val;
 		}
+
+		public override void PrintInfo() =>
+			Console.WriteLine($"Number token at {this.pos.row},{this.pos.col}. Number is {this.value}.");
 	}
 }
