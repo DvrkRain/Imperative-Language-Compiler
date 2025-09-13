@@ -1,42 +1,6 @@
 using LexicalAnalyzer.TokenTree;
 using LexicalAnalyzer.IO;
 
-/*
-Start -- [буква] --> Identifier
-Start -- [цифра] --> Number
-Start -- [:] --> AssignmentOrColon
-Start -- [.] --> DotOrRange
-Start -- [<] --> Less
-Start -- [>] --> Greater
-Start -- [/] --> NotEqual
-Start -- ["] --> String
-Start -- [#] --> Comment
-
-Identifier -- [буква/цифра] --> Identifier
-Identifier -- [другой] --> завершение идентификатора -> Start
-
-Number -- [цифра] --> Number
-Number -- [.] --> Decimal
-Number -- [не цифра/не точка] --> завершение числа -> Start
-
-Decimal -- [цифра] --> Decimal
-Decimal -- [не цифра] --> завершение числа -> Start
-
-AssignmentOrColon -- [=] --> завершение := -> Start
-AssignmentOrColon -- [другой] --> завершение : -> Start
-
-DotOrRange -- [.] --> DotOrRange (ждем третью точку для диапазона)
-DotOrRange -- [другой] --> завершение . -> Start
-
-Less -- [=] --> завершение <= -> Start
-Less -- [другой] --> завершение < -> Start
-
-Greater -- [=] --> завершение >= -> Start
-Greater -- [другой] --> завершение > -> Start
-
-NotEqual -- [=] --> завершение /= -> Start
-NotEqual -- [другой] --> завершение / -> Start
-*/
 
 namespace LexicalAnalyzer
 {
