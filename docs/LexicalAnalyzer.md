@@ -33,9 +33,6 @@ Start --(digit)--> Integer
 Start --(<)--> Less
 Start --(>)--> Greater
 Start --(=)--> EqualOrOneliner
-Start --(separator)--> Start (with token creation)
-Start --(\n)--> Start
-Start --(whitespace)--> Start
 Start --(:)--> ColonOrAssignment
 Start --(/)--> DivOrNotEqual
 Start --(.)--> DotOrRange
