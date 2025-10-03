@@ -92,6 +92,10 @@ namespace LexicalAnalyzer.TokenTree {
 			this.identifier = identifier;
 		}
 
+		public string getIdentifier() {
+			return this.identifier;
+		}
+
 		public override void PrintInfo() =>
 			Console.WriteLine($"Identifier token at {this.pos.row},{this.pos.col}. Identifier is {this.identifier}.");
 	}
@@ -101,6 +105,10 @@ namespace LexicalAnalyzer.TokenTree {
 
 		public Dedicated(Position pos, DedicatedWord code) : base(pos) {
 			this.code = code;
+		}
+
+		public DedicatedWord getCode() {
+			return this.code;
 		}
 
 		public override void PrintInfo() =>
