@@ -47,7 +47,7 @@ namespace SyntaxAnalyzer {
 					case(0):
 						switch(token) {
 							case(Identifier):
-								this.identifier = token.getIdentifier();
+								this.identifier = ((Identifier) token).getIdentifier();
 								step = 1;
 								break;
 
@@ -63,7 +63,7 @@ namespace SyntaxAnalyzer {
 					case(1):
 						switch(token) {
 							case(Dedicated):
-								DedicatedWord code = token.getCode();
+								DedicatedWord code = ((Dedicated) token).getCode();
 								switch(code) {
 									case(DedicatedWord.type_assignment):
 										this.explicit_type = true;
@@ -93,7 +93,7 @@ namespace SyntaxAnalyzer {
 					case(2):
 						switch(token) {
 							case(Identifier):
-								this.type = token.getIdentifier();
+								this.type = ((Identifier) token).getIdentifier();
 								step = 3;
 								break;
 
@@ -109,7 +109,7 @@ namespace SyntaxAnalyzer {
 					case(3):
 						switch(token) {
 							case(Dedicated):
-								DedicatedCode code = token.getCode();
+								DedicatedWord code = ((Dedicated) token).getCode();
 								switch(code) {
 									case(DedicatedWord.is_assignment):
 										step = 4;
@@ -140,7 +140,7 @@ namespace SyntaxAnalyzer {
 					case(5):
 						switch(token) {
 							case(Dedicated):
-								DedicatedWord code = token.getCode();
+								DedicatedWord code = ((Dedicated) token).getCode();
 								if(code is DedicatedWord.end_of_line) {
 									step = 6;
 									break;
@@ -171,11 +171,77 @@ namespace SyntaxAnalyzer {
         public override void Parse(ref Queue<Token> tokenQueue) {}
     }
 
-    public class RecordNode : IdentifierNode {
-        public RecordNode() : base() { }
+public class RecordNode : IdentifierNode {
+    public RecordNode() : base() { }
 
-        public override void Parse(ref Queue<Token> tokenQueue) {}
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        int step = 0;
+        bool parsing = true;
+        
+        while(parsing && tokenQueue.Count > 0) {
+            Token token = tokenQueue.Peek();
+            
+            switch(step) {
+                case 0: // Expecting "record" keyword
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.record_type:
+                            tokenQueue.Dequeue(); // Consume "record"
+                            step = 1;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+							// Undexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 1: // Parse field declarations until "end"
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                            tokenQueue.Dequeue(); // Consume "end"
+                            step = 2;
+                            break;
+                        case Identifier: // Field declaration starts
+                            VarNode fieldNode = new VarNode();
+                            fieldNode.Parse(ref tokenQueue);
+                            this.childs.Add(fieldNode);
+                            // Remain in step 1 to get next field or "end"
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+							// Undexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 2: // Expecting semicolon after "end"
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                            tokenQueue.Dequeue(); // Consume semicolon
+                            parsing = false;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+							// Undexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+            }
+        }
     }
+}
 
     public class ArrayNode : IdentifierNode {
         public ArrayNode() : base() { }
