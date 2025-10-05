@@ -244,10 +244,99 @@ public class RecordNode : IdentifierNode {
 }
 
     public class ArrayNode : IdentifierNode {
-        public ArrayNode() : base() { }
-
-        public override void Parse(ref Queue<Token> tokenQueue) {}
+    public ExpressionNode SizeExpression { get; private set; }
+    
+    public ArrayNode() : base() {
+        SizeExpression = null;
     }
+
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        int step = 0;
+        bool parsing = true;
+        
+        while(parsing && tokenQueue.Count > 0) {
+            Token token = tokenQueue.Peek();
+            
+            switch(step) {
+                case 0: // Expecting "array" keyword
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.array_type:
+                            tokenQueue.Dequeue(); // Consume "array"
+                            step = 1;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+							// Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 1: // Expecting opening bracket "["
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.right_bracket:
+                            tokenQueue.Dequeue(); // Consume "["
+                            step = 2;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 2: // Parse size expression
+                    // Create and parse the size expression
+                    SizeExpression = new ExpressionNode();
+                    SizeExpression.Parse(ref tokenQueue);
+                    step = 3;
+                    break;
+                    
+                case 3: // Expecting closing bracket "]"
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.left_bracket:
+                            tokenQueue.Dequeue(); // Consume "]"
+                            step = 4;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 4: // Expecting type identifier
+                    switch(token) {
+                        case Identifier identifier:
+                            this.identifier = identifier.getIdentifier(); // Store element type
+                            tokenQueue.Dequeue(); // Consume type identifier
+                            parsing = false;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+				}
+			}
+		}
+	}
 
     public class AssignmentNode : IdentifierNode {
         public AssignmentNode() : base() { }
