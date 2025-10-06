@@ -244,11 +244,8 @@ public class RecordNode : IdentifierNode {
 }
 
     public class ArrayNode : IdentifierNode {
-    public ExpressionNode SizeExpression { get; private set; }
     
-    public ArrayNode() : base() {
-        SizeExpression = null;
-    }
+    public ArrayNode() : base() {}
 
     public override void Parse(ref Queue<Token> tokenQueue) {
         int step = 0;
@@ -294,8 +291,9 @@ public class RecordNode : IdentifierNode {
                     
                 case 2: // Parse size expression
                     // Create and parse the size expression
-                    SizeExpression = new ExpressionNode();
-                    SizeExpression.Parse(ref tokenQueue);
+                    ExpressionNode expression = new ExpressionNode();
+                    expression.Parse(ref tokenQueue);
+                    this.childs.Add(expression);
                     step = 3;
                     break;
                     
@@ -339,9 +337,78 @@ public class RecordNode : IdentifierNode {
 	}
 
     public class AssignmentNode : IdentifierNode {
-        public AssignmentNode() : base() { }
+    
+    public AssignmentNode() : base() {}
 
-        public override void Parse(ref Queue<Token> tokenQueue) {}
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        int step = 0;
+        bool parsing = true;
+        
+        while(parsing && tokenQueue.Count > 0) {
+            Token token = tokenQueue.Peek();
+            
+            switch(step) {
+                case 0: // Expecting identifier (variable name)
+                    switch(token) {
+                        case Identifier identifier:
+                            this.identifier = identifier.getIdentifier();
+                            tokenQueue.Dequeue(); // Consume identifier
+                            step = 1;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 1: // Expecting assignment operator ":="
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.bare_assignment:
+                            tokenQueue.Dequeue(); // Consume ":="
+                            step = 2;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 2: // Parse the expression
+                    ExpressionNode expression = new ExpressionNode();
+                    expression.Parse(ref tokenQueue);
+                    this.childs.Add(expression);
+                    step = 3;
+                    break;
+                    
+                case 3: // Expecting semicolon
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                            tokenQueue.Dequeue(); // Consume ";"
+                            parsing = false;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     public abstract class SubprogramNode : Node {
