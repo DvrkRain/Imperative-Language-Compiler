@@ -121,7 +121,7 @@ namespace SyntaxAnalyzer {
 		protected string type;
 		protected bool explicit_type;
 
-        public VarNode() : base() { }
+        public VarNode() : base() => this.type = "void";
 
         public override void Parse(ref Queue<Token> tokenQueue) {
 			int step = 0;
