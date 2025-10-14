@@ -179,37 +179,21 @@ public class RecordNode : IdentifierNode {
         bool parsing = true;
         
         while(parsing && tokenQueue.Count > 0) {
-            Token token = tokenQueue.Peek();
+                Token token = tokenQueue.Peek();
             
+            // We assume that "record" keyword is already consumed
             switch(step) {
-                case 0: // Expecting "record" keyword
-                    switch(token) {
-                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.record_type:
-                            tokenQueue.Dequeue(); // Consume "record"
-                            step = 1;
-                            break;
-                        case Mock:
-                            tokenQueue.Dequeue();
-                            break;
-                        default:
-							// Undexpected token
-							// TODO: Add exception throw
-                            parsing = false;
-                            break;
-                    }
-                    break;
-                    
-                case 1: // Parse field declarations until "end"
+                case 0: // Parse field declarations until "end"
                     switch(token) {
                         case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
                             tokenQueue.Dequeue(); // Consume "end"
-                            step = 2;
+                            step = 1;
                             break;
                         case Identifier: // Field declaration starts
                             VarNode fieldNode = new VarNode();
                             fieldNode.Parse(ref tokenQueue);
                             this.childs.Add(fieldNode);
-                            // Remain in step 1 to get next field or "end"
+                            // Remain in step 0 to get next field or "end"
                             break;
                         case Mock:
                             tokenQueue.Dequeue();
@@ -222,7 +206,7 @@ public class RecordNode : IdentifierNode {
                     }
                     break;
                     
-                case 2: // Expecting semicolon after "end"
+                case 1: // Expecting semicolon after "end"
                     switch(token) {
                         case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
                             tokenQueue.Dequeue(); // Consume semicolon
@@ -252,36 +236,20 @@ public class RecordNode : IdentifierNode {
         bool parsing = true;
         
         while(parsing && tokenQueue.Count > 0) {
-            Token token = tokenQueue.Peek();
+                Token token = tokenQueue.Peek();
             
+            // We assume that "array" keyword is already consumed
             switch(step) {
-                case 0: // Expecting "array" keyword
+                case 0: // Expecting opening bracket "["
                     switch(token) {
-                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.array_type:
-                            tokenQueue.Dequeue(); // Consume "array"
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.right_bracket:
+                            tokenQueue.Dequeue(); // Consume "["
                             step = 1;
                             break;
                         case Mock:
                             tokenQueue.Dequeue();
                             break;
                         default:
-							// Unexpected token
-							// TODO: Add exception throw
-                            parsing = false;
-                            break;
-                    }
-                    break;
-                    
-                case 1: // Expecting opening bracket "["
-                    switch(token) {
-                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.right_bracket:
-                            tokenQueue.Dequeue(); // Consume "["
-                            step = 2;
-                            break;
-                        case Mock:
-                            tokenQueue.Dequeue();
-                            break;
-                        default:
                             // Unexpected token
 							// TODO: Add exception throw
                             parsing = false;
@@ -289,19 +257,19 @@ public class RecordNode : IdentifierNode {
                     }
                     break;
                     
-                case 2: // Parse size expression
+                case 1: // Parse size expression
                     // Create and parse the size expression
                     ExpressionNode expression = new ExpressionNode();
                     expression.Parse(ref tokenQueue);
                     this.childs.Add(expression);
-                    step = 3;
+                    step = 2;
                     break;
                     
-                case 3: // Expecting closing bracket "]"
+                case 2: // Expecting closing bracket "]"
                     switch(token) {
                         case Dedicated dedicated when dedicated.getCode() == DedicatedWord.left_bracket:
                             tokenQueue.Dequeue(); // Consume "]"
-                            step = 4;
+                            step = 3;
                             break;
                         case Mock:
                             tokenQueue.Dequeue();
@@ -314,7 +282,7 @@ public class RecordNode : IdentifierNode {
                     }
                     break;
                     
-                case 4: // Expecting type identifier
+                case 3: // Expecting type identifier
                     switch(token) {
                         case Identifier identifier:
                             this.identifier = identifier.getIdentifier(); // Store element type
