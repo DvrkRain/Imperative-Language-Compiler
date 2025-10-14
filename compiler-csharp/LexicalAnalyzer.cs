@@ -52,7 +52,9 @@ namespace LexicalAnalyzer
 				StateCode nextStateCode = StateCode.Start;
 
 				if(separators.Contains(nextChar)) {
-					TokenStream.Enqueue(this.currentState.CreateToken());
+					Token token = this.currentState.CreateToken();
+					if(token is not Mock)
+						TokenStream.Enqueue(token);
 					Token separatorToken = new Mock();
 					switch (nextChar) {
 						case ',':
@@ -123,8 +125,11 @@ namespace LexicalAnalyzer
 
 				try {
 					if (nextStateCode != this.currentStateCode) {
-						if(!separators.Contains(nextChar))
-							TokenStream.Enqueue(this.currentState.CreateToken());
+						if(!separators.Contains(nextChar)) {
+							Token token = this.currentState.CreateToken();
+							if(token is not Mock)
+								TokenStream.Enqueue(token);
+						}
 
 						this.currentStateCode = nextStateCode;
 
