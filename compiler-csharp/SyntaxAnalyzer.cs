@@ -24,7 +24,107 @@ namespace SyntaxAnalyzer {
 
         public IfNode() : base() => this.branches = new List<BranchNode>();
 
-        public override void Parse(ref Queue<Token> tokenQueue) {}
+        public override void Parse(ref Queue<Token> tokenQueue) {
+            int step = 0;
+            bool parsing = true;
+            
+            while(parsing && tokenQueue.Count > 0) {
+                Token token = tokenQueue.Peek();
+                
+                switch(step) {
+                    case 0: // Expecting "if" keyword
+                        switch(token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.if_statement:
+                                tokenQueue.Dequeue(); // Consume "if"
+                                step = 1;
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Undexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 1: // Parse condition expression
+                        ExpressionNode condition = new ExpressionNode();
+                        condition.Parse(ref tokenQueue);
+                        this.childs.Add(condition);
+
+                        step = 2;
+                        break;
+                        
+                    case 2: // Expecting "then" keyword
+                        switch(token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.then_branch:
+                                tokenQueue.Dequeue(); // Consume "then"
+                                step = 3;
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Undexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 3 or 5: // Parse then-branch statements until "else" or "end"
+                        BranchNode newBranch = new BranchNode();
+                        newBranch.Parse(ref tokenQueue);
+                        this.childs.Add(newBranch);
+
+                        step += 1;
+                        break;
+                        
+                    case 4: // Check for "else" or "end"
+                        switch(token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.else_branch:
+                                tokenQueue.Dequeue(); // Consume "else"
+                                step = 5;
+                                break;
+                                
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                                tokenQueue.Dequeue(); // Consume "end"
+                                step = 6; // Proceed to final validation
+                                break;
+                                
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                                
+                            default:
+                                // Undexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 6: // Expecting semicolon
+                        switch(token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                                tokenQueue.Dequeue(); // Consume ";"
+                                parsing = false; // Successfully completed
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Undexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
     }
 
     public abstract class IdentifierNode : Node {
@@ -214,7 +314,7 @@ public class RecordNode : IdentifierNode {
         bool parsing = true;
         
         while(parsing && tokenQueue.Count > 0) {
-                Token token = tokenQueue.Peek();
+            Token token = tokenQueue.Peek();
             
             // We assume that "array" keyword is already consumed
             switch(step) {
