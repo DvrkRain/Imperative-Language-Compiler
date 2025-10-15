@@ -175,52 +175,30 @@ public class RecordNode : IdentifierNode {
     public RecordNode() : base() { }
 
     public override void Parse(ref Queue<Token> tokenQueue) {
-        int step = 0;
         bool parsing = true;
         
         while(parsing && tokenQueue.Count > 0) {
-                Token token = tokenQueue.Peek();
+            Token token = tokenQueue.Peek();
             
             // We assume that "record" keyword is already consumed
-            switch(step) {
-                case 0: // Parse field declarations until "end"
-                    switch(token) {
-                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
-                            tokenQueue.Dequeue(); // Consume "end"
-                            step = 1;
-                            break;
-                        case Identifier: // Field declaration starts
-                            VarNode fieldNode = new VarNode();
-                            fieldNode.Parse(ref tokenQueue);
-                            this.childs.Add(fieldNode);
-                            // Remain in step 0 to get next field or "end"
-                            break;
-                        case Mock:
-                            tokenQueue.Dequeue();
-                            break;
-                        default:
-							// Undexpected token
-							// TODO: Add exception throw
-                            parsing = false;
-                            break;
-                    }
+            switch(token) {
+                case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                    tokenQueue.Dequeue(); // Consume "end"
+                    parsing = false;
                     break;
-                    
-                case 1: // Expecting semicolon after "end"
-                    switch(token) {
-                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
-                            tokenQueue.Dequeue(); // Consume semicolon
-                            parsing = false;
-                            break;
-                        case Mock:
-                            tokenQueue.Dequeue();
-                            break;
-                        default:
-							// Undexpected token
-							// TODO: Add exception throw
-                            parsing = false;
-                            break;
-                    }
+                case Identifier: // Field declaration starts
+                    VarNode fieldNode = new VarNode();
+                    fieldNode.Parse(ref tokenQueue);
+                    this.childs.Add(fieldNode);
+                    // Remain in step 0 to get next field or "end"
+                    break;
+                case Mock:
+                    tokenQueue.Dequeue();
+                    break;
+                default:
+                    // Undexpected token
+                    // TODO: Add exception throw
+                    parsing = false;
                     break;
             }
         }
