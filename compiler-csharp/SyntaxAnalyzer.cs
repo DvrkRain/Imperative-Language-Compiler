@@ -42,7 +42,7 @@ namespace SyntaxAnalyzer {
                                 tokenQueue.Dequeue();
                                 break;
                             default:
-                                // Undexpected token
+                                // Unexpected token
                                 // TODO: Add exception throw
                                 parsing = false;
                                 break;
@@ -67,14 +67,14 @@ namespace SyntaxAnalyzer {
                                 tokenQueue.Dequeue();
                                 break;
                             default:
-                                // Undexpected token
+                                // Unexpected token
                                 // TODO: Add exception throw
                                 parsing = false;
                                 break;
                         }
                         break;
                         
-                    case 3 or 5: // Parse then-branch statements until "else" or "end"
+                    case 3 or 5: // Parse branch statements until "else" or "end"
                         BranchNode newBranch = new BranchNode();
                         newBranch.Parse(ref tokenQueue);
                         this.childs.Add(newBranch);
@@ -99,7 +99,7 @@ namespace SyntaxAnalyzer {
                                 break;
                                 
                             default:
-                                // Undexpected token
+                                // Unexpected token
                                 // TODO: Add exception throw
                                 parsing = false;
                                 break;
@@ -116,7 +116,7 @@ namespace SyntaxAnalyzer {
                                 tokenQueue.Dequeue();
                                 break;
                             default:
-                                // Undexpected token
+                                // Unexpected token
                                 // TODO: Add exception throw
                                 parsing = false;
                                 break;
@@ -296,7 +296,7 @@ public class RecordNode : IdentifierNode {
                     tokenQueue.Dequeue();
                     break;
                 default:
-                    // Undexpected token
+                    // Unexpected token
                     // TODO: Add exception throw
                     parsing = false;
                     break;
@@ -464,10 +464,159 @@ public class RecordNode : IdentifierNode {
     }
 
     public class ForNode : SubprogramNode {
-        public ForNode() : base() { }
+    private string iterator;
+    
+    public ForNode() : base() { }
 
-        public override void Parse(ref Queue<Token> tokenQueue) {}
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        int step = 0;
+        bool parsing = true;
+
+        while (parsing && tokenQueue.Count > 0) {
+            Token token = tokenQueue.Peek();
+
+            switch (step) {
+                case 0: // Expecting "for" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.for_statement:
+                            tokenQueue.Dequeue(); // Consume "for"
+                            step = 1;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 1: // Expecting iterator identifier
+                    switch (token) {
+                        case Identifier identifier:
+                            this.iterator = identifier.getIdentifier();
+                            tokenQueue.Dequeue(); // Consume identifier
+                            step = 2;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 2: // Expecting "in" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.in_range_statement:
+                            tokenQueue.Dequeue(); // Consume "in"
+                            step = 3;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 3 or 5: // Parse start expression
+                    ExpressionNode RangeExpression = new ExpressionNode();
+                    RangeExpression.Parse(ref tokenQueue);
+                    this.childs.Add(RangeExpression);
+                    step += 1;
+                    break;
+                    
+                case 4: // Expecting ".." range operator
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.range:
+                            tokenQueue.Dequeue(); // Consume ".."
+                            step = 6;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 6: // Expecting "loop" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.loop_start:
+                            tokenQueue.Dequeue(); // Consume "loop"
+                            step = 7;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 7: // Parse loop body
+                    // Create and parse the nested program for the loop body
+                    this.nested = new ProgramNode();
+                    this.nested.Parse(ref tokenQueue);                
+                    
+                    step = 8;
+                    break;
+                    
+                case 8: // Expecting "end" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                            tokenQueue.Dequeue(); // Consume "end"
+                            step = 9;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 9: // Expecting semicolon
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                            tokenQueue.Dequeue(); // Consume ";"
+                            parsing = false; // Successfully completed
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+            }
+        }
     }
+    
+    // Helper method to get iterator name
+    public string GetIterator() => this.iterator;
+}
 
     public class WhileNode : SubprogramNode {
         public WhileNode() : base() { }
