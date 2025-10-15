@@ -619,10 +619,105 @@ public class RecordNode : IdentifierNode {
 }
 
     public class WhileNode : SubprogramNode {
-        public WhileNode() : base() { }
+    private ExpressionNode condition;
+    
+    public WhileNode() : base() { }
 
-        public override void Parse(ref Queue<Token> tokenQueue) {}
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        int step = 0;
+        bool parsing = true;
+
+        while (parsing && tokenQueue.Count > 0) {
+            Token token = tokenQueue.Peek();
+
+            switch (step) {
+                case 0: // Expecting "while" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.while_statement:
+                            tokenQueue.Dequeue(); // Consume "while"
+                            step = 1;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 1: // Parse condition expression
+                    this.condition = new ExpressionNode();
+                    this.condition.Parse(ref tokenQueue);
+                    step = 2;
+                    break;
+                    
+                case 2: // Expecting "loop" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.loop_start:
+                            tokenQueue.Dequeue(); // Consume "loop"
+                            step = 3;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 3: // Parse loop body
+                    // Create and parse the nested program for the loop body
+                    this.nested = new ProgramNode();
+                    this.nested.Parse(ref tokenQueue);
+                    step = 4;
+                    break;
+                    
+                case 4: // Expecting "end" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                            tokenQueue.Dequeue(); // Consume "end"
+                            step = 5;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 5: // Expecting semicolon
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                            tokenQueue.Dequeue(); // Consume ";"
+                            parsing = false; // Successfully completed
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+            }
+        }
     }
+    
+    // Helper method to get condition
+    public ExpressionNode GetCondition() => this.condition;
+}
 
     public class BranchNode : SubprogramNode {
         public BranchNode() : base() { }
