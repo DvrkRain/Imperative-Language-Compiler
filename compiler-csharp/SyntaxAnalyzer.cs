@@ -2,7 +2,6 @@ using LexicalAnalyzer.TokenTree;
 using LexicalAnalyzer;
 
 namespace SyntaxAnalyzer {
-
     public abstract class Node {
         protected List<Node> childs;
 
@@ -710,8 +709,86 @@ public class RecordNode : IdentifierNode {
     }
 
 	public class ExpressionNode : Node {
-		public ExpressionNode() : base() { }
+		public static List<DedicatedWord> allowedOperations = new List<DedicatedWord>() {
+			DedicatedWord.logical_and,
+			DedicatedWord.logical_or,
+			DedicatedWord.logical_xor,
+			DedicatedWord.logical_not,
+			DedicatedWord.less_equal,
+			DedicatedWord.less,
+			DedicatedWord.equal,
+			DedicatedWord.greater_equal,
+			DedicatedWord.greater,
+			DedicatedWord.not_equal,
+			DedicatedWord.summation,
+			DedicatedWord.difference,
+			DedicatedWord.multiplication,
+			DedicatedWord.division,
+			DedicatedWord.int_division,
+		};
 
-		public override void Parse(ref Queue<Token> tokenQueue) {}
+		public DedicatedWord opCode;
+		public ExpressionNode left;
+		public ExpressionNode right;
+		public bool initialized;
+
+		public ExpressionNode() : base() {
+			this.initialized = false;
+		}
+		public ExpressionNode(ExpressionNode init, DedicatedWord operation) : base() {
+			this.initialized = true;
+			this.left = init;
+			this.opCode = operation;
+		}
+
+		public override void Parse(ref Queue<Token> tokenQueue) {
+			int step = 0;
+			if(initialized) {
+				step = 2;
+			}
+			bool parenthesised = false;
+			while(step < 0) {
+				Token token = tokenQueue.Peek();
+				switch(step) {
+					case 0:
+						switch(token) {
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.left_parenthesis:
+								if(parenthesised) {
+									this.left = new ExpressionNode();
+									this.left.Parse(ref tokenQueue);
+									step = 1;
+								} else {
+									parenthesised = true;
+									tokenQueue.Dequeue();
+								}
+								break;
+
+							default:
+								break;
+						}
+						break;
+
+					case 1:
+						switch(token) {
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.dot:
+								this.left = new ExpressionNode(this.left, DedicatedWord.dot);
+								this.left.Parse(ref tokenQueue);
+								break;
+
+							default:
+								break;
+						}
+						break;
+				}
+			}
+		}
+	}
+
+	public class PrimaryNode : ExpressionNode {
+		public object value;
+
+		public PrimaryNode(object val) : base() {
+			this.value = val;
+		}
 	}
 }
