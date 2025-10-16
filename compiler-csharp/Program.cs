@@ -20,7 +20,7 @@ namespace Compiler
 				Console.Write("├── ");
 				indent += "│   ";
 			}
-			Console.WriteLine(node.GetType().Name);
+			node.PrintInfo();
 
 			var children = node.GetChilds();
 			for (int i = 0; i < children.Count; i++)

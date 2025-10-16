@@ -5,8 +5,11 @@ namespace SyntaxAnalyzer {
         protected List<Node> childs;
 
         public Node() => this.childs = new List<Node>();
+        
+        public abstract void PrintInfo();
 
         public abstract void Parse(ref Queue<Token> tokenQueue);
+
 
         public List<Node> GetChilds() {
             return this.childs;
@@ -17,6 +20,10 @@ namespace SyntaxAnalyzer {
         public bool main;
 
         public ProgramNode() : base() { }
+
+        public override void PrintInfo() {
+            Console.WriteLine($"ProgramNode(childs={this.childs.Count})");
+        }
 
         public override void Parse(ref Queue<Token> tokenQueue) {
 			bool parsing = true;
@@ -96,6 +103,10 @@ namespace SyntaxAnalyzer {
         public List<BranchNode> branches;
 
         public IfNode() : base() => this.branches = new List<BranchNode>();
+
+        public override void PrintInfo() {
+            Console.WriteLine($"IfNode(childs={this.childs.Count})");
+        }
 
         public override void Parse(ref Queue<Token> tokenQueue) {
             int step = 0;
@@ -195,6 +206,10 @@ namespace SyntaxAnalyzer {
 		protected bool explicit_type;
 
         public VarNode() : base() => this.type = "void";
+
+        public override void PrintInfo() {
+            Console.WriteLine($"VarNode(identifier='{this.identifier}', type='{this.type}', explicit_type={this.explicit_type}, childs={this.childs.Count})");
+        }
 
         public override void Parse(ref Queue<Token> tokenQueue) {
 			int step = 0;
@@ -339,6 +354,10 @@ namespace SyntaxAnalyzer {
         
         public TypeNode() : base() { }
 
+        public override void PrintInfo() {
+            Console.WriteLine($"TypeNode(identifier='{this.identifier}', childs={this.childs.Count})");
+        }
+
         public override void Parse(ref Queue<Token> tokenQueue) {
             int step = 0;
             bool parsing = true;
@@ -460,43 +479,51 @@ namespace SyntaxAnalyzer {
         }
     }
 
-public class RecordNode : IdentifierNode {
-    public RecordNode() : base() { }
+    public class RecordNode : IdentifierNode {
+        public RecordNode() : base() { }
 
-    public override void Parse(ref Queue<Token> tokenQueue) {
-        bool parsing = true;
-        
-        while(parsing && tokenQueue.Count > 0) {
-            Token token = tokenQueue.Peek();
+        public override void PrintInfo() {
+            Console.WriteLine($"RecordNode(identifier='{this.identifier}', childs={this.childs.Count})");
+        }
+
+        public override void Parse(ref Queue<Token> tokenQueue) {
+            bool parsing = true;
             
-            // We assume that "record" keyword is already consumed
-            switch(token) {
-                case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
-                    tokenQueue.Dequeue(); // Consume "end"
-                    parsing = false;
-                    break;
-                case Dedicated dedicated when dedicated.getCode() == DedicatedWord.variable_declaration: // Field declaration starts
-                    tokenQueue.Dequeue(); // Consume "var"
-                    VarNode fieldNode = new VarNode();
-                    fieldNode.Parse(ref tokenQueue);
-                    this.childs.Add(fieldNode);
-                    break;
-                case Mock:
-                    tokenQueue.Dequeue();
-                    break;
-                default:
-                    // Unexpected token
-                    // TODO: Add exception throw
-                    parsing = false;
-                    break;
+            while(parsing && tokenQueue.Count > 0) {
+                Token token = tokenQueue.Peek();
+                
+                // We assume that "record" keyword is already consumed
+                switch(token) {
+                    case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                        tokenQueue.Dequeue(); // Consume "end"
+                        parsing = false;
+                        break;
+                    case Dedicated dedicated when dedicated.getCode() == DedicatedWord.variable_declaration: // Field declaration starts
+                        tokenQueue.Dequeue(); // Consume "var"
+                        VarNode fieldNode = new VarNode();
+                        fieldNode.Parse(ref tokenQueue);
+                        this.childs.Add(fieldNode);
+                        break;
+                    case Mock:
+                        tokenQueue.Dequeue();
+                        break;
+                    default:
+                        // Unexpected token
+                        // TODO: Add exception throw
+                        parsing = false;
+                        break;
+                }
             }
         }
     }
-}
 
     public class ArrayNode : IdentifierNode {
     
     public ArrayNode() : base() {}
+    
+    public override void PrintInfo() {
+        Console.WriteLine($"ArrayNode(identifier='{this.identifier}', childs={this.childs.Count})");
+    }
 
     public override void Parse(ref Queue<Token> tokenQueue) {
         int step = 0;
@@ -577,6 +604,10 @@ public class RecordNode : IdentifierNode {
 		this.childs.Add(identifier);
 	}
 
+    public override void PrintInfo() {
+        Console.WriteLine($"AssignmentNode(identifier='{this.identifier}', childs={this.childs.Count})");
+    }
+
     public override void Parse(ref Queue<Token> tokenQueue) {
         int step = 0;
         bool parsing = true;
@@ -632,6 +663,10 @@ public class RecordNode : IdentifierNode {
 
 	public class RoutineNode : IdentifierNode {
 		public RoutineNode() : base() { }
+
+        public override void PrintInfo() {
+            Console.WriteLine($"RoutineNode(identifier='{this.identifier}', childs={this.childs.Count})");
+        }
 
 		public override void Parse(ref Queue<Token> tokenQueue) {
 			int step = 0;
@@ -746,6 +781,10 @@ public class RecordNode : IdentifierNode {
 
 	public class ParameterNode : IdentifierNode {
 		public ParameterNode() : base() { }
+        
+        public override void PrintInfo() {
+            Console.WriteLine($"ParameterNode(identifier='{this.identifier}', childs={this.childs.Count})");
+        }
 
 		public override void Parse(ref Queue<Token> tokenQueue) {
 			Token token;
@@ -796,6 +835,10 @@ public class RecordNode : IdentifierNode {
     private string iterator;
     
     public ForNode() : base() { }
+
+    public override void PrintInfo() {
+        Console.WriteLine($"ForNode(iterator='{this.iterator}', childs={this.childs.Count})");
+    }
 
     public override void Parse(ref Queue<Token> tokenQueue) {
         int step = 0;
@@ -901,7 +944,8 @@ public class RecordNode : IdentifierNode {
                 case 7: // Parse loop body
                     // Create and parse the nested program for the loop body
                     this.nested = new ProgramNode();
-                    this.nested.Parse(ref tokenQueue);                
+                    this.nested.Parse(ref tokenQueue);  
+                    this.childs.Add(nested);              
                     
                     step = 8;
                     break;
@@ -951,6 +995,10 @@ public class RecordNode : IdentifierNode {
     private ExpressionNode condition;
     
     public WhileNode() : base() { }
+
+    public override void PrintInfo() {
+        Console.WriteLine($"WhileNode(childs={this.childs.Count})");
+    }
 
     public override void Parse(ref Queue<Token> tokenQueue) {
         int step = 0;
@@ -1004,6 +1052,7 @@ public class RecordNode : IdentifierNode {
                     // Create and parse the nested program for the loop body
                     this.nested = new ProgramNode();
                     this.nested.Parse(ref tokenQueue);
+                    this.childs.Add(nested);
                     step = 4;
                     break;
                     
@@ -1052,6 +1101,10 @@ public class RecordNode : IdentifierNode {
         public BranchNode() : base() { }
 
         public override void Parse(ref Queue<Token> tokenQueue) {}
+
+        public override void PrintInfo() {
+            Console.WriteLine($"BranchNode(childs={this.childs.Count})");
+        }
     }
 
 	public class ExpressionNode : Node {
@@ -1119,6 +1172,10 @@ public class RecordNode : IdentifierNode {
 			this.left = init;
 			this.opCode = operation;
 		}
+
+        public override void PrintInfo() {
+            Console.WriteLine($"ExpressionNode(opCode='{this.opCode}', initialized={this.initialized}, childs={this.childs.Count})");
+        }
 
 		public override void Parse(ref Queue<Token> tokenQueue) {
 			int step = 0;
@@ -1259,5 +1316,9 @@ public class RecordNode : IdentifierNode {
 		public PrimaryNode(object val) : base() {
 			this.value = val;
 		}
+
+        public override void PrintInfo() {
+            Console.WriteLine($"PrimaryNode(value='{this.value.ToString()}'childs={this.childs.Count})");
+        }
 	}
 }
