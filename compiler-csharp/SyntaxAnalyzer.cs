@@ -228,8 +228,10 @@ namespace SyntaxAnalyzer {
 										break;
 
 									case(DedicatedWord.is_assignment):
-										this.explicit_type = false;
-										step = 4;
+										Node expr = new ExpressionNode();
+										expr.Parse(ref tokenQueue);
+										this.childs.Add(expr);
+										step = 5;
 										break;
 
 									case(_):
@@ -284,7 +286,10 @@ namespace SyntaxAnalyzer {
 								DedicatedWord code = ((Dedicated) token).getCode();
 								switch(code) {
 									case(DedicatedWord.is_assignment):
-										step = 4;
+										Node expr = new ExpressionNode();
+										expr.Parse(ref tokenQueue);
+										this.childs.Add(expr);
+										step = 5;
 										break;
 
 									case(DedicatedWord.end_of_line):
@@ -300,13 +305,6 @@ namespace SyntaxAnalyzer {
 								// Unexpected token
 								break;
 						}
-						break;
-
-					case(4):
-						ExpressionNode expr = new ExpressionNode();
-						expr.Parse(ref tokenQueue);
-						this.childs.Add(expr);
-						step = 5;
 						break;
 
 					case(5):
@@ -638,10 +636,11 @@ public class RecordNode : IdentifierNode {
 		public override void Parse(ref Queue<Token> tokenQueue) {
 			int step = 0;
 			while(step < 6) {
-				Token token = tokenQueue.Dequeue();
+				Token token = tokenQueue.Peek();
 				switch(step) {
 					case 0:
 						if(token is Identifier) {
+							tokenQueue.Dequeue();
 							step = 1;
 							this.identifier = ((Identifier)token).getIdentifier();
 						} else {
@@ -651,31 +650,43 @@ public class RecordNode : IdentifierNode {
 
 					case 1:
 						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.left_parenthesis) {
+							tokenQueue.Dequeue();
 							step = 2;
 						} else {
 							// Unexpected token
+							return;
 						}
 						break;
 
 					case 2:
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.right_parenthesis) {
+							tokenQueue.Dequeue();
+							step = 3;
+						}
 						ParameterNode param = new ParameterNode();
 						param.Parse(ref tokenQueue);
+						token.PrintInfo();
+						token = tokenQueue.Peek();
 						this.childs.Add(param);
-						token = tokenQueue.Dequeue();
-						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.comma_separator) {
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.right_parenthesis) {
+							tokenQueue.Dequeue();
 							step = 3;
 						} else if(!(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.comma_separator)) {
+							return;
 							// Unexpected token
+						} else {
+							tokenQueue.Dequeue();
 						}
 						break;
 
 					case 3:
 						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.type_assignment) {
+							tokenQueue.Dequeue();
 							token = tokenQueue.Dequeue();
 							string str = "";
 							switch(token) {
 								case Identifier id:
-									str =id.getIdentifier();
+									str = id.getIdentifier();
 									break;
 
 								case Dedicated dedicated when dedicated.getCode() == DedicatedWord.integer_type:
@@ -694,7 +705,7 @@ public class RecordNode : IdentifierNode {
 							}
 							if(str == "") {
 								// Unexpected token
-								break;
+								return;
 							} else {
 								this.childs.Add(new PrimaryNode(str));
 							}
@@ -705,6 +716,7 @@ public class RecordNode : IdentifierNode {
 					case 4:
 						step = 5;
 						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.one_line_body) {
+							tokenQueue.Dequeue();
 							Node expr = new ExpressionNode();
 							expr.Parse(ref tokenQueue);
 							this.childs.Add(expr);
@@ -714,10 +726,12 @@ public class RecordNode : IdentifierNode {
 
 					case 5:
 						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.is_assignment) {
+							tokenQueue.Dequeue();
 							Node body = new ProgramNode();
 							body.Parse(ref tokenQueue);
 							this.childs.Add(body);
 						} else if (token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.end_of_line) {
+							tokenQueue.Dequeue();
 						} else {
 							// Unexpected token
 						}
@@ -744,7 +758,7 @@ public class RecordNode : IdentifierNode {
 			}
 
 			token = tokenQueue.Dequeue();
-			if(!(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.is_assignment)) {
+			if(!(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.type_assignment)) {
 				// Unexpected token
 				return;
 			}
@@ -756,7 +770,7 @@ public class RecordNode : IdentifierNode {
 					break;
 
 				case Dedicated dedicated when dedicated.getCode() == DedicatedWord.integer_type:
-					this.childs.Add(new PrimaryNode("indeger"));
+					this.childs.Add(new PrimaryNode("integer"));
 					break;
 
 				case Dedicated dedicated when dedicated.getCode() == DedicatedWord.real_type:
