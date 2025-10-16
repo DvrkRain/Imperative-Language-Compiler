@@ -23,37 +23,37 @@ namespace SyntaxAnalyzer {
 				Token token = tokenQueue.Dequeue();
 				switch(token) {
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.variable_declaration:
-						Node var_decl = new VarNode();
+						VarNode var_decl = new VarNode();
 						var_decl.Parse(ref tokenQueue);
 						this.childs.Add(var_decl);
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.type_declaration:
-						Node type_decl = new TypeNode();
+						TypeNode type_decl = new TypeNode();
 						type_decl.Parse(ref tokenQueue);
 						this.childs.Add(type_decl);
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.routine_declaration:
-						Node rout_decl = new RoutineNode();
+						RoutineNode rout_decl = new RoutineNode();
 						rout_decl.Parse(ref tokenQueue);
 						this.childs.Add(rout_decl);
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.if_statement:
-						Node if_stnt = new IfNode();
+						IfNode if_stnt = new IfNode();
 						if_stnt.Parse(ref tokenQueue);
 						this.childs.Add(if_stnt);
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.for_statement:
-						Node for_stnt = new ForNode();
+						ForNode for_stnt = new ForNode();
 						for_stnt.Parse(ref tokenQueue);
 						this.childs.Add(for_stnt);
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.while_statement:
-						Node while_stnt = new WhileNode();
+						WhileNode while_stnt = new WhileNode();
 						while_stnt.Parse(ref tokenQueue);
 						this.childs.Add(while_stnt);
 						break;
@@ -323,9 +323,128 @@ namespace SyntaxAnalyzer {
     }
 
     public class TypeNode : IdentifierNode {
+        
         public TypeNode() : base() { }
 
-        public override void Parse(ref Queue<Token> tokenQueue) {}
+        public override void Parse(ref Queue<Token> tokenQueue) {
+            int step = 0;
+            bool parsing = true;
+
+            while (parsing && tokenQueue.Count > 0) {
+                Token token = tokenQueue.Peek();
+
+                // Assume "type" keyword is already consumed
+                switch (step) {
+                    case 0: // Expecting type identifier (name)
+                        switch (token) {
+                            case Identifier identifier:
+                                this.identifier = identifier.getIdentifier();
+                                tokenQueue.Dequeue(); // Consume type name
+                                step = 1;
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 1: // Expecting "is" for type assignment
+                        switch (token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.is_assignment:
+                                tokenQueue.Dequeue(); // Consume "is"
+                                step = 2;
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 2: // Check for <type>: built-in or user-defined
+                        switch (token) {
+                            case Dedicated dedicated: // Built-in type (integer, real, boolean, record, array)
+                                DedicatedWord code = dedicated.getCode();
+                                if (code == DedicatedWord.integer_type ||
+                                    code == DedicatedWord.real_type ||
+                                    code == DedicatedWord.boolean_type) {
+                                    
+                                    PrimaryNode BuiltTypeName = new PrimaryNode(code.ToString());
+                                    this.childs.Add(BuiltTypeName);
+                                    tokenQueue.Dequeue();
+                                }
+
+                                else if (code == DedicatedWord.record_type) {
+                                    tokenQueue.Dequeue(); // Consume "record"
+                                    RecordNode recordNode = new RecordNode();
+                                    recordNode.Parse(ref tokenQueue);
+                                    this.childs.Add(recordNode);
+                                }
+
+                                else if (code == DedicatedWord.array_type) {
+                                    tokenQueue.Dequeue(); // Consume "array"
+                                    ArrayNode arrayNode = new ArrayNode();
+                                    arrayNode.Parse(ref tokenQueue);
+                                    this.childs.Add(arrayNode);
+                                }
+
+                                else {
+                                    // Unexpected token
+                                    // TODO: Add exception throw
+                                    parsing = false;
+                                }
+
+                                step = 3; // Expect semicolon
+                                break;
+                                
+                            case Identifier identifier:
+                                // User-defined type reference
+                                PrimaryNode TypeName = new PrimaryNode(identifier.getIdentifier());
+                                this.childs.Add(TypeName);
+                                tokenQueue.Dequeue(); // Consume type identifier
+                                step = 3; // Expect semicolon
+                                break;
+                                
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                                
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 3: // Expecting semicolon
+                        switch (token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                                tokenQueue.Dequeue(); // Consume ";"
+                                parsing = false; // Successfully completed
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
     }
 
 public class RecordNode : IdentifierNode {
@@ -343,11 +462,11 @@ public class RecordNode : IdentifierNode {
                     tokenQueue.Dequeue(); // Consume "end"
                     parsing = false;
                     break;
-                case Identifier: // Field declaration starts
+                case Dedicated dedicated when dedicated.getCode() == DedicatedWord.variable_declaration: // Field declaration starts
+                    tokenQueue.Dequeue(); // Consume "var"
                     VarNode fieldNode = new VarNode();
                     fieldNode.Parse(ref tokenQueue);
                     this.childs.Add(fieldNode);
-                    // Remain in step 0 to get next field or "end"
                     break;
                 case Mock:
                     tokenQueue.Dequeue();
