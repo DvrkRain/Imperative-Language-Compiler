@@ -31,37 +31,21 @@ namespace SyntaxAnalyzer {
             while(parsing && tokenQueue.Count > 0) {
                 Token token = tokenQueue.Peek();
                 
+                // Assume that "if" keyword is already consumed
                 switch(step) {
-                    case 0: // Expecting "if" keyword
-                        switch(token) {
-                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.if_statement:
-                                tokenQueue.Dequeue(); // Consume "if"
-                                step = 1;
-                                break;
-                            case Mock:
-                                tokenQueue.Dequeue();
-                                break;
-                            default:
-                                // Unexpected token
-                                // TODO: Add exception throw
-                                parsing = false;
-                                break;
-                        }
-                        break;
-                        
-                    case 1: // Parse condition expression
+                    case 0: // Parse condition expression
                         ExpressionNode condition = new ExpressionNode();
                         condition.Parse(ref tokenQueue);
                         this.childs.Add(condition);
 
-                        step = 2;
+                        step = 1;
                         break;
                         
-                    case 2: // Expecting "then" keyword
+                    case 1: // Expecting "then" keyword
                         switch(token) {
                             case Dedicated dedicated when dedicated.getCode() == DedicatedWord.then_branch:
                                 tokenQueue.Dequeue(); // Consume "then"
-                                step = 3;
+                                step = 2;
                                 break;
                             case Mock:
                                 tokenQueue.Dequeue();
@@ -74,7 +58,7 @@ namespace SyntaxAnalyzer {
                         }
                         break;
                         
-                    case 3 or 5: // Parse branch statements until "else" or "end"
+                    case 2 or 4: // Parse branch statements until "else" or "end"
                         BranchNode newBranch = new BranchNode();
                         newBranch.Parse(ref tokenQueue);
                         this.childs.Add(newBranch);
@@ -82,16 +66,16 @@ namespace SyntaxAnalyzer {
                         step += 1;
                         break;
                         
-                    case 4: // Check for "else" or "end"
+                    case 3: // Check for "else" or "end"
                         switch(token) {
                             case Dedicated dedicated when dedicated.getCode() == DedicatedWord.else_branch:
                                 tokenQueue.Dequeue(); // Consume "else"
-                                step = 5;
+                                step = 4;
                                 break;
                                 
                             case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
                                 tokenQueue.Dequeue(); // Consume "end"
-                                step = 6; // Proceed to final validation
+                                step = 5; // Proceed to final validation
                                 break;
                                 
                             case Mock:
@@ -106,7 +90,7 @@ namespace SyntaxAnalyzer {
                         }
                         break;
                         
-                    case 6: // Expecting semicolon
+                    case 5: // Expecting semicolon
                         switch(token) {
                             case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
                                 tokenQueue.Dequeue(); // Consume ";"
