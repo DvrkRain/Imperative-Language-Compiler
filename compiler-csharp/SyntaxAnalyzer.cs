@@ -1,5 +1,4 @@
 using LexicalAnalyzer.TokenTree;
-using LexicalAnalyzer;
 
 namespace SyntaxAnalyzer {
     public abstract class Node {
@@ -15,7 +14,51 @@ namespace SyntaxAnalyzer {
 
         public ProgramNode() : base() { }
 
-        public override void Parse(ref Queue<Token> tokenQueue) { }
+        public override void Parse(ref Queue<Token> tokenQueue) {
+			while(tokenQueue.Count > 0) {
+				Token token = tokenQueue.Dequeue();
+				switch(token) {
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.variable_declaration:
+						Node var_decl = new VarNode();
+						var_decl.Parse(ref tokenQueue);
+						this.childs.Add(var_decl);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.type_declaration:
+						Node type_decl = new VarNode();
+						type_decl.Parse(ref tokenQueue);
+						this.childs.Add(type_decl);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.routine_declaration:
+						Node rout_decl = new VarNode();
+						rout_decl.Parse(ref tokenQueue);
+						this.childs.Add(rout_decl);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.if_statement:
+						Node if_stnt = new VarNode();
+						if_stnt.Parse(ref tokenQueue);
+						this.childs.Add(if_stnt);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.for_statement:
+						Node for_stnt = new VarNode();
+						for_stnt.Parse(ref tokenQueue);
+						this.childs.Add(for_stnt);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.while_statement:
+						Node while_stnt = new VarNode();
+						while_stnt.Parse(ref tokenQueue);
+						this.childs.Add(while_stnt);
+						break;
+						
+					default:
+						break;
+				}
+			}
+		}
     }
 
     public class IfNode : Node {
@@ -727,6 +770,39 @@ public class RecordNode : IdentifierNode {
 			DedicatedWord.int_division,
 		};
 
+		public static List<DedicatedWord> unaryOperations = new List<DedicatedWord>() {
+			DedicatedWord.logical_not,
+			DedicatedWord.summation,
+			DedicatedWord.difference,
+		};
+
+		public static List<DedicatedWord> logicalOperations = new List<DedicatedWord>() {
+			DedicatedWord.logical_and,
+			DedicatedWord.logical_or,
+			DedicatedWord.logical_xor,
+			DedicatedWord.logical_not,
+		};
+
+		public static List<DedicatedWord> relationOperations = new List<DedicatedWord>() {
+			DedicatedWord.less_equal,
+			DedicatedWord.less,
+			DedicatedWord.equal,
+			DedicatedWord.greater_equal,
+			DedicatedWord.greater,
+			DedicatedWord.not_equal,
+		};
+
+		public static List<DedicatedWord> factorOperations = new List<DedicatedWord>() {
+			DedicatedWord.multiplication,
+			DedicatedWord.division,
+			DedicatedWord.int_division,
+		};
+
+		public static List<DedicatedWord> termOperations = new List<DedicatedWord>() {
+			DedicatedWord.summation,
+			DedicatedWord.difference,
+		};
+
 		public DedicatedWord opCode;
 		public ExpressionNode left;
 		public ExpressionNode right;
@@ -763,7 +839,39 @@ public class RecordNode : IdentifierNode {
 								}
 								break;
 
+							case Identifier var:
+								this.left = new PrimaryNode(var.getIdentifier());
+								step = 1;
+								tokenQueue.Dequeue();
+								break;
+
+							case Integer lit:
+								this.left = new PrimaryNode(lit.getValue());
+								step = 1;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.false_const:
+								this.left = new PrimaryNode(false);
+								step = 1;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.true_const:
+								this.left = new PrimaryNode(true);
+								step = 1;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when unaryOperations.Contains(dedicated.getCode()):
+								this.left = new PrimaryNode(0);
+								this.opCode = dedicated.getCode();
+								step = 2;
+								tokenQueue.Dequeue();
+								break;
+
 							default:
+								// Unexpected token
 								break;
 						}
 						break;
@@ -771,13 +879,70 @@ public class RecordNode : IdentifierNode {
 					case 1:
 						switch(token) {
 							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.dot:
+								tokenQueue.Dequeue();
 								this.left = new ExpressionNode(this.left, DedicatedWord.dot);
 								this.left.Parse(ref tokenQueue);
+								break;
+
+							case Dedicated dedicated when allowedOperations.Contains(dedicated.getCode()):
+								this.opCode = dedicated.getCode();
+								step = 2;
+								tokenQueue.Dequeue();
 								break;
 
 							default:
 								break;
 						}
+						break;
+
+					case 2:
+						switch(token) {
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.logical_not:
+								tokenQueue.Dequeue();
+								this.right = new ExpressionNode(new PrimaryNode(0), DedicatedWord.logical_not);
+								this.right.Parse(ref tokenQueue);
+								step = 3;
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.left_parenthesis:
+								this.left = new ExpressionNode();
+								this.left.Parse(ref tokenQueue);
+								step = 3;
+								break;
+
+							case Identifier var:
+								this.left = new PrimaryNode(var.getIdentifier());
+								step = 3;
+								tokenQueue.Dequeue();
+								break;
+
+							case Integer lit:
+								this.left = new PrimaryNode(lit.getValue());
+								step = 3;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.false_const:
+								this.left = new PrimaryNode(false);
+								step = 3;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.true_const:
+								this.left = new PrimaryNode(true);
+								step = 3;
+								tokenQueue.Dequeue();
+								break;
+
+							default:
+								break;
+						}
+						break;
+
+					case 3:
+						break;
+
+					default:
 						break;
 				}
 			}

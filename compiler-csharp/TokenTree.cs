@@ -124,5 +124,9 @@ namespace LexicalAnalyzer.TokenTree {
 
 		public override void PrintInfo() =>
 			Console.WriteLine($"Number token at {this.pos.row},{this.pos.col}. Number is {this.value}.");
+		
+		public int getValue() {
+			return this.value;
+		}
 	}
 }
