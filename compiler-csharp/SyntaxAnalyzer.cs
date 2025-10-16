@@ -29,31 +29,31 @@ namespace SyntaxAnalyzer {
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.type_declaration:
-						Node type_decl = new VarNode();
+						Node type_decl = new TypeNode();
 						type_decl.Parse(ref tokenQueue);
 						this.childs.Add(type_decl);
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.routine_declaration:
-						Node rout_decl = new VarNode();
+						Node rout_decl = new RoutineNode();
 						rout_decl.Parse(ref tokenQueue);
 						this.childs.Add(rout_decl);
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.if_statement:
-						Node if_stnt = new VarNode();
+						Node if_stnt = new IfNode();
 						if_stnt.Parse(ref tokenQueue);
 						this.childs.Add(if_stnt);
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.for_statement:
-						Node for_stnt = new VarNode();
+						Node for_stnt = new ForNode();
 						for_stnt.Parse(ref tokenQueue);
 						this.childs.Add(for_stnt);
 						break;
 						
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.while_statement:
-						Node while_stnt = new VarNode();
+						Node while_stnt = new WhileNode();
 						while_stnt.Parse(ref tokenQueue);
 						this.childs.Add(while_stnt);
 						break;
@@ -68,7 +68,7 @@ namespace SyntaxAnalyzer {
 								break;
 								
 							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.bare_assignment:
-								asgnmt = new AssignmentNode(new PrimaryNode(id.getIdentifier());
+								asgnmt = new AssignmentNode(new PrimaryNode(id.getIdentifier()));
 								asgnmt.Parse(ref tokenQueue);
 								this.childs.Add(asgnmt);
 								break;
@@ -84,6 +84,13 @@ namespace SyntaxAnalyzer {
 			}
 		}
     }
+
+	public class RoutineNode : Node {
+		public RoutineNode() : base() { }
+
+		public override void Parse(ref Queue<Token> tokenQueue) {
+		}
+	}
 
     public class IfNode : Node {
         public List<BranchNode> branches;
