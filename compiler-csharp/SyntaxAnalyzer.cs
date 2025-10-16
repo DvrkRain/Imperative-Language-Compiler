@@ -57,6 +57,26 @@ namespace SyntaxAnalyzer {
 						while_stnt.Parse(ref tokenQueue);
 						this.childs.Add(while_stnt);
 						break;
+
+					case Identifier id:
+						switch(tokenQueue.Peek()) {
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.dot:
+								Node field_acc = new ExpressionNode(new PrimaryNode(id.getIdentifier()), DedicatedWord.dot);
+								field_acc.Parse(ref tokenQueue);
+								Node asgnmt = new AssignmentNode(field_acc);
+								asgnmt.Parse(ref tokenQueue);
+								break;
+								
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.bare_assignment:
+								asgnmt = new AssignmentNode(new PrimaryNode(id.getIdentifier());
+								asgnmt.Parse(ref tokenQueue);
+								this.childs.Add(asgnmt);
+								break;
+
+							default:
+								break;
+						}
+						break;
 						
 					default:
 						break;
@@ -414,7 +434,9 @@ public class RecordNode : IdentifierNode {
 
     public class AssignmentNode : IdentifierNode {
     
-    public AssignmentNode() : base() {}
+    public AssignmentNode(Node identifier) : base() {
+		this.childs.Add(identifier);
+	}
 
     public override void Parse(ref Queue<Token> tokenQueue) {
         int step = 0;
@@ -424,11 +446,10 @@ public class RecordNode : IdentifierNode {
             Token token = tokenQueue.Peek();
             
             switch(step) {
-                case 0: // Expecting identifier (variable name)
+                case 0: // Expecting assignment operator ":="
                     switch(token) {
-                        case Identifier identifier:
-                            this.identifier = identifier.getIdentifier();
-                            tokenQueue.Dequeue(); // Consume identifier
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.bare_assignment:
+                            tokenQueue.Dequeue(); // Consume ":="
                             step = 1;
                             break;
                         case Mock:
@@ -442,31 +463,14 @@ public class RecordNode : IdentifierNode {
                     }
                     break;
                     
-                case 1: // Expecting assignment operator ":="
-                    switch(token) {
-                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.bare_assignment:
-                            tokenQueue.Dequeue(); // Consume ":="
-                            step = 2;
-                            break;
-                        case Mock:
-                            tokenQueue.Dequeue();
-                            break;
-                        default:
-                            // Unexpected token
-							// TODO: Add exception throw
-                            parsing = false;
-                            break;
-                    }
-                    break;
-                    
-                case 2: // Parse the expression
+                case 1: // Parse the expression
                     ExpressionNode expression = new ExpressionNode();
                     expression.Parse(ref tokenQueue);
                     this.childs.Add(expression);
-                    step = 3;
+                    step = 2;
                     break;
                     
-                case 3: // Expecting semicolon
+                case 2: // Expecting semicolon
                     switch(token) {
                         case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
                             tokenQueue.Dequeue(); // Consume ";"
