@@ -511,7 +511,7 @@ public class RecordNode : IdentifierNode {
             switch(step) {
                 case 0: // Expecting opening bracket "["
                     switch(token) {
-                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.right_bracket:
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.left_bracket:
                             tokenQueue.Dequeue(); // Consume "["
                             step = 1;
                             break;
@@ -536,7 +536,7 @@ public class RecordNode : IdentifierNode {
                     
                 case 2: // Expecting closing bracket "]"
                     switch(token) {
-                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.left_bracket:
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.right_bracket:
                             tokenQueue.Dequeue(); // Consume "]"
                             step = 3;
                             break;
