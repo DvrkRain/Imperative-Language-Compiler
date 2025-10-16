@@ -19,7 +19,8 @@ namespace SyntaxAnalyzer {
         public ProgramNode() : base() { }
 
         public override void Parse(ref Queue<Token> tokenQueue) {
-			while(tokenQueue.Count > 0) {
+			bool parsing = true;
+			while(parsing && tokenQueue.Count > 0) {
 				Token token = tokenQueue.Dequeue();
 				switch(token) {
 					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.variable_declaration:
@@ -78,7 +79,13 @@ namespace SyntaxAnalyzer {
 						}
 						break;
 						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+						parsing = false;
+						break;
+
 					default:
+						// Unexpected token
+						parsing = false;
 						break;
 				}
 			}
@@ -630,7 +637,7 @@ public class RecordNode : IdentifierNode {
 
 		public override void Parse(ref Queue<Token> tokenQueue) {
 			int step = 0;
-			while(step < 8) {
+			while(step < 6) {
 				Token token = tokenQueue.Dequeue();
 				switch(step) {
 					case 0:
@@ -663,11 +670,104 @@ public class RecordNode : IdentifierNode {
 						break;
 
 					case 3:
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.type_assignment) {
+							token = tokenQueue.Dequeue();
+							string str = "";
+							switch(token) {
+								case Identifier id:
+									str =id.getIdentifier();
+									break;
 
+								case Dedicated dedicated when dedicated.getCode() == DedicatedWord.integer_type:
+									str = "integer";
+									break;
+
+								case Dedicated dedicated when dedicated.getCode() == DedicatedWord.boolean_type:
+									str = "boolean";
+									break;
+
+								case Dedicated dedicated when dedicated.getCode() == DedicatedWord.real_type:
+									str = "real";
+									break;
+
+								default: break;
+							}
+							if(str == "") {
+								// Unexpected token
+								break;
+							} else {
+								this.childs.Add(new PrimaryNode(str));
+							}
+						}
+						step = 4;
+						break;
+
+					case 4:
+						step = 5;
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.one_line_body) {
+							Node expr = new ExpressionNode();
+							expr.Parse(ref tokenQueue);
+							this.childs.Add(expr);
+							step = 6;
+						}
+						break;
+
+					case 5:
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.is_assignment) {
+							Node body = new ProgramNode();
+							body.Parse(ref tokenQueue);
+							this.childs.Add(body);
+						} else if (token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.end_of_line) {
+						} else {
+							// Unexpected token
+						}
+						step = 6;
 						break;
 
 					default: break;
 				}
+			}
+		}
+	}
+
+	public class ParameterNode : IdentifierNode {
+		public ParameterNode() : base() { }
+
+		public override void Parse(ref Queue<Token> tokenQueue) {
+			Token token;
+			token = tokenQueue.Dequeue();
+			if(token is Identifier) {
+				this.childs.Add(new PrimaryNode(((Identifier)token).getIdentifier()));
+			} else {
+				// Unexpected token
+				return;
+			}
+
+			token = tokenQueue.Dequeue();
+			if(!(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.is_assignment)) {
+				// Unexpected token
+				return;
+			}
+
+			token = tokenQueue.Dequeue();
+			switch(token) {
+				case Identifier id:
+					this.childs.Add(new PrimaryNode(id.getIdentifier()));
+					break;
+
+				case Dedicated dedicated when dedicated.getCode() == DedicatedWord.integer_type:
+					this.childs.Add(new PrimaryNode("indeger"));
+					break;
+
+				case Dedicated dedicated when dedicated.getCode() == DedicatedWord.real_type:
+					this.childs.Add(new PrimaryNode("real"));
+					break;
+
+				case Dedicated dedicated when dedicated.getCode() == DedicatedWord.boolean_type:
+					this.childs.Add(new PrimaryNode("boolean"));
+					break;
+
+				default: break;
 			}
 		}
 	}
