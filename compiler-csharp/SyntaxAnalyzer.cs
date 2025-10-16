@@ -85,13 +85,6 @@ namespace SyntaxAnalyzer {
 		}
     }
 
-	public class RoutineNode : Node {
-		public RoutineNode() : base() { }
-
-		public override void Parse(ref Queue<Token> tokenQueue) {
-		}
-	}
-
     public class IfNode : Node {
         public List<BranchNode> branches;
 
@@ -251,6 +244,21 @@ namespace SyntaxAnalyzer {
 						switch(token) {
 							case(Identifier):
 								this.type = ((Identifier) token).getIdentifier();
+								step = 3;
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.integer_type:
+								this.type = "integer";
+								step = 3;
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.real_type:
+								this.type = "real";
+								step = 3;
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.real_type:
+								this.type = "real";
 								step = 3;
 								break;
 
@@ -616,6 +624,53 @@ public class RecordNode : IdentifierNode {
             }
         }
     }
+
+	public class RoutineNode : IdentifierNode {
+		public RoutineNode() : base() { }
+
+		public override void Parse(ref Queue<Token> tokenQueue) {
+			int step = 0;
+			while(step < 8) {
+				Token token = tokenQueue.Dequeue();
+				switch(step) {
+					case 0:
+						if(token is Identifier) {
+							step = 1;
+							this.identifier = ((Identifier)token).getIdentifier();
+						} else {
+							// Unexpected token
+						}
+						break;
+
+					case 1:
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.left_parenthesis) {
+							step = 2;
+						} else {
+							// Unexpected token
+						}
+						break;
+
+					case 2:
+						ParameterNode param = new ParameterNode();
+						param.Parse(ref tokenQueue);
+						this.childs.Add(param);
+						token = tokenQueue.Dequeue();
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.comma_separator) {
+							step = 3;
+						} else if(!(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.comma_separator)) {
+							// Unexpected token
+						}
+						break;
+
+					case 3:
+
+						break;
+
+					default: break;
+				}
+			}
+		}
+	}
 
     public abstract class SubprogramNode : Node {
         protected ProgramNode nested;
