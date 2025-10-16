@@ -7,6 +7,10 @@ namespace SyntaxAnalyzer {
         public Node() => this.childs = new List<Node>();
 
         public abstract void Parse(ref Queue<Token> tokenQueue);
+
+        public List<Node> GetChilds() {
+            return this.childs;
+        }
     }
 
     public class ProgramNode : Node {
