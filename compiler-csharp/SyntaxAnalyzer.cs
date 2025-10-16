@@ -1112,7 +1112,7 @@ public class RecordNode : IdentifierNode {
 				step = 2;
 			}
 			bool parenthesised = false;
-			while(step < 0) {
+			while(step < 3) {
 				Token token = tokenQueue.Peek();
 				switch(step) {
 					case 0:
@@ -1180,6 +1180,7 @@ public class RecordNode : IdentifierNode {
 								break;
 
 							default:
+                                step = 4;
 								break;
 						}
 						break;
