@@ -21,13 +21,6 @@ namespace Compiler
 				indent += "│   ";
 			}
 			Console.WriteLine(node.GetType().Name);
-            // switch (node) {
-            //     case ProgramNode programNode:
-			// 		Console.WriteLine($"(main={programNode.main})");
-			// 		break;
-			// 	case VarNode varNode:
-					
-            // }
 
 			var children = node.GetChilds();
 			for (int i = 0; i < children.Count; i++)
@@ -38,9 +31,9 @@ namespace Compiler
 
 		static void Main(string[] args)
 		{
-			if (args.Length < 1)
+			if (args.Length < 2)
 			{
-				Console.WriteLine("Usage: compiler-csharp <source-file-path>");
+				Console.WriteLine("Usage: compiler-csharp <source-file-path> <tree-option>");
 				return;
 			}
 
@@ -53,35 +46,45 @@ namespace Compiler
 			Lexer lexer = new Lexer(reader, stream);
 			lexer.ParseFile();
 
+			int treeOption = int.Parse(args[1]);
+			if (treeOption == 0){
+				while (stream.Count > 0) {
+					Token token = stream.Dequeue();
+					token.PrintInfo();
+				}
+
+				return;
+			}
+
 			ProgramNode ProgramTree = new ProgramNode();
 			ProgramTree.Parse(ref stream);
 
 			PrintProgramTree(ProgramTree);
 			Console.WriteLine();
 
-			//// Interactive
+			// Interactive
 
-			// List<Node> NodeStack = [ProgramTree];
+			List<Node> NodeStack = [ProgramTree];
 
-			// while (NodeStack.Count > 0) {
-            //     Console.Write("Current NodeStack: [" + string.Join(", ", NodeStack.Select(node => node.GetType().Name)) + "]\n");
-			// 	List<Node> childs = NodeStack[NodeStack.Count - 1].GetChilds();
+			while (NodeStack.Count > 0) {
+                Console.Write("Current NodeStack: [" + string.Join(", ", NodeStack.Select(node => node.GetType().Name)) + "]\n");
+				List<Node> childs = NodeStack[NodeStack.Count - 1].GetChilds();
 				
-			// 	Console.WriteLine("Choose where to go next:");
-			// 	Console.WriteLine("0. Go Back");
-			// 	for (int i = 0; i < childs.Count; i++) {
-            //         Console.WriteLine($"{1 + i}. {childs[i].GetType().Name}");
-            //     }
+				Console.WriteLine("Choose where to go next:");
+				Console.WriteLine("0. Go Back");
+				for (int i = 0; i < childs.Count; i++) {
+                    Console.WriteLine($"{1 + i}. {childs[i].GetType().Name}");
+                }
 
-			// 	int option = 0;
+				int option = 0;
 
-			// 	while (!int.TryParse(Console.ReadLine(), out option) && 0 <= option && option <= childs.Count + 1) {
-            //         Console.WriteLine("Not a number or wrong option!");
-            //     }
+				while (!int.TryParse(Console.ReadLine(), out option) && 0 <= option && option <= childs.Count + 1) {
+                    Console.WriteLine("Not a number or wrong option!");
+                }
 
-			// 	if (option == 0) NodeStack.RemoveAt(NodeStack.Count - 1);
-			// 	else NodeStack.Add(childs[option - 1]);
-            // }
+				if (option == 0) NodeStack.RemoveAt(NodeStack.Count - 1);
+				else NodeStack.Add(childs[option - 1]);
+            }
 		}
 	}
 }

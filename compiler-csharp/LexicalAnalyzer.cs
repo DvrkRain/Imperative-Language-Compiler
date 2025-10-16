@@ -233,7 +233,7 @@ namespace LexicalAnalyzer
 			new Dictionary<string,DedicatedWord>() {
 				{"var",		DedicatedWord.variable_declaration},
 				{"is",		DedicatedWord.is_assignment},
-				{"type",	DedicatedWord.type_assignment},
+				{"type",	DedicatedWord.type_declaration},
 				{"integer", DedicatedWord.integer_type},
 				{"real",	DedicatedWord.real_type},
 				{"boolean", DedicatedWord.boolean_type},
