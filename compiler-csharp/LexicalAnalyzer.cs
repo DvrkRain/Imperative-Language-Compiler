@@ -62,19 +62,19 @@ namespace LexicalAnalyzer
 							break;
 
 						case '(':
-							separatorToken = new Dedicated(cursor, DedicatedWord.right_parenthesis);
-							break;
-
-						case ')':
 							separatorToken = new Dedicated(cursor, DedicatedWord.left_parenthesis);
 							break;
 
+						case ')':
+							separatorToken = new Dedicated(cursor, DedicatedWord.right_parenthesis);
+							break;
+
 						case '[':
-							separatorToken = new Dedicated(cursor, DedicatedWord.right_bracket);
+							separatorToken = new Dedicated(cursor, DedicatedWord.left_bracket);
 							break;
 
 						case ']':
-							separatorToken = new Dedicated(cursor, DedicatedWord.left_bracket);
+							separatorToken = new Dedicated(cursor, DedicatedWord.right_bracket);
 							break;
 
 						case '+':
@@ -251,7 +251,7 @@ namespace LexicalAnalyzer
 				{"in",		DedicatedWord.in_range_statement},
 				{"reverse",	DedicatedWord.reverse_order_statement},
 				{"print",	DedicatedWord.print_routine},
-				{"routnine",DedicatedWord.routine_declaration},
+				{"routine",DedicatedWord.routine_declaration},
 				{"and",		DedicatedWord.logical_and},
 				{"or",		DedicatedWord.logical_or},
 				{"xor",		DedicatedWord.logical_xor},
