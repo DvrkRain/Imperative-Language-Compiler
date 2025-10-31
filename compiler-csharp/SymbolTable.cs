@@ -12,6 +12,8 @@ public abstract class Entry
     }
 
     public abstract bool AddToScope();
+
+
 }
 
 public class Variable : Entry
@@ -36,8 +38,8 @@ public class Routine : Entry
 {
     public List<Variable> Parameters { get; } // Routine parameters contained in list to keep order
     public string? ReturnType { get; } // Each routine might have a return type
-    public Hashtable? BodyScope { get; set; } // Each routine migh have a body scope
-    public bool IsForward { get; set; } // 
+    public Hashtable? BodyScope { get; } // Each routine migh have a body scope
+    public bool IsForward { get; set; } // Determine whether body is presented
     
     public Routine(string name, List<Variable>? parameters = null, string? returnType = null) : base(name)
     {
@@ -54,10 +56,8 @@ public class Routine : Entry
 
 public class Type : Entry
 {
-    public string BaseType { get; set; } // Базовый тип (integer, real, boolean, array, record)
-    public Hashtable? RecordScope { get; set; } // Для record типов
-    public string? ArrayElementType { get; set; } // Для array типов
-    public int? ArraySize { get; set; } // Размер массива (null если не указан)
+    public string BaseType { get; set; } // Each type has a base type (integer, real, boolean, array, record), type == baseType -> baseType in builtInTypes
+    public Hashtable? RecordScope { get; } // Each type might have its scope
     
     public Type(string name, string baseType) : base(name)
     {
