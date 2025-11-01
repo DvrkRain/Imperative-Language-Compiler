@@ -1,11 +1,11 @@
 namespace SemanticAnalyzer.SymbolTable;
 
 public enum ScopeType {
-    global,
-    loop,
-    branch,
-    functionDeclaration,
-    functionBody
+    Global,
+    Loop,
+    Branch,
+    FunctionDeclaration,
+    FunctionBody
 }
 
 public abstract class Entry
