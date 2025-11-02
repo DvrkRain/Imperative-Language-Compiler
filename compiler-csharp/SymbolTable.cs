@@ -16,10 +16,6 @@ public abstract class Entry
     {
         Name = name;
     }
-
-    public abstract bool AddToScope();
-
-
 }
 
 public class Variable : Entry
@@ -31,10 +27,6 @@ public class Variable : Entry
     {
         Type = type;
         Value = value;
-    }
-
-    public override bool AddToScope() {
-        throw new NotImplementedException();
     }
 }
 
@@ -50,10 +42,6 @@ public class Routine : Entry
         ReturnType = returnType;
         BodyScope = null;
     }
-
-    public override bool AddToScope() {
-        throw new NotImplementedException();
-    }
 }
 
 public class Type : Entry
@@ -64,10 +52,6 @@ public class Type : Entry
     public Type(string name, string baseType) : base(name)
     {
         BaseType = baseType;
-    }
-
-    public override bool AddToScope() {
-        throw new NotImplementedException();
     }
 }
 
@@ -170,8 +154,15 @@ public class SymbolTable
 
     public bool IsInsideLoop() {
         // Alternative use:
-        // .GetCurrentScope().scopeType == ScopeType.loop
+        // .GetCurrentScope().scopeType == ScopeType.Loop
 
-        return _currentScope.scopeType == ScopeType.loop;
+        return _currentScope.scopeType == ScopeType.Loop;
+    }
+
+    public bool IsInsideFunction() {
+        // Alternative use:
+        // .GetCurrentScope().scopeType == ScopeType.FunctionBody
+
+        return _currentScope.scopeType == ScopeType.FunctionBody;
     }
 }
