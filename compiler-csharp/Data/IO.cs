@@ -1,5 +1,5 @@
 using System.Text;
-namespace LexicalAnalyzer.IO
+namespace Data.IO
 {
     public class FileReader
     {

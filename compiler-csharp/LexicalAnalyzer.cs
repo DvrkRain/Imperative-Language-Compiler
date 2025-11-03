@@ -1,5 +1,5 @@
-using LexicalAnalyzer.TokenTree;
-using LexicalAnalyzer.IO;
+using Data.Objects;
+using Data.IO;
 
 
 namespace LexicalAnalyzer
@@ -8,14 +8,13 @@ namespace LexicalAnalyzer
 		public Position pos;
 		public UnexpectedTokenException(Position pos) : base("Unexpected token") => this.pos = pos;
 		public void Info() =>
-			Console.WriteLine($"Unrecognizable token at {this.pos.row},{this.pos.col}.");
+			Console.WriteLine($"Unrecognizable token at {this.pos.Row()},{this.pos.Col()}.");
 	}
 
     // Enum is needed to easy check state switching
     public enum StateCode
     {
         Start,
-		Separator,
         Identifier,
         Integer,
         Less,
@@ -31,90 +30,41 @@ namespace LexicalAnalyzer
     {
         private State currentState;
         private StateCode currentStateCode;
-		public Queue<Token> TokenStream {get; set;}
-		public FileReader reader;
+		private FileReader reader;
 
-		private static List<char> separators =
-			new List<char>() {',', '(', ')', '[', ']', '+', '-', '*', '%', ';'};
-
-		public Lexer(FileReader reader, Queue<Token> stream) {
+		public Lexer(FileReader reader) {
             this.currentState = new StartState();
             this.currentStateCode = StateCode.Start;
-			this.TokenStream = stream;
 			this.reader = reader;
 		}
 
-        public void ParseFile()
+        public void ParseFile(ref Queue<Token> TokenStream)
         {
 			Position cursor = new Position(1,1);
 			while(!reader.Empty()) {
 				char nextChar = reader.GetNextChar();
 				StateCode nextStateCode = StateCode.Start;
 
-				if(separators.Contains(nextChar)) {
-					Token token = this.currentState.CreateToken();
-					if(token is not Mock)
-						TokenStream.Enqueue(token);
-					Token separatorToken = new Mock();
-					switch (nextChar) {
-						case ',':
-							separatorToken = new Dedicated(cursor, DedicatedWord.comma_separator);
-							break;
-
-						case '(':
-							separatorToken = new Dedicated(cursor, DedicatedWord.left_parenthesis);
-							break;
-
-						case ')':
-							separatorToken = new Dedicated(cursor, DedicatedWord.right_parenthesis);
-							break;
-
-						case '[':
-							separatorToken = new Dedicated(cursor, DedicatedWord.left_bracket);
-							break;
-
-						case ']':
-							separatorToken = new Dedicated(cursor, DedicatedWord.right_bracket);
-							break;
-
-						case '+':
-							separatorToken = new Dedicated(cursor, DedicatedWord.summation);
-							break;
-
-						case '-':
-							separatorToken = new Dedicated(cursor, DedicatedWord.difference);
-							break;
-
-						case '*':
-							separatorToken = new Dedicated(cursor, DedicatedWord.multiplication);
-							break;
-
-						case '%':
-							separatorToken = new Dedicated(cursor, DedicatedWord.int_division);
-							break;
-
-						case ';':
-							separatorToken = new Dedicated(cursor, DedicatedWord.end_of_line);
-							break;
-					}
+				if(SeparatorList.Contains(nextChar)) {
+					this.currentState.AddToken(ref TokenStream);
+					Token separatorToken = new Token(cursor, SeparatorList.Code(nextChar));
 					TokenStream.Enqueue(separatorToken);
 
 				} else if (nextChar == '\n') {
 					nextStateCode = StateCode.Start;
-					cursor.row += 1;
-					cursor.col = 0;
+					cursor.NextLine();
 
-				} else if (char.IsWhiteSpace(nextChar))
+				} else if (char.IsWhiteSpace(nextChar)) {
 					nextStateCode = StateCode.Start;
 
-				else if (nextChar == ':') {
+				} else if (nextChar == ':') {
 					if (this.currentStateCode == StateCode.ColonOrAssignment)
-						TokenStream.Enqueue(this.currentState.CreateToken());
+						this.currentState.AddToken(ref TokenStream);
 					nextStateCode = StateCode.ColonOrAssignment;
 
 				} else if (nextChar == '/') {
 					if (this.currentStateCode == StateCode.DivOrNotEqual)
-						TokenStream.Enqueue(this.currentState.CreateToken());
+						this.currentState.AddToken(ref TokenStream);
 					nextStateCode = StateCode.DivOrNotEqual;
 
 				} else if (nextChar == '.' && this.currentStateCode != StateCode.DotOrRange) {
@@ -125,22 +75,14 @@ namespace LexicalAnalyzer
 
 				try {
 					if (nextStateCode != this.currentStateCode) {
-						if(!separators.Contains(nextChar)) {
-							Token token = this.currentState.CreateToken();
-							if(token is not Mock)
-								TokenStream.Enqueue(token);
-						}
+						if(!SeparatorList.Contains(nextChar))
+							this.currentState.AddToken(ref TokenStream);
 
 						this.currentStateCode = nextStateCode;
 
 						switch(nextStateCode) {
 							case StateCode.Start:
 								this.currentState = new StartState();
-								break;
-
-							case StateCode.Separator:
-								this.currentState = new StartState();
-								this.currentStateCode = StateCode.Start;
 								break;
 
 							case StateCode.Identifier:
@@ -187,7 +129,7 @@ namespace LexicalAnalyzer
 					Console.WriteLine("Unexpected Exception. Terminating...");
 					System.Environment.Exit(1);
 				}
-				cursor.col += 1;
+				cursor.NextChar();
 			}
         }
     }
@@ -198,7 +140,7 @@ namespace LexicalAnalyzer
 			this.pos = pos;
 
         public abstract StateCode ProccessSymbol(char symbol);
-		public abstract Token CreateToken();
+		public abstract void AddToken(ref Queue<Token> tokenQueue);
     }
 
     public class StartState : State {
@@ -216,9 +158,7 @@ namespace LexicalAnalyzer
             return StateCode.Error;
         }
 
-		public override Token CreateToken() {
-			return new Mock();
-		}
+		public override void AddToken(ref Queue<Token> tokenQueue) {}
     }
 
 	public abstract class StoringState : State {
@@ -228,35 +168,6 @@ namespace LexicalAnalyzer
 	
 	public class IdentifierState : StoringState {
 		public IdentifierState(Position pos, char symbol) : base(pos) => this.data += symbol;
-
-		protected Dictionary<string,DedicatedWord> dedicatedWords =
-			new Dictionary<string,DedicatedWord>() {
-				{"var",		DedicatedWord.variable_declaration},
-				{"is",		DedicatedWord.is_assignment},
-				{"type",	DedicatedWord.type_declaration},
-				{"integer", DedicatedWord.integer_type},
-				{"real",	DedicatedWord.real_type},
-				{"boolean", DedicatedWord.boolean_type},
-				{"true",	DedicatedWord.true_const},
-				{"false",	DedicatedWord.false_const},
-				{"record",	DedicatedWord.record_type},
-				{"array",	DedicatedWord.array_type},
-				{"end",		DedicatedWord.end_of_body},
-				{"if",		DedicatedWord.if_statement},
-				{"then",	DedicatedWord.then_branch},
-				{"else",	DedicatedWord.else_branch},
-				{"loop",	DedicatedWord.loop_start},
-				{"while",	DedicatedWord.while_statement},
-				{"for",		DedicatedWord.for_statement},
-				{"in",		DedicatedWord.in_range_statement},
-				{"reverse",	DedicatedWord.reverse_order_statement},
-				{"print",	DedicatedWord.print_routine},
-				{"routine",DedicatedWord.routine_declaration},
-				{"and",		DedicatedWord.logical_and},
-				{"or",		DedicatedWord.logical_or},
-				{"xor",		DedicatedWord.logical_xor},
-				{"not",		DedicatedWord.logical_not},
-			};
 
         public override StateCode ProccessSymbol(char symbol) {
 			if(char.IsLetter(symbol) || char.IsDigit(symbol) || symbol == '_') {
@@ -271,10 +182,14 @@ namespace LexicalAnalyzer
 			return StateCode.Error;
 		}
 
-		public override Token CreateToken() {
-			if (dedicatedWords.Keys.Contains(data))
-				return new Dedicated(this.pos, dedicatedWords[data]);
-			return new Identifier(this.pos, data);
+		public override void AddToken(ref Queue<Token> tokenQueue) {
+			Token token;
+			if(DedicatedWords.Contains(this.data))
+				token = new Token(this.pos, DedicatedWords.Code(this.data), this.data);
+			else
+				token = new Token(this.pos, TokenCode.identifier, this.data);
+
+			tokenQueue.Enqueue(token);
 		}
 	}
 
@@ -296,8 +211,8 @@ namespace LexicalAnalyzer
 			return StateCode.Error;
 		}
 
-		public override Token CreateToken() {
-			return new Integer(this.pos, int.Parse(data));
+		public override void AddToken(ref Queue<Token> tokenQueue) {
+			tokenQueue.Enqueue(new Token(this.pos, TokenCode.constant_value, int.Parse(data)));
 		}
 	}
 
@@ -318,16 +233,19 @@ namespace LexicalAnalyzer
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
 
-			if (symbol == '<') return StateCode.Less;
+			if (symbol == '<') return StateCode.Error;
 			if (symbol == '>') return StateCode.Greater;
 
 			return StateCode.Error;
 		}
 
-		public override Token CreateToken() {
+		public override void AddToken(ref Queue<Token> tokenQueue) {
+			Token token = new Token(this.pos, TokenCode.logic_op);
 			if (single)
-				return new Dedicated(this.pos, DedicatedWord.less);
-			return new Dedicated(this.pos, DedicatedWord.less_equal);
+				token.value = "<";
+			else
+				token.value = "<=";
+			tokenQueue.Enqueue(token);
 		}
 	}
 
@@ -349,10 +267,13 @@ namespace LexicalAnalyzer
 			return StateCode.Error;
 		}
 
-		public override Token CreateToken() {
+		public override void AddToken(ref Queue<Token> tokenQueue) {
+			Token token = new Token(this.pos, TokenCode.logic_op);
 			if (single)
-				return new Dedicated(this.pos, DedicatedWord.greater);
-			return new Dedicated(this.pos, DedicatedWord.greater_equal);
+				token.value = ">";
+			else
+				token.value = ">=";
+			tokenQueue.Enqueue(token);
 		}
 	}
 
@@ -374,10 +295,13 @@ namespace LexicalAnalyzer
 			return StateCode.Error;
 		}
 
-		public override Token CreateToken() {
+		public override void AddToken(ref Queue<Token> tokenQueue) {
+			Token token;
 			if (single)
-				return new Dedicated(this.pos, DedicatedWord.equal);
-			return new Dedicated(this.pos, DedicatedWord.one_line_body);
+				token = new Token(this.pos, TokenCode.logic_op, "==");
+			else
+				token = new Token(this.pos, TokenCode.one_line_body);
+			tokenQueue.Enqueue(token);
 		}
 	}
 
@@ -399,10 +323,13 @@ namespace LexicalAnalyzer
 			return StateCode.Error;
 		}
 
-		public override Token CreateToken() {
+		public override void AddToken(ref Queue<Token> tokenQueue) {
+			Token token;
 			if (single)
-				return new Dedicated(this.pos, DedicatedWord.division);
-			return new Dedicated(this.pos, DedicatedWord.not_equal);
+				token = new Token(this.pos, TokenCode.factor_op, "/");
+			else
+				token = new Token(this.pos, TokenCode.logic_op, "/=");
+			tokenQueue.Enqueue(token);
 		}
 	}
 
@@ -424,10 +351,13 @@ namespace LexicalAnalyzer
 			return StateCode.Error;
 		}
 
-		public override Token CreateToken() {
+		public override void AddToken(ref Queue<Token> tokenQueue) {
+			Token token;
 			if (single)
-				return new Dedicated(this.pos, DedicatedWord.type_assignment);
-			return new Dedicated(this.pos, DedicatedWord.bare_assignment);
+				token = new Token(this.pos, TokenCode.type_assignment);
+			else
+				token = new Token(this.pos, TokenCode.bare_assignment);
+			tokenQueue.Enqueue(token);
 		}
 	}
 
@@ -450,10 +380,13 @@ namespace LexicalAnalyzer
 			return StateCode.Error;
 		}
 
-		public override Token CreateToken() {
+		public override void AddToken(ref Queue<Token> tokenQueue) {
+			Token token;
 			if (single)
-				return new Dedicated(this.pos, DedicatedWord.dot);
-			return new Dedicated(this.pos, DedicatedWord.range);
+				token = new Token(this.pos, TokenCode.dot);
+			else
+				token = new Token(this.pos, TokenCode.range_sign);
+			tokenQueue.Enqueue(token);
 		}
 	}
 }
