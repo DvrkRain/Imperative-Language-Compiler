@@ -1,5 +1,5 @@
-﻿using LexicalAnalyzer.IO;
-using LexicalAnalyzer.TokenTree;
+﻿using Data.Objects;
+using Data.IO;
 using LexicalAnalyzer;
 using SyntaxAnalyzer;
 
@@ -43,8 +43,8 @@ namespace Compiler
 
 			Queue<Token> stream = new Queue<Token>();
 
-			Lexer lexer = new Lexer(reader, stream);
-			lexer.ParseFile();
+			Lexer lexer = new Lexer(reader);
+			lexer.ParseFile(ref stream);
 
 			int treeOption = int.Parse(args[1]);
 			if (treeOption == 0){
