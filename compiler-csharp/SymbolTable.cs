@@ -1,5 +1,3 @@
-using System.Reflection.Metadata;
-
 namespace SemanticAnalyzer.SymbolTable;
 
 public enum ScopeType {
