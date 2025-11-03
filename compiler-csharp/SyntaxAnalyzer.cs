@@ -1,0 +1,1324 @@
+using LexicalAnalyzer.TokenTree;
+
+namespace SyntaxAnalyzer {
+    public abstract class Node {
+        protected List<Node> childs;
+
+        public Node() => this.childs = new List<Node>();
+        
+        public abstract void PrintInfo();
+
+        public abstract void Parse(ref Queue<Token> tokenQueue);
+
+
+        public List<Node> GetChilds() {
+            return this.childs;
+        }
+    }
+
+    public class ProgramNode : Node {
+        public bool main;
+
+        public ProgramNode() : base() { }
+
+        public override void PrintInfo() {
+            Console.WriteLine($"ProgramNode(childs={this.childs.Count})");
+        }
+
+        public override void Parse(ref Queue<Token> tokenQueue) {
+			bool parsing = true;
+			while(parsing && tokenQueue.Count > 0) {
+				Token token = tokenQueue.Dequeue();
+				switch(token) {
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.variable_declaration:
+						VarNode var_decl = new VarNode();
+						var_decl.Parse(ref tokenQueue);
+						this.childs.Add(var_decl);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.type_declaration:
+						TypeNode type_decl = new TypeNode();
+						type_decl.Parse(ref tokenQueue);
+						this.childs.Add(type_decl);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.routine_declaration:
+						RoutineNode rout_decl = new RoutineNode();
+						rout_decl.Parse(ref tokenQueue);
+						this.childs.Add(rout_decl);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.if_statement:
+						IfNode if_stnt = new IfNode();
+						if_stnt.Parse(ref tokenQueue);
+						this.childs.Add(if_stnt);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.for_statement:
+						ForNode for_stnt = new ForNode();
+						for_stnt.Parse(ref tokenQueue);
+						this.childs.Add(for_stnt);
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.while_statement:
+						WhileNode while_stnt = new WhileNode();
+						while_stnt.Parse(ref tokenQueue);
+						this.childs.Add(while_stnt);
+						break;
+
+					case Identifier id:
+						switch(tokenQueue.Peek()) {
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.dot:
+								Node field_acc = new ExpressionNode(new PrimaryNode(id.getIdentifier()), DedicatedWord.dot);
+								field_acc.Parse(ref tokenQueue);
+								Node asgnmt = new AssignmentNode(field_acc);
+								asgnmt.Parse(ref tokenQueue);
+								break;
+								
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.bare_assignment:
+								asgnmt = new AssignmentNode(new PrimaryNode(id.getIdentifier()));
+								asgnmt.Parse(ref tokenQueue);
+								this.childs.Add(asgnmt);
+								break;
+
+							default:
+								break;
+						}
+						break;
+						
+					case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+						parsing = false;
+						break;
+
+					default:
+						// Unexpected token
+						parsing = false;
+						break;
+				}
+			}
+		}
+    }
+
+    public class IfNode : Node {
+        public List<BranchNode> branches;
+
+        public IfNode() : base() => this.branches = new List<BranchNode>();
+
+        public override void PrintInfo() {
+            Console.WriteLine($"IfNode(childs={this.childs.Count})");
+        }
+
+        public override void Parse(ref Queue<Token> tokenQueue) {
+            int step = 0;
+            bool parsing = true;
+            
+            while(parsing && tokenQueue.Count > 0) {
+                Token token = tokenQueue.Peek();
+                
+                // Assume that "if" keyword is already consumed
+                switch(step) {
+                    case 0: // Parse condition expression
+                        ExpressionNode condition = new ExpressionNode();
+                        condition.Parse(ref tokenQueue);
+                        this.childs.Add(condition);
+
+                        step = 1;
+                        break;
+                        
+                    case 1: // Expecting "then" keyword
+                        switch(token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.then_branch:
+                                tokenQueue.Dequeue(); // Consume "then"
+                                step = 2;
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 2 or 4: // Parse branch statements until "else" or "end"
+                        BranchNode newBranch = new BranchNode();
+                        newBranch.Parse(ref tokenQueue);
+                        this.childs.Add(newBranch);
+
+                        step += 1;
+                        break;
+                        
+                    case 3: // Check for "else" or "end"
+                        switch(token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.else_branch:
+                                tokenQueue.Dequeue(); // Consume "else"
+                                step = 4;
+                                break;
+                                
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                                tokenQueue.Dequeue(); // Consume "end"
+                                step = 5; // Proceed to final validation
+                                break;
+                                
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                                
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 5: // Expecting semicolon
+                        switch(token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                                tokenQueue.Dequeue(); // Consume ";"
+                                parsing = false; // Successfully completed
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    public abstract class IdentifierNode : Node {
+        protected string identifier;
+
+        public IdentifierNode() : base() => this.identifier = "";
+    }
+
+    public class VarNode : IdentifierNode {
+		protected string type;
+		protected bool explicit_type;
+
+        public VarNode() : base() => this.type = "void";
+
+        public override void PrintInfo() {
+            Console.WriteLine($"VarNode(identifier='{this.identifier}', type='{this.type}', explicit_type={this.explicit_type}, childs={this.childs.Count})");
+        }
+
+        public override void Parse(ref Queue<Token> tokenQueue) {
+			int step = 0;
+			while(step<6) {
+				Token token = tokenQueue.Dequeue();
+				switch(step) {
+					case(0):
+						switch(token) {
+							case(Identifier):
+								this.identifier = ((Identifier) token).getIdentifier();
+								step = 1;
+								break;
+
+							case(Mock):
+								break;
+
+							case(_):
+								// Unexpected token
+								break;
+						}
+						break;
+
+					case(1):
+						switch(token) {
+							case(Dedicated):
+								DedicatedWord code = ((Dedicated) token).getCode();
+								switch(code) {
+									case(DedicatedWord.type_assignment):
+										this.explicit_type = true;
+										step = 2;
+										break;
+
+									case(DedicatedWord.is_assignment):
+										Node expr = new ExpressionNode();
+										expr.Parse(ref tokenQueue);
+										this.childs.Add(expr);
+										step = 5;
+										break;
+
+									case(_):
+										// Unexpected dedicated word
+										break;
+								}
+								break;
+
+							case(Mock):
+								break;
+
+							case(_):
+								// Unexpected token
+								break;
+						}
+						break;
+
+					case(2):
+						switch(token) {
+							case(Identifier):
+								this.type = ((Identifier) token).getIdentifier();
+								step = 3;
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.integer_type:
+								this.type = "integer";
+								step = 3;
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.real_type:
+								this.type = "real";
+								step = 3;
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.real_type:
+								this.type = "real";
+								step = 3;
+								break;
+
+							case(Mock):
+								break;
+
+							case(_):
+								// Unexpecred token
+								break;
+						}
+						break;
+
+					case(3):
+						switch(token) {
+							case(Dedicated):
+								DedicatedWord code = ((Dedicated) token).getCode();
+								switch(code) {
+									case(DedicatedWord.is_assignment):
+										Node expr = new ExpressionNode();
+										expr.Parse(ref tokenQueue);
+										this.childs.Add(expr);
+										step = 5;
+										break;
+
+									case(DedicatedWord.end_of_line):
+										step = 6;
+										break;
+								}
+								break;
+
+							case(Mock):
+								break;
+
+							case(_):
+								// Unexpected token
+								break;
+						}
+						break;
+
+					case(5):
+						switch(token) {
+							case(Dedicated):
+								DedicatedWord code = ((Dedicated) token).getCode();
+								if(code is DedicatedWord.end_of_line) {
+									step = 6;
+									break;
+								} else {
+									// Unexpected token
+								}
+								break;
+
+							case(Mock):
+								break;
+
+							case(_):
+								// Unexpected token
+								break;
+						}
+						break;
+
+					case(_):
+						break;
+				}
+			}
+		} 
+    }
+
+    public class TypeNode : IdentifierNode {
+        
+        public TypeNode() : base() { }
+
+        public override void PrintInfo() {
+            Console.WriteLine($"TypeNode(identifier='{this.identifier}', childs={this.childs.Count})");
+        }
+
+        public override void Parse(ref Queue<Token> tokenQueue) {
+            int step = 0;
+            bool parsing = true;
+
+            while (parsing && tokenQueue.Count > 0) {
+                Token token = tokenQueue.Peek();
+
+                // Assume "type" keyword is already consumed
+                switch (step) {
+                    case 0: // Expecting type identifier (name)
+                        switch (token) {
+                            case Identifier identifier:
+                                this.identifier = identifier.getIdentifier();
+                                tokenQueue.Dequeue(); // Consume type name
+                                step = 1;
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 1: // Expecting "is" for type assignment
+                        switch (token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.is_assignment:
+                                tokenQueue.Dequeue(); // Consume "is"
+                                step = 2;
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 2: // Check for <type>: built-in or user-defined
+                        switch (token) {
+                            case Dedicated dedicated: // Built-in type (integer, real, boolean, record, array)
+                                DedicatedWord code = dedicated.getCode();
+                                if (code == DedicatedWord.integer_type ||
+                                    code == DedicatedWord.real_type ||
+                                    code == DedicatedWord.boolean_type) {
+                                    
+                                    PrimaryNode BuiltTypeName = new PrimaryNode(code.ToString());
+                                    this.childs.Add(BuiltTypeName);
+                                    tokenQueue.Dequeue();
+                                }
+
+                                else if (code == DedicatedWord.record_type) {
+                                    tokenQueue.Dequeue(); // Consume "record"
+                                    RecordNode recordNode = new RecordNode();
+                                    recordNode.Parse(ref tokenQueue);
+                                    this.childs.Add(recordNode);
+                                }
+
+                                else if (code == DedicatedWord.array_type) {
+                                    tokenQueue.Dequeue(); // Consume "array"
+                                    ArrayNode arrayNode = new ArrayNode();
+                                    arrayNode.Parse(ref tokenQueue);
+                                    this.childs.Add(arrayNode);
+                                }
+
+                                else {
+                                    // Unexpected token
+                                    // TODO: Add exception throw
+                                    parsing = false;
+                                }
+
+                                step = 3; // Expect semicolon
+                                break;
+                                
+                            case Identifier identifier:
+                                // User-defined type reference
+                                PrimaryNode TypeName = new PrimaryNode(identifier.getIdentifier());
+                                this.childs.Add(TypeName);
+                                tokenQueue.Dequeue(); // Consume type identifier
+                                step = 3; // Expect semicolon
+                                break;
+                                
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                                
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                        
+                    case 3: // Expecting semicolon
+                        switch (token) {
+                            case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                                tokenQueue.Dequeue(); // Consume ";"
+                                parsing = false; // Successfully completed
+                                break;
+                            case Mock:
+                                tokenQueue.Dequeue();
+                                break;
+                            default:
+                                // Unexpected token
+                                // TODO: Add exception throw
+                                parsing = false;
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
+    }
+
+    public class RecordNode : IdentifierNode {
+        public RecordNode() : base() { }
+
+        public override void PrintInfo() {
+            Console.WriteLine($"RecordNode(identifier='{this.identifier}', childs={this.childs.Count})");
+        }
+
+        public override void Parse(ref Queue<Token> tokenQueue) {
+            bool parsing = true;
+            
+            while(parsing && tokenQueue.Count > 0) {
+                Token token = tokenQueue.Peek();
+                
+                // We assume that "record" keyword is already consumed
+                switch(token) {
+                    case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                        tokenQueue.Dequeue(); // Consume "end"
+                        parsing = false;
+                        break;
+                    case Dedicated dedicated when dedicated.getCode() == DedicatedWord.variable_declaration: // Field declaration starts
+                        tokenQueue.Dequeue(); // Consume "var"
+                        VarNode fieldNode = new VarNode();
+                        fieldNode.Parse(ref tokenQueue);
+                        this.childs.Add(fieldNode);
+                        break;
+                    case Mock:
+                        tokenQueue.Dequeue();
+                        break;
+                    default:
+                        // Unexpected token
+                        // TODO: Add exception throw
+                        parsing = false;
+                        break;
+                }
+            }
+        }
+    }
+
+    public class ArrayNode : IdentifierNode {
+    
+    public ArrayNode() : base() {}
+    
+    public override void PrintInfo() {
+        Console.WriteLine($"ArrayNode(identifier='{this.identifier}', childs={this.childs.Count})");
+    }
+
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        int step = 0;
+        bool parsing = true;
+        
+        while(parsing && tokenQueue.Count > 0) {
+            Token token = tokenQueue.Peek();
+            
+            // We assume that "array" keyword is already consumed
+            switch(step) {
+                case 0: // Expecting opening bracket "["
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.left_bracket:
+                            tokenQueue.Dequeue(); // Consume "["
+                            step = 1;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 1: // Parse size expression
+                    // Create and parse the size expression
+                    ExpressionNode expression = new ExpressionNode();
+                    expression.Parse(ref tokenQueue);
+                    this.childs.Add(expression);
+                    step = 2;
+                    break;
+                    
+                case 2: // Expecting closing bracket "]"
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.right_bracket:
+                            tokenQueue.Dequeue(); // Consume "]"
+                            step = 3;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 3: // Expecting type identifier
+                    switch(token) {
+                        case Identifier identifier:
+                            this.identifier = identifier.getIdentifier(); // Store element type
+                            tokenQueue.Dequeue(); // Consume type identifier
+                            parsing = false;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+				}
+			}
+		}
+	}
+
+    public class AssignmentNode : IdentifierNode {
+    
+    public AssignmentNode(Node identifier) : base() {
+		this.childs.Add(identifier);
+	}
+
+    public override void PrintInfo() {
+        Console.WriteLine($"AssignmentNode(identifier='{this.identifier}', childs={this.childs.Count})");
+    }
+
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        int step = 0;
+        bool parsing = true;
+        
+        while(parsing && tokenQueue.Count > 0) {
+            Token token = tokenQueue.Peek();
+            
+            switch(step) {
+                case 0: // Expecting assignment operator ":="
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.bare_assignment:
+                            tokenQueue.Dequeue(); // Consume ":="
+                            step = 1;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 1: // Parse the expression
+                    ExpressionNode expression = new ExpressionNode();
+                    expression.Parse(ref tokenQueue);
+                    this.childs.Add(expression);
+                    step = 2;
+                    break;
+                    
+                case 2: // Expecting semicolon
+                    switch(token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                            tokenQueue.Dequeue(); // Consume ";"
+                            parsing = false;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token
+							// TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+	public class RoutineNode : IdentifierNode {
+		public RoutineNode() : base() { }
+
+        public override void PrintInfo() {
+            Console.WriteLine($"RoutineNode(identifier='{this.identifier}', childs={this.childs.Count})");
+        }
+
+		public override void Parse(ref Queue<Token> tokenQueue) {
+			int step = 0;
+			while(step < 6) {
+				Token token = tokenQueue.Peek();
+				switch(step) {
+					case 0:
+						if(token is Identifier) {
+							tokenQueue.Dequeue();
+							step = 1;
+							this.identifier = ((Identifier)token).getIdentifier();
+						} else {
+							// Unexpected token
+						}
+						break;
+
+					case 1:
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.left_parenthesis) {
+							tokenQueue.Dequeue();
+							step = 2;
+						} else {
+							// Unexpected token
+							return;
+						}
+						break;
+
+					case 2:
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.right_parenthesis) {
+							tokenQueue.Dequeue();
+							step = 3;
+						}
+						ParameterNode param = new ParameterNode();
+						param.Parse(ref tokenQueue);
+						token.PrintInfo();
+						token = tokenQueue.Peek();
+						this.childs.Add(param);
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.right_parenthesis) {
+							tokenQueue.Dequeue();
+							step = 3;
+						} else if(!(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.comma_separator)) {
+							return;
+							// Unexpected token
+						} else {
+							tokenQueue.Dequeue();
+						}
+						break;
+
+					case 3:
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.type_assignment) {
+							tokenQueue.Dequeue();
+							token = tokenQueue.Dequeue();
+							string str = "";
+							switch(token) {
+								case Identifier id:
+									str = id.getIdentifier();
+									break;
+
+								case Dedicated dedicated when dedicated.getCode() == DedicatedWord.integer_type:
+									str = "integer";
+									break;
+
+								case Dedicated dedicated when dedicated.getCode() == DedicatedWord.boolean_type:
+									str = "boolean";
+									break;
+
+								case Dedicated dedicated when dedicated.getCode() == DedicatedWord.real_type:
+									str = "real";
+									break;
+
+								default: break;
+							}
+							if(str == "") {
+								// Unexpected token
+								return;
+							} else {
+								this.childs.Add(new PrimaryNode(str));
+							}
+						}
+						step = 4;
+						break;
+
+					case 4:
+						step = 5;
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.one_line_body) {
+							tokenQueue.Dequeue();
+							Node expr = new ExpressionNode();
+							expr.Parse(ref tokenQueue);
+							this.childs.Add(expr);
+							step = 6;
+						}
+						break;
+
+					case 5:
+						if(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.is_assignment) {
+							tokenQueue.Dequeue();
+							Node body = new ProgramNode();
+							body.Parse(ref tokenQueue);
+							this.childs.Add(body);
+						} else if (token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.end_of_line) {
+							tokenQueue.Dequeue();
+						} else {
+							// Unexpected token
+						}
+						step = 6;
+						break;
+
+					default: break;
+				}
+			}
+		}
+	}
+
+	public class ParameterNode : IdentifierNode {
+		public ParameterNode() : base() { }
+        
+        public override void PrintInfo() {
+            Console.WriteLine($"ParameterNode(identifier='{this.identifier}', childs={this.childs.Count})");
+        }
+
+		public override void Parse(ref Queue<Token> tokenQueue) {
+			Token token;
+			token = tokenQueue.Dequeue();
+			if(token is Identifier) {
+				this.childs.Add(new PrimaryNode(((Identifier)token).getIdentifier()));
+			} else {
+				// Unexpected token
+				return;
+			}
+
+			token = tokenQueue.Dequeue();
+			if(!(token is Dedicated && ((Dedicated)token).getCode() == DedicatedWord.type_assignment)) {
+				// Unexpected token
+				return;
+			}
+
+			token = tokenQueue.Dequeue();
+			switch(token) {
+				case Identifier id:
+					this.childs.Add(new PrimaryNode(id.getIdentifier()));
+					break;
+
+				case Dedicated dedicated when dedicated.getCode() == DedicatedWord.integer_type:
+					this.childs.Add(new PrimaryNode("integer"));
+					break;
+
+				case Dedicated dedicated when dedicated.getCode() == DedicatedWord.real_type:
+					this.childs.Add(new PrimaryNode("real"));
+					break;
+
+				case Dedicated dedicated when dedicated.getCode() == DedicatedWord.boolean_type:
+					this.childs.Add(new PrimaryNode("boolean"));
+					break;
+
+				default: break;
+			}
+		}
+	}
+
+    public abstract class SubprogramNode : Node {
+        protected ProgramNode nested;
+
+        public SubprogramNode() : base() {}
+    }
+
+    public class ForNode : SubprogramNode {
+    private string iterator;
+    
+    public ForNode() : base() { }
+
+    public override void PrintInfo() {
+        Console.WriteLine($"ForNode(iterator='{this.iterator}', childs={this.childs.Count})");
+    }
+
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        int step = 0;
+        bool parsing = true;
+
+        while (parsing && tokenQueue.Count > 0) {
+            Token token = tokenQueue.Peek();
+
+            switch (step) {
+                case 0: // Expecting "for" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.for_statement:
+                            tokenQueue.Dequeue(); // Consume "for"
+                            step = 1;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 1: // Expecting iterator identifier
+                    switch (token) {
+                        case Identifier identifier:
+                            this.iterator = identifier.getIdentifier();
+                            tokenQueue.Dequeue(); // Consume identifier
+                            step = 2;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 2: // Expecting "in" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.in_range_statement:
+                            tokenQueue.Dequeue(); // Consume "in"
+                            step = 3;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 3 or 5: // Parse start expression
+                    ExpressionNode RangeExpression = new ExpressionNode();
+                    RangeExpression.Parse(ref tokenQueue);
+                    this.childs.Add(RangeExpression);
+                    step += 1;
+                    break;
+                    
+                case 4: // Expecting ".." range operator
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.range:
+                            tokenQueue.Dequeue(); // Consume ".."
+                            step = 6;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 6: // Expecting "loop" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.loop_start:
+                            tokenQueue.Dequeue(); // Consume "loop"
+                            step = 7;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 7: // Parse loop body
+                    // Create and parse the nested program for the loop body
+                    this.nested = new ProgramNode();
+                    this.nested.Parse(ref tokenQueue);  
+                    this.childs.Add(nested);              
+                    
+                    step = 8;
+                    break;
+                    
+                case 8: // Expecting "end" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                            tokenQueue.Dequeue(); // Consume "end"
+                            step = 9;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 9: // Expecting semicolon
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                            tokenQueue.Dequeue(); // Consume ";"
+                            parsing = false; // Successfully completed
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+            }
+        }
+    }
+    
+    // Helper method to get iterator name
+    public string GetIterator() => this.iterator;
+}
+
+    public class WhileNode : SubprogramNode {
+    private ExpressionNode condition;
+    
+    public WhileNode() : base() { }
+
+    public override void PrintInfo() {
+        Console.WriteLine($"WhileNode(childs={this.childs.Count})");
+    }
+
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        int step = 0;
+        bool parsing = true;
+
+        while (parsing && tokenQueue.Count > 0) {
+            Token token = tokenQueue.Peek();
+
+            switch (step) {
+                case 0: // Expecting "while" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.while_statement:
+                            tokenQueue.Dequeue(); // Consume "while"
+                            step = 1;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 1: // Parse condition expression
+                    this.condition = new ExpressionNode();
+                    this.condition.Parse(ref tokenQueue);
+                    step = 2;
+                    break;
+                    
+                case 2: // Expecting "loop" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.loop_start:
+                            tokenQueue.Dequeue(); // Consume "loop"
+                            step = 3;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 3: // Parse loop body
+                    // Create and parse the nested program for the loop body
+                    this.nested = new ProgramNode();
+                    this.nested.Parse(ref tokenQueue);
+                    this.childs.Add(nested);
+                    step = 4;
+                    break;
+                    
+                case 4: // Expecting "end" keyword
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_body:
+                            tokenQueue.Dequeue(); // Consume "end"
+                            step = 5;
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+                    
+                case 5: // Expecting semicolon
+                    switch (token) {
+                        case Dedicated dedicated when dedicated.getCode() == DedicatedWord.end_of_line:
+                            tokenQueue.Dequeue(); // Consume ";"
+                            parsing = false; // Successfully completed
+                            break;
+                        case Mock:
+                            tokenQueue.Dequeue();
+                            break;
+                        default:
+                            // Unexpected token 
+                            // TODO: Add exception throw
+                            parsing = false;
+                            break;
+                    }
+                    break;
+            }
+        }
+    }
+    
+    // Helper method to get condition
+    public ExpressionNode GetCondition() => this.condition;
+}
+
+    public class BranchNode : SubprogramNode {
+        public BranchNode() : base() { }
+
+        public override void Parse(ref Queue<Token> tokenQueue) {}
+
+        public override void PrintInfo() {
+            Console.WriteLine($"BranchNode(childs={this.childs.Count})");
+        }
+    }
+
+	public class ExpressionNode : Node {
+		public static List<DedicatedWord> allowedOperations = new List<DedicatedWord>() {
+			DedicatedWord.logical_and,
+			DedicatedWord.logical_or,
+			DedicatedWord.logical_xor,
+			DedicatedWord.logical_not,
+			DedicatedWord.less_equal,
+			DedicatedWord.less,
+			DedicatedWord.equal,
+			DedicatedWord.greater_equal,
+			DedicatedWord.greater,
+			DedicatedWord.not_equal,
+			DedicatedWord.summation,
+			DedicatedWord.difference,
+			DedicatedWord.multiplication,
+			DedicatedWord.division,
+			DedicatedWord.int_division,
+		};
+
+		public static List<DedicatedWord> unaryOperations = new List<DedicatedWord>() {
+			DedicatedWord.logical_not,
+			DedicatedWord.summation,
+			DedicatedWord.difference,
+		};
+
+		public static List<DedicatedWord> logicalOperations = new List<DedicatedWord>() {
+			DedicatedWord.logical_and,
+			DedicatedWord.logical_or,
+			DedicatedWord.logical_xor,
+			DedicatedWord.logical_not,
+		};
+
+		public static List<DedicatedWord> relationOperations = new List<DedicatedWord>() {
+			DedicatedWord.less_equal,
+			DedicatedWord.less,
+			DedicatedWord.equal,
+			DedicatedWord.greater_equal,
+			DedicatedWord.greater,
+			DedicatedWord.not_equal,
+		};
+
+		public static List<DedicatedWord> factorOperations = new List<DedicatedWord>() {
+			DedicatedWord.multiplication,
+			DedicatedWord.division,
+			DedicatedWord.int_division,
+		};
+
+		public static List<DedicatedWord> termOperations = new List<DedicatedWord>() {
+			DedicatedWord.summation,
+			DedicatedWord.difference,
+		};
+
+		public DedicatedWord opCode;
+		public ExpressionNode left;
+		public ExpressionNode right;
+		public bool initialized;
+
+		public ExpressionNode() : base() {
+			this.initialized = false;
+		}
+		public ExpressionNode(ExpressionNode init, DedicatedWord operation) : base() {
+			this.initialized = true;
+			this.left = init;
+			this.opCode = operation;
+		}
+
+        public override void PrintInfo() {
+            Console.WriteLine($"ExpressionNode(opCode='{this.opCode}', initialized={this.initialized}, childs={this.childs.Count})");
+        }
+
+		public override void Parse(ref Queue<Token> tokenQueue) {
+			int step = 0;
+			if(initialized) {
+				step = 2;
+			}
+			bool parenthesised = false;
+			while(step < 3) {
+				Token token = tokenQueue.Peek();
+				switch(step) {
+					case 0:
+						switch(token) {
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.left_parenthesis:
+								if(parenthesised) {
+									this.left = new ExpressionNode();
+									this.left.Parse(ref tokenQueue);
+									step = 1;
+								} else {
+									parenthesised = true;
+									tokenQueue.Dequeue();
+								}
+								break;
+
+							case Identifier var:
+								this.left = new PrimaryNode(var.getIdentifier());
+								step = 1;
+								tokenQueue.Dequeue();
+								break;
+
+							case Integer lit:
+								this.left = new PrimaryNode(lit.getValue());
+								step = 1;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.false_const:
+								this.left = new PrimaryNode(false);
+								step = 1;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.true_const:
+								this.left = new PrimaryNode(true);
+								step = 1;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when unaryOperations.Contains(dedicated.getCode()):
+								this.left = new PrimaryNode(0);
+								this.opCode = dedicated.getCode();
+								step = 2;
+								tokenQueue.Dequeue();
+								break;
+
+							default:
+								// Unexpected token
+								break;
+						}
+						break;
+
+					case 1:
+						switch(token) {
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.dot:
+								tokenQueue.Dequeue();
+								this.left = new ExpressionNode(this.left, DedicatedWord.dot);
+								this.left.Parse(ref tokenQueue);
+								break;
+
+							case Dedicated dedicated when allowedOperations.Contains(dedicated.getCode()):
+								this.opCode = dedicated.getCode();
+								step = 2;
+								tokenQueue.Dequeue();
+								break;
+
+							default:
+                                step = 4;
+								break;
+						}
+						break;
+
+					case 2:
+						switch(token) {
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.logical_not:
+								tokenQueue.Dequeue();
+								this.right = new ExpressionNode(new PrimaryNode(0), DedicatedWord.logical_not);
+								this.right.Parse(ref tokenQueue);
+								step = 3;
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.left_parenthesis:
+								this.left = new ExpressionNode();
+								this.left.Parse(ref tokenQueue);
+								step = 3;
+								break;
+
+							case Identifier var:
+								this.left = new PrimaryNode(var.getIdentifier());
+								step = 3;
+								tokenQueue.Dequeue();
+								break;
+
+							case Integer lit:
+								this.left = new PrimaryNode(lit.getValue());
+								step = 3;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.false_const:
+								this.left = new PrimaryNode(false);
+								step = 3;
+								tokenQueue.Dequeue();
+								break;
+
+							case Dedicated dedicated when dedicated.getCode() == DedicatedWord.true_const:
+								this.left = new PrimaryNode(true);
+								step = 3;
+								tokenQueue.Dequeue();
+								break;
+
+							default:
+								break;
+						}
+						break;
+
+					case 3:
+						break;
+
+					default:
+						break;
+				}
+			}
+		}
+	}
+
+	public class PrimaryNode : ExpressionNode {
+		public object value;
+
+		public PrimaryNode(object val) : base() {
+			this.value = val;
+		}
+
+        public override void PrintInfo() {
+            Console.WriteLine($"PrimaryNode(value='{this.value.ToString()}'childs={this.childs.Count})");
+        }
+	}
+}
