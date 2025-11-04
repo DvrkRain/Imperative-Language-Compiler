@@ -30,10 +30,10 @@ namespace Data.Objects {
 		identifier,
 
 		// User-defined types
-		record_decl,
-		array_decl,
+		record_declaration,
+		array_declaration,
 		// Variable declaration
-		variable_decl,
+		variable_declaration,
 		type_declaration,
 		// Assingnment
 		type_assignment,
@@ -49,55 +49,65 @@ namespace Data.Objects {
 		left_bracket,
 		right_bracket,
 		// Branching
-		if_stnt,
-		then_stnt,
-		else_stnt,
+		if_statement,
+		then_statement,
+		else_statement,
 		// Loops
-		while_stnt,
-		for_stnt,
-		in_stnt,
-		reverse_stnt,
+		while_statement,
+		for_statement,
+		in_statement,
+		reverse_statement,
 		loop_start,
 		range_sign,
 		// Routines
-		print_rtn,
-		routine_decl,
+		print_routine,
+		routine_declaration,
 		one_line_body,
 		end_of_body,
+		// Sequence breaking
+		return_statement,
+		break_statement,
+		continue_statement,
 	}
 
 	public static class DedicatedWords {
 		private static Dictionary<string,TokenCode> dedicatedWords =
 			new Dictionary<string,TokenCode>() {
-				{"integer", TokenCode.builtin_type},
-				{"real",	TokenCode.builtin_type},
-				{"boolean", TokenCode.builtin_type},
-				{"record",	TokenCode.record_decl},
-				{"array",	TokenCode.array_decl},
-				{"and",		TokenCode.logic_op},
-				{"or",		TokenCode.logic_op},
-				{"xor",		TokenCode.logic_op},
-				{"not",		TokenCode.logic_op},
-				{"true",	TokenCode.constant_value},
-				{"false",	TokenCode.constant_value},
-				{"var",		TokenCode.variable_decl},
-				{"is",		TokenCode.is_assignment},
-				{"type",	TokenCode.type_declaration},
-				{"end",		TokenCode.end_of_body},
-				{"if",		TokenCode.if_stnt},
-				{"then",	TokenCode.then_stnt},
-				{"else",	TokenCode.else_stnt},
-				{"loop",	TokenCode.loop_start},
-				{"while",	TokenCode.while_stnt},
-				{"for",		TokenCode.for_stnt},
-				{"in",		TokenCode.in_stnt},
-				{"reverse",	TokenCode.reverse_stnt},
-				{"print",	TokenCode.print_rtn},
-				{"routine", TokenCode.routine_decl},
+				{"integer",		TokenCode.builtin_type},
+				{"real",		TokenCode.builtin_type},
+				{"boolean", 	TokenCode.builtin_type},
+				{"record",		TokenCode.record_declaration},
+				{"array",		TokenCode.array_declaration},
+				{"and",			TokenCode.logic_op},
+				{"or",			TokenCode.logic_op},
+				{"xor",			TokenCode.logic_op},
+				{"not",			TokenCode.logic_op},
+				{"true",		TokenCode.constant_value},
+				{"false",		TokenCode.constant_value},
+				{"var",			TokenCode.variable_declaration},
+				{"is",			TokenCode.is_assignment},
+				{"type",		TokenCode.type_declaration},
+				{"end",			TokenCode.end_of_body},
+				{"if",			TokenCode.if_statement},
+				{"then",		TokenCode.then_statement},
+				{"else",		TokenCode.else_statement},
+				{"loop",		TokenCode.loop_start},
+				{"while",		TokenCode.while_statement},
+				{"for",			TokenCode.for_statement},
+				{"in",			TokenCode.in_statement},
+				{"reverse",		TokenCode.reverse_statement},
+				{"print",		TokenCode.print_routine},
+				{"routine", 	TokenCode.routine_declaration},
+				{"return",		TokenCode.return_statement},
+				{"break",		TokenCode.break_statement},
+				{"continue",	TokenCode.continue_statement},
 			};
 
-		public static bool Contains(string key) =>
-			dedicatedWords.Keys.Contains(key);
+		public static bool Keys(string key) =>
+			dedicatedWords.ContainsKey(key);
+
+		public static bool Vals(TokenCode code) =>
+			dedicatedWords.ContainsValue(code);
 
 		public static TokenCode Code(string key) =>
 			dedicatedWords[key];
@@ -126,29 +136,30 @@ namespace Data.Objects {
 	}
 
 	public class Token {
-		public Position pos;
-		public TokenCode tokenCode;
-		public object? value;
+		private Position position {get;}
+		private TokenCode tokenCode {get;}
+		private object value {get; set;}
+
+		public Position Position() => this.position;
+		public TokenCode Code() => this.tokenCode;
+		public object Value() => this.value;
+
+		public void Value(object val) => this.value = val;
 
 		// Construction
-		// Basic
-		private Token(int x, int y) =>
-			this.pos = new Position(x,y);
-		private Token(Position pos) =>
-			this.pos = pos;
-		// Without value
-		public Token(int x, int y, TokenCode code) : this(x,y) =>
+		public Token(Position pos, TokenCode code) {
+			this.position = pos;
 			this.tokenCode = code;
-		public Token(Position pos, TokenCode code) : this(pos) =>
+			this.value = "";
+		}
+		public Token(Position pos, TokenCode code, object val) {
+			this.position = pos;
 			this.tokenCode = code;
-		// With value
-		public Token(int x, int y, TokenCode code, object val) : this(x,y, code) =>
 			this.value = val;
-		public Token(Position pos, TokenCode code, object val) : this(pos, code) =>
-			this.value = val;
+		}
 
 		public void PrintInfo() {
-			Console.Write($"Token of type {this.tokenCode}\tin position ({this.pos.Row()}, {this.pos.Col()}).\t");
+			Console.Write($"Token of type {this.tokenCode}\tin position ({this.position.Row()}, {this.position.Col()}).\t");
 			if(!(this.value is null))
 				Console.Write($"Value in Token is {this.value}.");
 			Console.Write("\n");

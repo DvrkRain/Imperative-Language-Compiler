@@ -1,0 +1,27 @@
+using Data.Objects;
+namespace AST {
+public class WhileNode : Node {
+	public WhileNode(Position pos) : base(pos) { }
+
+
+	public override void Parse(ref Queue<Token> tokenQueue) {
+		// Condition expression
+		ExpressionNode expr = new ExpressionNode(this.position);
+		expr.Parse(ref tokenQueue);
+		this.childs.Add(expr);
+
+		// 'loop' keyword
+		Token token = tokenQueue.Dequeue();
+		if(token.Code() != TokenCode.loop_start) {
+			HandleUnexpectedToken(ref tokenQueue);
+			return;
+		}
+
+		// Loop body
+		token = tokenQueue.Peek();
+		ProgramNode nested = new ProgramNode(token.Position());
+		nested.Parse(ref tokenQueue);
+		this.childs.Add(nested);
+	}
+}
+}

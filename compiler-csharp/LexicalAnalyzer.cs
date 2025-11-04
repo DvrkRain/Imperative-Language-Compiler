@@ -1,16 +1,10 @@
 using Data.Objects;
 using Data.IO;
+using Exceptions;
 
 
 namespace LexicalAnalyzer
 {
-	public class UnexpectedTokenException : Exception {
-		public Position pos;
-		public UnexpectedTokenException(Position pos) : base("Unexpected token") => this.pos = pos;
-		public void Info() =>
-			Console.WriteLine($"Unrecognizable token at {this.pos.Row()},{this.pos.Col()}.");
-	}
-
     // Enum is needed to easy check state switching
     public enum StateCode
     {
@@ -184,7 +178,7 @@ namespace LexicalAnalyzer
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
-			if(DedicatedWords.Contains(this.data))
+			if(DedicatedWords.Keys(this.data))
 				token = new Token(this.pos, DedicatedWords.Code(this.data), this.data);
 			else
 				token = new Token(this.pos, TokenCode.identifier, this.data);
@@ -242,9 +236,9 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token = new Token(this.pos, TokenCode.logic_op);
 			if (single)
-				token.value = "<";
+				token.Value("<");
 			else
-				token.value = "<=";
+				token.Value("<=");
 			tokenQueue.Enqueue(token);
 		}
 	}
@@ -270,9 +264,9 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token = new Token(this.pos, TokenCode.logic_op);
 			if (single)
-				token.value = ">";
+				token.Value(">");
 			else
-				token.value = ">=";
+				token.Value(">=");
 			tokenQueue.Enqueue(token);
 		}
 	}
