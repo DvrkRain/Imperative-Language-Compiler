@@ -10,7 +10,7 @@ public class PrimaryNode : Node {
 	public override void Parse(ref Queue<Token> tokenQueue) { }
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"ParameterNode(childs={this.childs.Count}, value={this.value})");
+		if (this.GetType().Name == "PrimaryNode") Console.WriteLine($"PrimaryNode(childs={this.childs.Count}, value={this.value})");
 		base.PrintInfo(indent);
 	}
 }

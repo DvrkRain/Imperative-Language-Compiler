@@ -20,7 +20,7 @@ public class RecordNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"RecordNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "RecordNode") Console.WriteLine($"RecordNode(childs={this.childs.Count})");
 		base.PrintInfo(indent);
 	}
 }

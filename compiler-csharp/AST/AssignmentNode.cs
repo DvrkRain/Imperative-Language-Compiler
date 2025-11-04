@@ -29,7 +29,7 @@ public class AssignmentNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"AssignmentNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "AssignmentNode") Console.WriteLine($"AssignmentNode(childs={this.childs.Count})");
 		base.PrintInfo(indent);
 	}
 }

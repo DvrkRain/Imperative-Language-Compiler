@@ -25,7 +25,7 @@ public class WhileNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"WhileNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "WhileNode") Console.WriteLine($"WhileNode(childs={this.childs.Count})");
 		base.PrintInfo(indent);
 	}
 }

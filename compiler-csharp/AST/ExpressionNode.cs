@@ -216,7 +216,7 @@ public class ExpressionNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, operation={this.operation}, initialized={this.initialized}, const={this.cnst}, left?={this.left != null}, right?={this.right != null})");
+		if (this.GetType().Name == "ExpressionNode") Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, operation={this.operation}, initialized={this.initialized}, const={this.cnst}, left?={this.left != null}, right?={this.right != null})");
 		base.PrintInfo(indent);
 	}
 }
