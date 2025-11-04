@@ -33,5 +33,10 @@ public class IfNode : Node {
 			this.childs.Add(branch);
 		}
 	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"IfNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }

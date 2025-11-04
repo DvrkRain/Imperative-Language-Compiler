@@ -21,13 +21,6 @@ public class ExpressionNode : Node {
 	public ExpressionNode(Position pos, Node init, string operation, TokenCode priorCode, Node rightInit)
 		: this(pos, init, operation, priorCode) => this.right = rightInit;
 
-	public new void PrintInfo(string indent) {
-		Console.Write(indent + "└── ");
-		this.left.PrintInfo(indent + "│   ");
-		Console.Write(indent + "├── ");
-		this.right.PrintInfo(indent + "    ");
-	}
-
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		int step = 0;
@@ -220,6 +213,11 @@ public class ExpressionNode : Node {
 					break;
 			}
 		}
+	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, operation={this.operation}, initialized={this.initialized}, const={this.cnst}, left?={this.left != null}, right?={this.right != null})");
+		base.PrintInfo(indent);
 	}
 }
 }

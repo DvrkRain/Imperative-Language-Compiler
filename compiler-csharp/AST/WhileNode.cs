@@ -23,5 +23,10 @@ public class WhileNode : Node {
 		nested.Parse(ref tokenQueue);
 		this.childs.Add(nested);
 	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"WhileNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }

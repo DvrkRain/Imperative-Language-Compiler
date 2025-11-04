@@ -62,5 +62,10 @@ public class TypeNode : Node {
 		}
 		tokenQueue.Dequeue();
 	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"TypeNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }

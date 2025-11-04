@@ -28,5 +28,10 @@ public class ParameterNode : Node {
 		if(token.Code() == TokenCode.identifier || token.Code() == TokenCode.builtin_type)
 			this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
 	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"ParameterNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }
