@@ -34,5 +34,10 @@ public class ArrayNode : Node {
 			return;
 		}
 	}
+
+        public override void PrintInfo(string indent) {
+			Console.WriteLine($"ArrayNode(childs={this.childs.Count})");
+            base.PrintInfo(indent);
+        }
 }
 }

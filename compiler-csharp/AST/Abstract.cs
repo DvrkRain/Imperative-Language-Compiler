@@ -21,8 +21,9 @@ public abstract class Node {
 		}
 	}
 
-	public void PrintInfo(string indent) {
-		Console.WriteLine($"{this.GetType().Name}");
+	public virtual void PrintInfo(string indent) {
+		if (this.GetType().Name == "Node") Console.WriteLine($"Node(childs={this.childs.Count})");
+
 		for(int i=0; i<this.childs.Count; i++) {
 			if(i == this.childs.Count - 1)
 				Console.Write(indent + "└── ");

@@ -16,5 +16,10 @@ public class RecordNode : Node {
 			token = tokenQueue.Dequeue();
 		}
 	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"RecordNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }

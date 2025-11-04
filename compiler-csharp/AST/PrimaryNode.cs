@@ -8,5 +8,10 @@ public class PrimaryNode : Node {
 		this.value = val;
 
 	public override void Parse(ref Queue<Token> tokenQueue) { }
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"ParameterNode(childs={this.childs.Count}, value={this.value})");
+		base.PrintInfo(indent);
+	}
 }
 }

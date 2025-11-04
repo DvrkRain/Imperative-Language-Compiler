@@ -26,5 +26,10 @@ public class AssignmentNode : Node {
 			return;
 		}
 	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"AssignmentNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }

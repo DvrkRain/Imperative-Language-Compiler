@@ -55,5 +55,10 @@ public class TypeNode : Node {
 			HandleUnexpectedToken(ref tokenQueue);
 		}
 	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"TypeNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }

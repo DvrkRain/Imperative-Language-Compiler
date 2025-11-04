@@ -45,5 +45,10 @@ public class ForNode : Node {
 		nested.Parse(ref tokenQueue);
 		this.childs.Add(nested);
 	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"ForNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }

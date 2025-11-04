@@ -52,5 +52,10 @@ public class VarNode : Node {
 			HandleUnexpectedToken(ref tokenQueue);
 		}
 	} 
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"VarNode(childs={this.childs.Count}, type={this.type}, explicit={this.explicit_type})");
+		base.PrintInfo(indent);
+	}
 }
 }
