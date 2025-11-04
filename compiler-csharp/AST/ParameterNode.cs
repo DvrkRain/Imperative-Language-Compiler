@@ -28,7 +28,7 @@ public class ParameterNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"ParameterNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "ParameterNode") Console.WriteLine($"ParameterNode(childs={this.childs.Count})");
 		base.PrintInfo(indent);
 	}
 }

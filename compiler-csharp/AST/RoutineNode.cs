@@ -72,7 +72,7 @@ public class RoutineNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"RoutineNode(childs={this.childs.Count}, type={this.type != null})");
+		if (this.GetType().Name == "RoutineNode") Console.WriteLine($"RoutineNode(childs={this.childs.Count}, type={this.type != null})");
 		base.PrintInfo(indent);
 	}
 }
