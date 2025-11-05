@@ -67,10 +67,5 @@ public class TypeNode : Node {
 		if (this.GetType().Name == "TypeNode") Console.WriteLine($"TypeNode(childs={this.childs.Count})");
 		base.PrintInfo(indent);
 	}
-
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "TypeNode") Console.WriteLine($"TypeNode(childs={this.childs.Count})");
-		base.PrintInfo(indent);
-	}
 }
 }

@@ -15,5 +15,10 @@ public class ReturnNode : Node {
 			return;
 		}
 	}
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "ReturnNode") Console.WriteLine($"ReturnNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }

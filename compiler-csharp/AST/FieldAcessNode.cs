@@ -21,5 +21,10 @@ public class FieldAccessNode : Node {
 			}
 		}
 	}
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "FieldAccessNode") Console.WriteLine($"FieldAccessNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }

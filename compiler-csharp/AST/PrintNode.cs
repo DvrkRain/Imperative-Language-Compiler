@@ -23,5 +23,10 @@ public class PrintNode : Node {
 			return;
 		}
 	}
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "PrintNode") Console.WriteLine($"PrintNode(childs={this.childs.Count})");
+		base.PrintInfo(indent);
+	}
 }
 }
