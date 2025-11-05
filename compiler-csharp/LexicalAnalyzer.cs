@@ -114,7 +114,7 @@ namespace LexicalAnalyzer
 							case StateCode.Error:
 								this.currentState = new StartState();
 								this.currentStateCode = StateCode.Start;
-								throw new UnexpectedTokenException(cursor);
+								throw new UnexpectedTokenException(cursor, "LexicalAnalyzer");
 						}
 					}
 				} catch (UnexpectedTokenException e) {
@@ -125,6 +125,7 @@ namespace LexicalAnalyzer
 				}
 				cursor.NextChar();
 			}
+			TokenStream.Enqueue(new Token(cursor, TokenCode.end_of_file));
         }
     }
 

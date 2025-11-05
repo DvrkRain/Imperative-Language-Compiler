@@ -54,29 +54,38 @@ public class ProgramNode : Node {
 					break;
 
 				// Assignment
-				// TODO
 				case TokenCode.identifier:
-					switch(tokenQueue.Peek().Code()) {
-						case TokenCode.dot:
-							// TODO
-							// Node field_acc = new ExpressionNode(new PrimaryNode(token.value));
-							// field_acc.Parse(ref tokenQueue);
-							// Node asgnmt = new AssignmentNode(field_acc);
-							// asgnmt.Parse(ref tokenQueue);
-							break;
-							
-						case TokenCode.bare_assignment:
-							Node asgnmt = new AssignmentNode(token.Position(), new PrimaryNode(token.Position(), token.Value()));
-							asgnmt.Parse(ref tokenQueue);
-							this.childs.Add(asgnmt);
-							break;
-
-						default:
-							break;
+					FieldAccessNode access = new FieldAccessNode(token.Position());
+					access.Parse(ref tokenQueue);
+					token = tokenQueue.Peek();
+					if(token.Code() != TokenCode.bare_assignment) {
+						HandleUnexpectedToken(ref tokenQueue, token.Position());
+						parsing = false;
 					}
+					tokenQueue.Dequeue();
+					AssignmentNode asgnmt = new AssignmentNode(token.Position(), access);
+					this.childs.Add(asgnmt);
 					break;
 					
+				// Return
+				case TokenCode.return_statement:
+					ReturnNode ret = new ReturnNode(token.Position());
+					ret.Parse(ref tokenQueue);
+					this.childs.Add(ret);
+					break;
+
+				// Print
+				case TokenCode.print_routine:
+					PrintNode prt = new PrintNode(token.Position());
+					prt.Parse(ref tokenQueue);
+					this.childs.Add(prt);
+					break;
+
 				case TokenCode.end_of_body:
+					parsing = false;
+					break;
+
+				case TokenCode.end_of_file:
 					parsing = false;
 					break;
 
@@ -84,7 +93,7 @@ public class ProgramNode : Node {
 					break;
 
 				default:
-					HandleUnexpectedToken(ref tokenQueue);
+					HandleUnexpectedToken(ref tokenQueue, token.Position());
 					break;
 			}
 		}

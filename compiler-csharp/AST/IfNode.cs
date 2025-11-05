@@ -13,11 +13,12 @@ public class IfNode : Node {
 		this.childs.Add(expr);
 
 		// 'then' keyword
-		token = tokenQueue.Dequeue();
+		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.then_statement) {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 
 		// Then branch body
 		ProgramNode branch = new ProgramNode(tokenQueue.Peek().Position());

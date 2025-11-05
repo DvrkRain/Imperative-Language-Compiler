@@ -11,15 +11,15 @@ public class WhileNode : Node {
 		this.childs.Add(expr);
 
 		// 'loop' keyword
-		Token token = tokenQueue.Dequeue();
+		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.loop_start) {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 
 		// Loop body
-		token = tokenQueue.Peek();
-		ProgramNode nested = new ProgramNode(token.Position());
+		ProgramNode nested = new ProgramNode(tokenQueue.Peek().Position());
 		nested.Parse(ref tokenQueue);
 		this.childs.Add(nested);
 	}

@@ -5,19 +5,21 @@ public class ForNode : Node {
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Iterator identifier
-		Token token = tokenQueue.Dequeue();
+		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.identifier) {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 		PrimaryNode id = new PrimaryNode(token.Position(), token.Value());
 
 		// 'in' keyword
-		token = tokenQueue.Dequeue();
+		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.in_statement) {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 
 		// First expression
 		ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position());
@@ -25,8 +27,9 @@ public class ForNode : Node {
 		this.childs.Add(expr);
 		
 		// Second expression (optional)
-		token = tokenQueue.Dequeue();
+		token = tokenQueue.Peek();
 		if(token.Code() == TokenCode.range_sign) {
+			tokenQueue.Dequeue();
 			token = tokenQueue.Peek();
 			expr = new ExpressionNode(token.Position());
 			expr.Parse(ref tokenQueue);
@@ -36,7 +39,7 @@ public class ForNode : Node {
 
 		// 'loop' keyword
 		if(token.Code() != TokenCode.loop_start) {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
 

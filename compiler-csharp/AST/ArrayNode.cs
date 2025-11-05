@@ -6,11 +6,12 @@ public class ArrayNode : Node {
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Left bracket
-		Token token = tokenQueue.Dequeue();
+		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.left_bracket) {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 
 		// Expression(optional) and right bracket
 		token = tokenQueue.Peek();
@@ -20,17 +21,18 @@ public class ArrayNode : Node {
 			this.childs.Add(expr);
 			token = tokenQueue.Dequeue();
 			if(token.Code() != TokenCode.right_bracket) {
-				HandleUnexpectedToken(ref tokenQueue);
+				HandleUnexpectedToken(ref tokenQueue, token.Position());
 				return;
 			}
 		}
 
 		// Typename
-		token = tokenQueue.Dequeue();
-		if(token.Code() == TokenCode.identifier || token.Code() == TokenCode.builtin_type) 
+		token = tokenQueue.Peek();
+		if(token.Code() == TokenCode.identifier || token.Code() == TokenCode.builtin_type) {
 			this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
-		else {
-			HandleUnexpectedToken(ref tokenQueue);
+			tokenQueue.Dequeue();
+		} else {
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
 	}

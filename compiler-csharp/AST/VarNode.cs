@@ -12,45 +12,55 @@ public class VarNode : Node {
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Search for identifier
-		Token token = tokenQueue.Dequeue();
+		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.identifier) {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 		this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
 
 		// Check if type is explicitly stated
 		bool flag = false;
-		token = tokenQueue.Dequeue();
+		token = tokenQueue.Peek();
 		if(token.Code() == TokenCode.type_assignment) {
+			tokenQueue.Dequeue();
 			flag = true;
 			this.explicit_type = true;
-			token = tokenQueue.Dequeue();
-			if(token.Code() == TokenCode.builtin_type || token.Code() == TokenCode.identifier)
+			token = tokenQueue.Peek();
+			if(token.Code() == TokenCode.builtin_type || token.Code() == TokenCode.identifier) {
 				this.type = (string)token.Value();
-			else {
-				HandleUnexpectedToken(ref tokenQueue);
+			} else {
+				HandleUnexpectedToken(ref tokenQueue, token.Position());
 				return;
 			}
-			token = tokenQueue.Dequeue();
-			if(token.Code() == TokenCode.semicolon) return;
+			tokenQueue.Dequeue();
+			token = tokenQueue.Peek();
+			if(token.Code() == TokenCode.semicolon) {
+				tokenQueue.Dequeue();
+				return;
+			}
 		}
 
 		// Check if variable initialized in declaration
 		if(token.Code() == TokenCode.is_assignment) {
+			tokenQueue.Dequeue();
 			ExpressionNode expr = new ExpressionNode(token.Position());
 			expr.Parse(ref tokenQueue);
 			this.childs.Add(expr);
 		} else if (!flag) {
-			HandleUnexpectedToken(ref tokenQueue);
+			tokenQueue.Dequeue();
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
 
 		// Check if declaration ends with ';'
-		token = tokenQueue.Dequeue();
+		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.semicolon) {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			return;
 		}
+		tokenQueue.Dequeue();
 	} 
 }
 }

@@ -68,6 +68,7 @@ namespace Data.Objects {
 		return_statement,
 		break_statement,
 		continue_statement,
+		end_of_file,
 	}
 
 	public static class DedicatedWords {

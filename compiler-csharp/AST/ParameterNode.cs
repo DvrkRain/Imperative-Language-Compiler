@@ -6,20 +6,22 @@ public class ParameterNode : Node {
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Identifier
-		Token token = tokenQueue.Dequeue();
+		Token token = tokenQueue.Peek();
 		if(token.Code() == TokenCode.identifier) {
 			this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
 		} else {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 
 		// Type assignment
-		token = tokenQueue.Dequeue();
+		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.type_assignment) {
-			HandleUnexpectedToken(ref tokenQueue);
+			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 
 		// Type
 		token = tokenQueue.Dequeue();
