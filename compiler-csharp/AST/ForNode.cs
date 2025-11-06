@@ -35,7 +35,7 @@ public class ForNode : Node {
 			expr = new ExpressionNode(token.Position());
 			expr.Parse(ref tokenQueue);
 			this.childs.Add(expr);
-			token = tokenQueue.Dequeue();
+			token = tokenQueue.Peek();
 		}
 
 		// Reverse (optional)
