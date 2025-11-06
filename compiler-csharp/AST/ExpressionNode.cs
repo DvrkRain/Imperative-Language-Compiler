@@ -198,13 +198,9 @@ public class ExpressionNode : Node {
 							break;
 
 						case TokenCode.right_parenthesis:
-							if(parenthesised) {
+							if(parenthesised)
 								tokenQueue.Dequeue();
-								step = 4;
-							} else {
-								HandleUnexpectedToken(ref tokenQueue, token.Position());
-								return;
-							}
+							step = 4;
 							break;
 
 						default:
