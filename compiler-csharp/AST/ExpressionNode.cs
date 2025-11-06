@@ -35,14 +35,10 @@ public class ExpressionNode : Node {
 					step = 1;
 					switch(token.Code()) {
 						case TokenCode.left_parenthesis:
-							if(parenthesised) {
-								this.left = new ExpressionNode(token.Position());
-								this.left.Parse(ref tokenQueue);
-							} else {
-								parenthesised = true;
-								step = 0;
-								tokenQueue.Dequeue();
-							}
+							tokenQueue.Dequeue();
+							this.left = new ExpressionNode(token.Position());
+							this.left.Parse(ref tokenQueue);
+							parenthesised = true;
 							break;
 
 						case TokenCode.identifier:
@@ -205,7 +201,6 @@ public class ExpressionNode : Node {
 						case TokenCode.right_parenthesis:
 							if(parenthesised) {
 								tokenQueue.Dequeue();
-								this.left = new ExpressionNode(this.position, this.left, this.operation, this.priorityCode, this.right);
 								step = 1;
 							} else step = 4;
 							break;
