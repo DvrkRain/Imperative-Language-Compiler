@@ -24,7 +24,7 @@ public class ArrayNode : Node {
 				HandleUnexpectedToken(ref tokenQueue, token.Position());
 				return;
 			}
-		}
+		} else tokenQueue.Dequeue();
 
 		// Typename
 		token = tokenQueue.Peek();
