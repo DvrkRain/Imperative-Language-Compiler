@@ -86,6 +86,10 @@ public class ProgramNode : Node {
 					parsing = false;
 					break;
 
+				case TokenCode.else_statement:
+					parsing = false;
+					break;
+
 				case TokenCode.end_of_file:
 					parsing = false;
 					break;
