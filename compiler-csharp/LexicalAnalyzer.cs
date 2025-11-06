@@ -273,7 +273,8 @@ namespace LexicalAnalyzer
 	}
 
 	public class EqualState : ChoosingState {
-		public EqualState(Position pos) : base(pos) { }
+		bool state;
+		public EqualState(Position pos) : base(pos) => this.state = false;
 		
 		public override StateCode ProccessSymbol(char symbol) {
 			if (symbol == '>') {
@@ -282,6 +283,7 @@ namespace LexicalAnalyzer
 			}
 			if (symbol == '=') {
 				this.single = false;
+				this.state = true;
 				return StateCode.Start;
 			}
 			if (char.IsDigit(symbol)) return StateCode.Integer;
@@ -298,7 +300,10 @@ namespace LexicalAnalyzer
 			if (single)
 				Console.WriteLine($"Unexpected token at {this.pos.Row()}, {this.pos.Col()}.");
 			else {
-				token = new Token(this.pos, TokenCode.one_line_body);
+				if(state)
+					token = new Token(this.pos, TokenCode.logic_op, "==");
+				else
+					token = new Token(this.pos, TokenCode.one_line_body);
 				tokenQueue.Enqueue(token);
 			}
 		}
