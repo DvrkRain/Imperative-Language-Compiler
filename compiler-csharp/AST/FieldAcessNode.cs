@@ -18,6 +18,19 @@ public class FieldAccessNode : Node {
 			this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
 			token = tokenQueue.Peek();
 		}
+		while(token.Code() == TokenCode.left_bracket) {
+			tokenQueue.Dequeue();
+			ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position());
+			expr.Parse(ref tokenQueue);
+			this.childs.Add(expr);
+			token = tokenQueue.Peek();
+			if(token.Code() != TokenCode.right_bracket) {
+				HandleUnexpectedToken(ref tokenQueue, token.Position());
+				return;
+			}
+			tokenQueue.Dequeue();
+			token = tokenQueue.Peek();
+		}
 	}
 
 	public override void PrintInfo(string indent) {
