@@ -293,10 +293,11 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-				token = new Token(this.pos, TokenCode.logic_op, "==");
-			else
+				Console.WriteLine($"Unexpected token at {this.pos.Row()}, {this.pos.Col()}.");
+			else {
 				token = new Token(this.pos, TokenCode.one_line_body);
-			tokenQueue.Enqueue(token);
+				tokenQueue.Enqueue(token);
+			}
 		}
 	}
 
