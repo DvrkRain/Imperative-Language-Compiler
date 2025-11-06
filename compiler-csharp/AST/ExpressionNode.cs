@@ -111,6 +111,13 @@ public class ExpressionNode : Node {
 							tokenQueue.Dequeue();
 							break;
 
+						case TokenCode.right_parenthesis:
+							if(parenthesised) {
+								tokenQueue.Dequeue();
+								step = 1;
+							} else step = 4;
+							break;
+
 						default:
 							step = 4;
 							break;
