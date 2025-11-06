@@ -41,6 +41,7 @@ public class ForNode : Node {
 		// Reverse (optional)
 		if(token.Code() == TokenCode.reverse_statement) {
 			this.reversed = true;
+			tokenQueue.Dequeue();
 			token = tokenQueue.Peek();
 		}
 		// 'loop' keyword
