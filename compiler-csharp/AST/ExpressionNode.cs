@@ -202,7 +202,8 @@ public class ExpressionNode : Node {
 						case TokenCode.right_parenthesis:
 							if(parenthesised)
 								tokenQueue.Dequeue();
-							step = 4;
+							this.left = new ExpressionNode(this.position, this.left, this.operation, this.priorityCode, this.right);
+							step = 1;
 							break;
 
 						case TokenCode.dot:
