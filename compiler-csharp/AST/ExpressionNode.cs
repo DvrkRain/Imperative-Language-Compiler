@@ -46,11 +46,9 @@ public class ExpressionNode : Node {
 							break;
 
 						case TokenCode.identifier:
-							this.left = new PrimaryNode(token.Position(), token.Value());
-							tokenQueue.Dequeue();
-							token = tokenQueue.Peek();
-							if(token.Code() == TokenCode.dot)
-								this.left = new FieldAccessNode(token.Position(), this.left);
+							FieldAccessNode access = new FieldAccessNode(token.Position());
+							access.Parse(ref tokenQueue);
+							this.left = access;
 							break;
 
 						case TokenCode.constant_value:
@@ -135,12 +133,9 @@ public class ExpressionNode : Node {
 							break;
 
 						case TokenCode.identifier:
-							tokenQueue.Dequeue();
-							if(tokenQueue.Peek().Code() == TokenCode.dot)
-								this.right = new FieldAccessNode(token.Position(), this.right);
-							else {
-								this.right = new PrimaryNode(token.Position(), token.Value());
-							}
+							FieldAccessNode access = new FieldAccessNode(token.Position());
+							access.Parse(ref tokenQueue);
+							this.left = access;
 							break;
 
 						case TokenCode.constant_value:
