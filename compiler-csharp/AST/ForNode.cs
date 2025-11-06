@@ -1,7 +1,8 @@
 using Data.Objects;
 namespace AST {
 public class ForNode : Node {
-	public ForNode(Position pos) : base(pos) { }
+	protected bool reversed;
+	public ForNode(Position pos) : base(pos) => this.reversed = false;
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Iterator identifier
@@ -37,6 +38,11 @@ public class ForNode : Node {
 			token = tokenQueue.Dequeue();
 		}
 
+		// Reverse (optional)
+		if(token.Code() == TokenCode.reverse_statement) {
+			this.reversed = true;
+			token = tokenQueue.Peek();
+		}
 		// 'loop' keyword
 		if(token.Code() != TokenCode.loop_start) {
 			HandleUnexpectedToken(ref tokenQueue, token.Position());
