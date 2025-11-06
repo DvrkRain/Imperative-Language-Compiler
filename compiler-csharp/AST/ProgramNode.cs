@@ -64,6 +64,7 @@ public class ProgramNode : Node {
 					}
 					tokenQueue.Dequeue();
 					AssignmentNode asgnmt = new AssignmentNode(token.Position(), access);
+					asgnmt.Parse(ref tokenQueue);
 					this.childs.Add(asgnmt);
 					break;
 					
