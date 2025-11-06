@@ -68,6 +68,7 @@ public class ExpressionNode : Node {
 						case TokenCode.term_op:
 							this.left = new PrimaryNode(token.Position(), 0);
 							this.operation = (string)token.Value();
+							this.priorityCode = token.Code();
 							step = 2;
 							tokenQueue.Dequeue();
 							break;
@@ -143,6 +144,13 @@ public class ExpressionNode : Node {
 						case TokenCode.constant_value:
 							this.right = new PrimaryNode(token.Position(), token.Value());
 							tokenQueue.Dequeue();
+							break;
+
+						case TokenCode.dot:
+							this.right = new ExpressionNode(token.Position(), this.right, ".", TokenCode.dot);
+							tokenQueue.Dequeue();
+							this.left.Parse(ref tokenQueue);
+							step = 1;
 							break;
 
 						default:
