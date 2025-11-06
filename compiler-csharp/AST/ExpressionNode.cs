@@ -140,7 +140,6 @@ public class ExpressionNode : Node {
 								this.right = new FieldAccessNode(token.Position(), this.right);
 							else {
 								this.right = new PrimaryNode(token.Position(), token.Value());
-								tokenQueue.Dequeue();
 							}
 							break;
 
