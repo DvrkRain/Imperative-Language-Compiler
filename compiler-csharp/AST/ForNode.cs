@@ -49,6 +49,7 @@ public class ForNode : Node {
 			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 
 		// Loop body
 		ProgramNode nested = new ProgramNode(token.Position());
