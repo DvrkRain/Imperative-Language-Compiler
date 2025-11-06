@@ -46,6 +46,7 @@ public class ExpressionNode : Node {
 							break;
 
 						case TokenCode.identifier:
+							tokenQueue.Dequeue();
 							FieldAccessNode access = new FieldAccessNode(token.Position());
 							access.Parse(ref tokenQueue);
 							this.left = access;
@@ -133,6 +134,7 @@ public class ExpressionNode : Node {
 							break;
 
 						case TokenCode.identifier:
+							tokenQueue.Dequeue();
 							FieldAccessNode access = new FieldAccessNode(token.Position());
 							access.Parse(ref tokenQueue);
 							this.left = access;
