@@ -41,7 +41,7 @@ namespace LexicalAnalyzer
 
 				if(SeparatorList.Contains(nextChar)) {
 					this.currentState.AddToken(ref TokenStream);
-					Token separatorToken = new Token(cursor, SeparatorList.Code(nextChar), nextChar);
+					Token separatorToken = new Token(cursor, SeparatorList.Code(nextChar), char.ToString(nextChar));
 					TokenStream.Enqueue(separatorToken);
 
 				} else if (nextChar == '\n') {
