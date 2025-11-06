@@ -97,7 +97,6 @@ public class ProgramNode : Node {
 					break;
 
 				case TokenCode.else_statement:
-					tokenQueue.Dequeue();
 					parsing = false;
 					break;
 
@@ -107,6 +106,7 @@ public class ProgramNode : Node {
 					break;
 
 				case TokenCode.semicolon:
+					tokenQueue.Dequeue();
 					break;
 
 				default:

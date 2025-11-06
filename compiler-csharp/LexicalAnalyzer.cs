@@ -280,7 +280,10 @@ namespace LexicalAnalyzer
 				this.single = false;
 				return StateCode.Start;
 			}
-			if (symbol == '=') return StateCode.Start;
+			if (symbol == '=') {
+				this.single = false;
+				return StateCode.Start;
+			}
 			if (char.IsDigit(symbol)) return StateCode.Integer;
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
