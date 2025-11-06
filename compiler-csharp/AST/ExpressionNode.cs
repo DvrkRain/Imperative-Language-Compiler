@@ -207,7 +207,7 @@ public class ExpressionNode : Node {
 						case TokenCode.dot:
 							this.right = new ExpressionNode(token.Position(), this.right, ".", TokenCode.dot);
 							tokenQueue.Dequeue();
-							this.left.Parse(ref tokenQueue);
+							this.right.Parse(ref tokenQueue);
 							break;
 
 						default:
