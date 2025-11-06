@@ -26,8 +26,9 @@ public class IfNode : Node {
 		this.childs.Add(branch);
 
 		// 'else' keyword and respective body (optional)
-		token = tokenQueue.Dequeue();
+		token = tokenQueue.Peek();
 		if(token.Code() == TokenCode.else_statement) {
+			tokenQueue.Dequeue();
 			branch = new ProgramNode(tokenQueue.Peek().Position());
 			branch.Parse(ref tokenQueue);
 			this.childs.Add(branch);
