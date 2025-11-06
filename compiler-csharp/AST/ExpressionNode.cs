@@ -208,7 +208,6 @@ public class ExpressionNode : Node {
 							this.right = new ExpressionNode(token.Position(), this.right, ".", TokenCode.dot);
 							tokenQueue.Dequeue();
 							this.left.Parse(ref tokenQueue);
-							step = 1;
 							break;
 
 						default:
