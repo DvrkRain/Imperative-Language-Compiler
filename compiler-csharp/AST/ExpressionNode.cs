@@ -138,7 +138,7 @@ public class ExpressionNode : Node {
 							tokenQueue.Dequeue();
 							FieldAccessNode access = new FieldAccessNode(token.Position());
 							access.Parse(ref tokenQueue);
-							this.left = access;
+							this.right = access;
 							break;
 
 						case TokenCode.constant_value:
