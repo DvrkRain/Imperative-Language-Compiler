@@ -60,6 +60,7 @@ public class ExpressionNode : Node {
 
 						case TokenCode.logic_op when (string)token.Value() == "not":
 							this.left = new PrimaryNode(token.Position(), 0);
+							this.priorityCode = token.Code();
 							this.operation = (string)token.Value();
 							step = 2;
 							tokenQueue.Dequeue();
