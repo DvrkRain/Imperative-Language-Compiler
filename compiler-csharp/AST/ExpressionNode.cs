@@ -200,6 +200,16 @@ public class ExpressionNode : Node {
 							tokenQueue.Dequeue();
 							break;
 
+						case TokenCode.right_parenthesis:
+							if(parenthesised) {
+								tokenQueue.Dequeue();
+								step = 4;
+							} else {
+								HandleUnexpectedToken(ref tokenQueue, token.Position());
+								return;
+							}
+							break;
+
 						default:
 							step = 4;
 							break;
