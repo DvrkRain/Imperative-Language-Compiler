@@ -38,7 +38,7 @@ public class ArrayNode : Node {
 	}
 
         public override void PrintInfo(string indent) {
-			if (this.GetType().Name == "ArrayNode") Console.WriteLine($"ArrayNode(childs={this.childs.Count})");
+			if (this.GetType().Name == "ArrayNode") Console.WriteLine($"ArrayNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
             base.PrintInfo(indent);
         }
 }

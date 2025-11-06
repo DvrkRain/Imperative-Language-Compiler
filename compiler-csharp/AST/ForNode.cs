@@ -58,7 +58,7 @@ public class ForNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
 }

@@ -36,7 +36,7 @@ public class IfNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
 }
