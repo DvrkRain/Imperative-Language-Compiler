@@ -26,6 +26,7 @@ public class FieldAccessNode : Node {
 
 			if(token.Code() != TokenCode.right_parenthesis)
 				HandleUnexpectedToken(ref tokenQueue, token.Position());
+			tokenQueue.Dequeue();
 			return;
 		}
 		while(token.Code() == TokenCode.dot) {
