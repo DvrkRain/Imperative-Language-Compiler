@@ -1,9 +1,7 @@
 using Data.Objects;
 namespace AST {
 public class RoutineNode : Node {
-	PrimaryNode type;
-	public RoutineNode(Position pos) : base(pos) =>
-		this.type = new PrimaryNode(new Position(0,0), "");
+	public RoutineNode(Position pos) : base(pos) { }
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -48,7 +46,7 @@ public class RoutineNode : Node {
 			tokenQueue.Dequeue();
 			token = tokenQueue.Dequeue();
 			if(token.Code() == TokenCode.identifier || token.Code() == TokenCode.builtin_type)
-				this.type = new PrimaryNode(token.Position(), token.Value());
+				this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
 			token = tokenQueue.Peek();
 		}
 
@@ -79,7 +77,7 @@ public class RoutineNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "RoutineNode") Console.WriteLine($"RoutineNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), type={this.type != null})");
+		if (this.GetType().Name == "RoutineNode") Console.WriteLine($"RoutineNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()})");
 		base.PrintInfo(indent);
 	}
 }
