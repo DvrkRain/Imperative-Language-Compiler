@@ -146,13 +146,6 @@ public class ExpressionNode : Node {
 							tokenQueue.Dequeue();
 							break;
 
-						case TokenCode.dot:
-							this.right = new ExpressionNode(token.Position(), this.right, ".", TokenCode.dot);
-							tokenQueue.Dequeue();
-							this.left.Parse(ref tokenQueue);
-							step = 1;
-							break;
-
 						default:
 							step = 4;
 							break;
@@ -209,6 +202,13 @@ public class ExpressionNode : Node {
 							if(parenthesised)
 								tokenQueue.Dequeue();
 							step = 4;
+							break;
+
+						case TokenCode.dot:
+							this.right = new ExpressionNode(token.Position(), this.right, ".", TokenCode.dot);
+							tokenQueue.Dequeue();
+							this.left.Parse(ref tokenQueue);
+							step = 1;
 							break;
 
 						default:
