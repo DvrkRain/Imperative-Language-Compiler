@@ -153,6 +153,7 @@ public class ExpressionNode : Node {
 					break;
 
 				case 3:
+					if(initialized) return;
 					step = 2;
 					switch(token.Code()) {
 						case TokenCode.logic_op:
