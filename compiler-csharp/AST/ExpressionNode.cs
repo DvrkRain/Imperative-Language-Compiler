@@ -199,6 +199,7 @@ public class ExpressionNode : Node {
 							tokenQueue.Dequeue();
 							this.right = new ExpressionNode(token.Position(), this.right, (string)token.Value(), token.Code());
 							this.right.Parse(ref tokenQueue);
+							step = 3;
 							break;
 
 						case TokenCode.right_parenthesis:
