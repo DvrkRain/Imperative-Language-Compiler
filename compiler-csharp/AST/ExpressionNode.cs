@@ -170,6 +170,7 @@ public class ExpressionNode : Node {
 								tokenQueue.Dequeue();
 								this.right = new ExpressionNode(token.Position());
 								this.right.Parse(ref tokenQueue);
+								step = 3;
 							} else {
 								this.left = new ExpressionNode(this.position, this.left, this.operation, this.priorityCode, this.right);
 								this.priorityCode = token.Code();
@@ -190,6 +191,7 @@ public class ExpressionNode : Node {
 								tokenQueue.Dequeue();
 								this.right = new ExpressionNode(token.Position());
 								this.right.Parse(ref tokenQueue);
+								step = 3;
 							}
 							break;
 
