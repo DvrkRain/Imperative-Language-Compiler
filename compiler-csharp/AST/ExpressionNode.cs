@@ -57,8 +57,6 @@ public class ExpressionNode : Node {
 							this.left = new PrimaryNode(token.Position(), token.Value());
 							tokenQueue.Dequeue();
 							token = tokenQueue.Peek();
-							if(token.Code() == TokenCode.dot)
-								this.left = new FieldAccessNode(token.Position(), this.left);
 							break;
 
 						case TokenCode.logic_op when (string)token.Value() == "not":
@@ -87,9 +85,9 @@ public class ExpressionNode : Node {
 					switch(token.Code()) {
 						case TokenCode.dot:
 							this.left = new ExpressionNode(token.Position(), this.left, ".", TokenCode.dot);
+							tokenQueue.Dequeue();
 							this.left.Parse(ref tokenQueue);
 							step = 1;
-							tokenQueue.Dequeue();
 							break;
 
 						case TokenCode.logic_op:
