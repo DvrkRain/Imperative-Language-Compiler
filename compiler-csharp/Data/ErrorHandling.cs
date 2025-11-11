@@ -35,4 +35,8 @@ public static class ErrorHandling {
         _errorList.Add($"{invoker}: Unexpected token at {pos.Row()},{pos.Col()}.");
     }
 
+    public static void MismatchedParenthesis(Position pos, string invoker) {
+        _errorList.Add($"{invoker}: Mismatched parenthesis at {pos.Row()},{pos.Col()}.");
+    }
+
 }
