@@ -1,5 +1,5 @@
 using Data.Objects;
-// using Data.ErrorHandling;
+using Data.ErrorHandling;
 namespace AST;
 public class ExpressionNode : Node {
 	// private bool cnst;
@@ -47,8 +47,7 @@ public class ExpressionNode : Node {
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_parenthesis) {
 						if(operatorStack.Count() == 0) {
-							// ErrorHandling.Add($"Mismatched parenthesis at {this.position.Row()},{this.position.Col()}.");
-							Console.WriteLine("Mismatched parenthesis");
+							ErrorHandling.MismatchedParenthesis(token.Position(), this.GetType().Name);
 							return;
 						}
 						token = operatorStack.Pop();
@@ -117,9 +116,8 @@ public class ExpressionNode : Node {
 			}
 		}
 		while(operatorStack.Count() > 0) {
-			if(operatorStack.Peek().Code() == TokenCode.left_parenthesis) {
-				// ErrorHandling.Add($"Mismatched parenthesis at {this.position.Row()},{this.position.Col()}.");
-				Console.WriteLine("Mismatched parenthesis");
+			if((token = operatorStack.Peek()).Code() == TokenCode.left_parenthesis) {
+				ErrorHandling.MismatchedParenthesis(token.Position(), this.GetType().Name);
 				return;
 			}
 			token = operatorStack.Pop();
