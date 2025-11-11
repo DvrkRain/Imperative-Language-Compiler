@@ -6,7 +6,7 @@
 [Oo]bj/
 [Bb]in/
 test*.skb
-test*.txt
+*.txt
 
 # CSharp editor config
 .editorconfig

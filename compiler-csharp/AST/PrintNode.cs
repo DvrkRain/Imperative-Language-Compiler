@@ -1,5 +1,5 @@
 using Data.Objects;
-namespace AST {
+namespace AST;
 public class PrintNode : Node {
 	public PrintNode(Position pos) : base(pos) { }
 	
@@ -25,8 +25,7 @@ public class PrintNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "PrintNode") Console.WriteLine($"PrintNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "PrintNode") Console.WriteLine($"PrintNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
-}
 }

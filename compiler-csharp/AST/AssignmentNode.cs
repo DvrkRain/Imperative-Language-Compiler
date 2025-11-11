@@ -1,5 +1,5 @@
 using Data.Objects;
-namespace AST {
+namespace AST;
 public class AssignmentNode : Node {
 
 	public AssignmentNode(Position pos, Node identifier) : base(pos) =>
@@ -7,30 +7,23 @@ public class AssignmentNode : Node {
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
-		// Assignment sign
-		Token token = tokenQueue.Peek();
-		if(token.Code() != TokenCode.bare_assignment) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
-			return;
-		}
-		tokenQueue.Dequeue();
-
 		// Expression
+		Token token = tokenQueue.Peek();
 		ExpressionNode expr = new ExpressionNode(token.Position());
 		expr.Parse(ref tokenQueue);
 		this.childs.Add(expr);
 
 		// Semicolon
-		token = tokenQueue.Dequeue();
+		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.semicolon) {
 			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "AssignmentNode") Console.WriteLine($"AssignmentNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "AssignmentNode") Console.WriteLine($"AssignmentNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
-}
 }

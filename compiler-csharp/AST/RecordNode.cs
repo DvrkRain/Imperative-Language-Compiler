@@ -1,5 +1,5 @@
 using Data.Objects;
-namespace AST {
+namespace AST;
 public class RecordNode : Node {
 	public RecordNode(Position pos) : base(pos) { }
 
@@ -20,8 +20,7 @@ public class RecordNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "RecordNode") Console.WriteLine($"RecordNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "RecordNode") Console.WriteLine($"RecordNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
-}
 }
