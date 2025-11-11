@@ -10,3 +10,6 @@ test*.skb
 
 # CSharp editor config
 .editorconfig
+
+# Undefined
+*.sln.*

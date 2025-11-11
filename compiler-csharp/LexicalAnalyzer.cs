@@ -236,7 +236,7 @@ namespace LexicalAnalyzer
 		}
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
-			Token token = new Token(this.pos, TokenCode.logic_op);
+			Token token = new Token(this.pos, TokenCode.relation_op);
 			if (single)
 				token.Value("<");
 			else
@@ -264,7 +264,7 @@ namespace LexicalAnalyzer
 		}
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
-			Token token = new Token(this.pos, TokenCode.logic_op);
+			Token token = new Token(this.pos, TokenCode.relation_op);
 			if (single)
 				token.Value(">");
 			else
@@ -302,7 +302,7 @@ namespace LexicalAnalyzer
 				Console.WriteLine($"Unexpected token at {this.pos.Row()}, {this.pos.Col()}.");
 			else {
 				if(state)
-					token = new Token(this.pos, TokenCode.logic_op, "==");
+					token = new Token(this.pos, TokenCode.relation_op, "==");
 				else
 					token = new Token(this.pos, TokenCode.one_line_body);
 				tokenQueue.Enqueue(token);
@@ -333,7 +333,7 @@ namespace LexicalAnalyzer
 			if (single)
 				token = new Token(this.pos, TokenCode.factor_op, "/");
 			else
-				token = new Token(this.pos, TokenCode.logic_op, "/=");
+				token = new Token(this.pos, TokenCode.relation_op, "/=");
 			tokenQueue.Enqueue(token);
 		}
 	}
