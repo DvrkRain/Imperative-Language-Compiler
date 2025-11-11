@@ -1,4 +1,8 @@
+using System.Security.Cryptography;
+using Data.ErrorHandling;
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class WhileNode : Node {
 	public WhileNode(Position pos) : base(pos) { }
@@ -28,4 +32,22 @@ public class WhileNode : Node {
 		if (this.GetType().Name == "WhileNode") Console.WriteLine($"WhileNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
+
+    public override void Verify(ref SymbolTable symTab) 
+    {
+        base.Verify(ref symTab);
+        if (this.childs.Count == 0) {
+            ErrorHandling.Add($"WhileNode({this.position.Row()}, {this.position.Col()}): No children");
+            return;
+        }
+
+        if (this.childs[0] is not ExpressionNode) {
+            ErrorHandling.Add($"WhileNode({this.position.Row()}, {this.position.Col()}): Expected ExpressionNode");
+        }
+        
+        ExpressionNode expr = (ExpressionNode)this.childs[0];
+        
+        // TODO: check for expression type
+        return;
+    }
 }
