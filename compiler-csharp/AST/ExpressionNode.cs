@@ -35,34 +35,28 @@ public class ExpressionNode : Node {
 					step = 1;
 					switch(token.Code()) {
 						case TokenCode.left_parenthesis:
-							if(parenthesised) {
-								this.left = new ExpressionNode(token.Position());
-								this.left.Parse(ref tokenQueue);
-							} else {
-								parenthesised = true;
-								step = 0;
-								tokenQueue.Dequeue();
-							}
+							tokenQueue.Dequeue();
+							this.left = new ExpressionNode(token.Position());
+							this.left.Parse(ref tokenQueue);
+							parenthesised = true;
 							break;
 
 						case TokenCode.identifier:
-							this.left = new PrimaryNode(token.Position(), token.Value());
 							tokenQueue.Dequeue();
-							token = tokenQueue.Peek();
-							if(token.Code() == TokenCode.dot)
-								this.left = new FieldAccessNode(token.Position(), this.left);
+							FieldAccessNode access = new FieldAccessNode(token.Position());
+							access.Parse(ref tokenQueue);
+							this.left = access;
 							break;
 
 						case TokenCode.constant_value:
 							this.left = new PrimaryNode(token.Position(), token.Value());
 							tokenQueue.Dequeue();
 							token = tokenQueue.Peek();
-							if(token.Code() == TokenCode.dot)
-								this.left = new FieldAccessNode(token.Position(), this.left);
 							break;
 
 						case TokenCode.logic_op when (string)token.Value() == "not":
 							this.left = new PrimaryNode(token.Position(), 0);
+							this.priorityCode = token.Code();
 							this.operation = (string)token.Value();
 							step = 2;
 							tokenQueue.Dequeue();
@@ -71,6 +65,7 @@ public class ExpressionNode : Node {
 						case TokenCode.term_op:
 							this.left = new PrimaryNode(token.Position(), 0);
 							this.operation = (string)token.Value();
+							this.priorityCode = token.Code();
 							step = 2;
 							tokenQueue.Dequeue();
 							break;
@@ -87,9 +82,9 @@ public class ExpressionNode : Node {
 					switch(token.Code()) {
 						case TokenCode.dot:
 							this.left = new ExpressionNode(token.Position(), this.left, ".", TokenCode.dot);
+							tokenQueue.Dequeue();
 							this.left.Parse(ref tokenQueue);
 							step = 1;
-							tokenQueue.Dequeue();
 							break;
 
 						case TokenCode.logic_op:
@@ -114,6 +109,13 @@ public class ExpressionNode : Node {
 							this.operation = (string)token.Value();
 							this.priorityCode = token.Code();
 							tokenQueue.Dequeue();
+							break;
+
+						case TokenCode.right_parenthesis:
+							if(parenthesised) {
+								tokenQueue.Dequeue();
+								step = 1;
+							} else step = 4;
 							break;
 
 						default:
@@ -138,12 +140,9 @@ public class ExpressionNode : Node {
 
 						case TokenCode.identifier:
 							tokenQueue.Dequeue();
-							if(tokenQueue.Peek().Code() == TokenCode.dot)
-								this.right = new FieldAccessNode(token.Position(), this.right);
-							else {
-								this.right = new PrimaryNode(token.Position(), token.Value());
-								tokenQueue.Dequeue();
-							}
+							FieldAccessNode access = new FieldAccessNode(token.Position());
+							access.Parse(ref tokenQueue);
+							this.right = access;
 							break;
 
 						case TokenCode.constant_value:
@@ -158,6 +157,7 @@ public class ExpressionNode : Node {
 					break;
 
 				case 3:
+					if(initialized) return;
 					step = 2;
 					switch(token.Code()) {
 						case TokenCode.logic_op:
@@ -173,6 +173,7 @@ public class ExpressionNode : Node {
 								tokenQueue.Dequeue();
 								this.right = new ExpressionNode(token.Position());
 								this.right.Parse(ref tokenQueue);
+								step = 3;
 							} else {
 								this.left = new ExpressionNode(this.position, this.left, this.operation, this.priorityCode, this.right);
 								this.priorityCode = token.Code();
@@ -193,6 +194,7 @@ public class ExpressionNode : Node {
 								tokenQueue.Dequeue();
 								this.right = new ExpressionNode(token.Position());
 								this.right.Parse(ref tokenQueue);
+								step = 3;
 							}
 							break;
 
@@ -200,7 +202,21 @@ public class ExpressionNode : Node {
 							tokenQueue.Dequeue();
 							this.right = new ExpressionNode(token.Position(), this.right, (string)token.Value(), token.Code());
 							this.right.Parse(ref tokenQueue);
+							step = 3;
+							break;
+
+						case TokenCode.right_parenthesis:
+							if(parenthesised) {
+								tokenQueue.Dequeue();
+								step = 1;
+							} else step = 4;
+							break;
+
+						case TokenCode.dot:
+							this.right = new ExpressionNode(token.Position(), this.right, ".", TokenCode.dot);
 							tokenQueue.Dequeue();
+							this.right.Parse(ref tokenQueue);
+							step = 1;
 							break;
 
 						default:
@@ -216,8 +232,11 @@ public class ExpressionNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ExpressionNode") Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, operation={this.operation}, initialized={this.initialized}, const={this.cnst}, left?={this.left != null}, right?={this.right != null})");
+		if (this.left != null) this.childs.Add(this.left);
+		if (this.right != null) this.childs.Add(this.right);
+		if (this.GetType().Name == "ExpressionNode") Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), operation='{this.operation}', initialized={this.initialized}, const={this.cnst}, left?={this.left != null}, right?={this.right != null})");
 		base.PrintInfo(indent);
+		this.childs.Clear();
 	}
 }
 }

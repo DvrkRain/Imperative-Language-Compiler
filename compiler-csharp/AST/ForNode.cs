@@ -1,7 +1,8 @@
 using Data.Objects;
 namespace AST {
 public class ForNode : Node {
-	public ForNode(Position pos) : base(pos) { }
+	protected bool reversed;
+	public ForNode(Position pos) : base(pos) => this.reversed = false;
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Iterator identifier
@@ -34,14 +35,21 @@ public class ForNode : Node {
 			expr = new ExpressionNode(token.Position());
 			expr.Parse(ref tokenQueue);
 			this.childs.Add(expr);
-			token = tokenQueue.Dequeue();
+			token = tokenQueue.Peek();
 		}
 
+		// Reverse (optional)
+		if(token.Code() == TokenCode.reverse_statement) {
+			this.reversed = true;
+			tokenQueue.Dequeue();
+			token = tokenQueue.Peek();
+		}
 		// 'loop' keyword
 		if(token.Code() != TokenCode.loop_start) {
 			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 
 		// Loop body
 		ProgramNode nested = new ProgramNode(token.Position());
@@ -50,7 +58,7 @@ public class ForNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count})");
+		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
 }

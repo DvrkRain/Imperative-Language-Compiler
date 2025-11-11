@@ -41,7 +41,7 @@ namespace LexicalAnalyzer
 
 				if(SeparatorList.Contains(nextChar)) {
 					this.currentState.AddToken(ref TokenStream);
-					Token separatorToken = new Token(cursor, SeparatorList.Code(nextChar));
+					Token separatorToken = new Token(cursor, SeparatorList.Code(nextChar), char.ToString(nextChar));
 					TokenStream.Enqueue(separatorToken);
 
 				} else if (nextChar == '\n') {
@@ -273,14 +273,19 @@ namespace LexicalAnalyzer
 	}
 
 	public class EqualState : ChoosingState {
-		public EqualState(Position pos) : base(pos) { }
+		bool state;
+		public EqualState(Position pos) : base(pos) => this.state = false;
 		
 		public override StateCode ProccessSymbol(char symbol) {
 			if (symbol == '>') {
 				this.single = false;
 				return StateCode.Start;
 			}
-			if (symbol == '=') return StateCode.Start;
+			if (symbol == '=') {
+				this.single = false;
+				this.state = true;
+				return StateCode.Start;
+			}
 			if (char.IsDigit(symbol)) return StateCode.Integer;
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
@@ -293,10 +298,14 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-				token = new Token(this.pos, TokenCode.logic_op, "==");
-			else
-				token = new Token(this.pos, TokenCode.one_line_body);
-			tokenQueue.Enqueue(token);
+				Console.WriteLine($"Unexpected token at {this.pos.Row()}, {this.pos.Col()}.");
+			else {
+				if(state)
+					token = new Token(this.pos, TokenCode.logic_op, "==");
+				else
+					token = new Token(this.pos, TokenCode.one_line_body);
+				tokenQueue.Enqueue(token);
+			}
 		}
 	}
 
