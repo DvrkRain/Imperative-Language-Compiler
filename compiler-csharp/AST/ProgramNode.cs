@@ -68,7 +68,8 @@ public class ProgramNode : Node {
 					if(token.Code() != TokenCode.bare_assignment) {
 						HandleUnexpectedToken(ref tokenQueue, token.Position());
 						parsing = false;
-					}
+                        break;
+                    }
 					tokenQueue.Dequeue();
 					AssignmentNode asgnmt = new AssignmentNode(token.Position(), access);
 					asgnmt.Parse(ref tokenQueue);
