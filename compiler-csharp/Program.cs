@@ -1,5 +1,7 @@
 ﻿using Data.Objects;
 using Data.IO;
+using Data.ErrorHandling;
+
 using LexicalAnalyzer;
 using AST;
 
@@ -14,7 +16,8 @@ namespace Compiler
 				Console.WriteLine("Usage: compiler-csharp <source-file-path> <tree-option>");
 				return;
 			}
-
+            
+            // Read file
 			string filepath = args[0];
 			FileReader reader = new FileReader(filepath);
 			Console.WriteLine("Filename: " + reader.filename);
@@ -24,19 +27,31 @@ namespace Compiler
 			Lexer lexer = new Lexer(reader);
 			lexer.ParseFile(ref stream);
 
-			int treeOption = int.Parse(args[1]);
-			if (treeOption == 0) {
-				while (stream.Count > 0) {
-					Token token = stream.Dequeue();
-					token.PrintInfo();
-				}
+            if (ErrorHandling.Count() > 0) {
+                Console.WriteLine("Lexical Analysis errors:");
+                ErrorHandling.PrintErrors();
+                return;
+            }
 
-				return;
-			}
+            int treeOption = int.Parse(args[1]);
+            if (treeOption == 0) {
+                while (stream.Count > 0) {
+                    Token token = stream.Dequeue();
+                    token.PrintInfo();
+                }
 
-			// Syntax analysis
+                return;
+            }
+
+            // Syntax analysis
 			ProgramNode AST = new ProgramNode(new Position(0,0));
 			AST.Parse(ref stream);
+            
+            if (ErrorHandling.Count() > 0) {
+                Console.WriteLine("Syntax Analysis errors:");
+                ErrorHandling.PrintErrors();
+                return;
+            }
 
 			if (treeOption == 1) AST.PrintInfo("");
 
