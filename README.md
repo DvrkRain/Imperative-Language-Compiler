@@ -17,7 +17,8 @@ Compiler for Imperative Language written on C#
 
 ## Features
 
-None atm.
+- Lexical Analysis
+- Syntax Analysis (New!)
 
 ## Expected language examples
 
