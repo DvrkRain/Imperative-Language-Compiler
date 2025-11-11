@@ -36,6 +36,7 @@ public class ExpressionNode : Node {
 					break;
 
 				case TokenCode.comma:
+                    if (operatorStack.Count() == 0) return;
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_parenthesis) {
 						token = operatorStack.Pop();
