@@ -1,5 +1,5 @@
 using Data.Objects;
-namespace AST {
+namespace AST;
 public class AssignmentNode : Node {
 
 	public AssignmentNode(Position pos, Node identifier) : base(pos) =>
@@ -26,5 +26,4 @@ public class AssignmentNode : Node {
 		if (this.GetType().Name == "AssignmentNode") Console.WriteLine($"AssignmentNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
-}
 }

@@ -1,6 +1,6 @@
 using Data.Objects;
 using Exceptions;
-namespace AST {
+namespace AST;
 public abstract class Node {
 	protected Position position;
 
@@ -38,5 +38,4 @@ public abstract class Node {
 		}
 	}
 
-}
 }

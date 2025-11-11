@@ -1,6 +1,5 @@
 using Data.Objects;
-
-namespace AST {
+namespace AST;
 public class TypeNode : Node {
 	
 	public TypeNode(Position pos) : base(pos) { }
@@ -67,5 +66,4 @@ public class TypeNode : Node {
 		if (this.GetType().Name == "TypeNode") Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
-}
 }

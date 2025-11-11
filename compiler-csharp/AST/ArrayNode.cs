@@ -1,5 +1,5 @@
 using Data.Objects;
-namespace AST {
+namespace AST;
 public class ArrayNode : Node {
 	public ArrayNode(Position pos) : base(pos) {}
 
@@ -37,9 +37,9 @@ public class ArrayNode : Node {
 		}
 	}
 
-        public override void PrintInfo(string indent) {
-			if (this.GetType().Name == "ArrayNode") Console.WriteLine($"ArrayNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-            base.PrintInfo(indent);
-        }
-}
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "ArrayNode")
+			Console.WriteLine($"ArrayNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
 }
