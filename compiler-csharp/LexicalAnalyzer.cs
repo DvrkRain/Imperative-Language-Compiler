@@ -1,6 +1,6 @@
+using Data.ErrorHandling;
 using Data.Objects;
 using Data.IO;
-using Exceptions;
 
 
 namespace LexicalAnalyzer
@@ -67,63 +67,64 @@ namespace LexicalAnalyzer
 				} else
 					nextStateCode = this.currentState.ProccessSymbol(nextChar);
 
-				try {
-					if (nextStateCode != this.currentStateCode) {
-						if(!SeparatorList.Contains(nextChar))
-							this.currentState.AddToken(ref TokenStream);
+                try {
+                    if (nextStateCode != this.currentStateCode) {
+                        if (!SeparatorList.Contains(nextChar))
+                            this.currentState.AddToken(ref TokenStream);
 
-						this.currentStateCode = nextStateCode;
+                        this.currentStateCode = nextStateCode;
 
-						switch(nextStateCode) {
-							case StateCode.Start:
-								this.currentState = new StartState();
-								break;
+                        switch (nextStateCode) {
+                            case StateCode.Start:
+                                this.currentState = new StartState();
+                                break;
 
-							case StateCode.Identifier:
-								this.currentState = new IdentifierState(cursor, nextChar);
-								break;
+                            case StateCode.Identifier:
+                                this.currentState = new IdentifierState(cursor, nextChar);
+                                break;
 
-							case StateCode.Integer:
-								this.currentState = new IntegerState(cursor, nextChar);
-								break;
+                            case StateCode.Integer:
+                                this.currentState = new IntegerState(cursor, nextChar);
+                                break;
 
-							case StateCode.Less:
-								this.currentState = new LessState(cursor);
-								break;
+                            case StateCode.Less:
+                                this.currentState = new LessState(cursor);
+                                break;
 
-							case StateCode.Greater:
-								this.currentState = new GreaterState(cursor);
-								break;
+                            case StateCode.Greater:
+                                this.currentState = new GreaterState(cursor);
+                                break;
 
-							case StateCode.EqualOrOneliner:
-								this.currentState = new EqualState(cursor);
-								break;
+                            case StateCode.EqualOrOneliner:
+                                this.currentState = new EqualState(cursor);
+                                break;
 
-							case StateCode.DotOrRange:
-								this.currentState = new DotOrRangeState(cursor);
-								break;
+                            case StateCode.DotOrRange:
+                                this.currentState = new DotOrRangeState(cursor);
+                                break;
 
-							case StateCode.ColonOrAssignment:
-								this.currentState = new ColonOrAssignmentState(cursor);
-								break;
+                            case StateCode.ColonOrAssignment:
+                                this.currentState = new ColonOrAssignmentState(cursor);
+                                break;
 
-							case StateCode.DivOrNotEqual:
-								this.currentState = new DivOrNotEqualState(cursor);
-								break;
+                            case StateCode.DivOrNotEqual:
+                                this.currentState = new DivOrNotEqualState(cursor);
+                                break;
 
-							case StateCode.Error:
-								this.currentState = new StartState();
-								this.currentStateCode = StateCode.Start;
-								throw new UnexpectedTokenException(cursor, "LexicalAnalyzer");
-						}
-					}
-				} catch (UnexpectedTokenException e) {
-					e.Info();
-				} catch (Exception) {
-					Console.WriteLine("Unexpected Exception. Terminating...");
-					System.Environment.Exit(1);
-				}
-				cursor.NextChar();
+                            case StateCode.Error:
+                                this.currentState = new StartState();
+                                this.currentStateCode = StateCode.Start;
+                                
+                                ErrorHandling.UnexpectedTokenException(cursor, "LexicalAnalyzer");
+                                break;
+                        }
+                    }
+                } catch (Exception e) {
+                    Console.WriteLine(e.Message);
+                    System.Environment.Exit(1);
+                }
+
+                cursor.NextChar();
 			}
 			TokenStream.Enqueue(new Token(cursor, TokenCode.end_of_file));
         }
