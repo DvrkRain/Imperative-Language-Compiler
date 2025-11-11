@@ -1,9 +1,15 @@
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class AssignmentNode : Node {
 
-	public AssignmentNode(Position pos, Node identifier) : base(pos) =>
+	public AssignmentNode(Position pos, FieldAccessNode identifier) : base(pos) =>
 		this.childs.Add(identifier);
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "AssignmentNode") Console.WriteLine($"AssignmentNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -22,8 +28,10 @@ public class AssignmentNode : Node {
 		tokenQueue.Dequeue();
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "AssignmentNode") Console.WriteLine($"AssignmentNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
+	public override void Verify(ref SymbolTable symTab) {
+		base(ref symTab);
+
+		if(this.childs[0].Type() != this.childs[1].Type()) 
+			ErrorHandling.Add($"AssignmentNode({this.position.Row()},{this.position.Col()}): Trying to put value of type {this.childs[1].Type()} to variable of type {this.childs[0].Type()}.");
 	}
 }
