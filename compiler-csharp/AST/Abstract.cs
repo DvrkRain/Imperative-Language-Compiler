@@ -1,5 +1,6 @@
 using Data.Objects;
 using Data.ErrorHandling;
+using SemanticAnalyzer.SymbolTable;
 
 namespace AST;
 public abstract class Node {
@@ -11,8 +12,6 @@ public abstract class Node {
     protected Node(Position pos) : this() => this.position = pos;
 
     public List<Node> GetChilds() => this.childs;
-
-    public abstract void Parse(ref Queue<Token> tokenQueue);
 
     protected void HandleUnexpectedToken(ref Queue<Token> tokenQueue, Position pos) {
         ErrorHandling.UnexpectedTokenException(pos, this.GetType().Name);
@@ -42,4 +41,9 @@ public abstract class Node {
         }
     }
 
+    public abstract void Parse(ref Queue<Token> tokenQueue);
+	public virtual void Verify(ref SymbolTable symTab) {
+		foreach(var child in childs)
+			child.Verify(ref symTab);
+	}
 }
