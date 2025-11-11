@@ -1,10 +1,12 @@
 # IDE files and directories
 .vscode
+.idea
 
 # Files and directories
 [Oo]bj/
 [Bb]in/
 test*.skb
+test*.txt
 
 # CSharp editor config
 .editorconfig
