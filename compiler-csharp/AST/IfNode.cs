@@ -1,6 +1,5 @@
 using Data.Objects;
-
-namespace AST {
+namespace AST;
 public class IfNode : Node {
 	public IfNode(Position pos) : base(pos) { }
 
@@ -26,12 +25,17 @@ public class IfNode : Node {
 		this.childs.Add(branch);
 
 		// 'else' keyword and respective body (optional)
-		token = tokenQueue.Dequeue();
+		token = tokenQueue.Peek();
 		if(token.Code() == TokenCode.else_statement) {
+			tokenQueue.Dequeue();
 			branch = new ProgramNode(tokenQueue.Peek().Position());
 			branch.Parse(ref tokenQueue);
 			this.childs.Add(branch);
 		}
 	}
-}
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
 }

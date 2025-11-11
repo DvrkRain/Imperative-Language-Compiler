@@ -90,6 +90,14 @@ public class Scope
         
         return Parent?.LookupEntry(name);
     }
+
+    public bool IsInsideType(ScopeType scopeType) {
+        if (this.scopeType == scopeType) return true;
+
+        if (Parent != null) return Parent.IsInsideType(scopeType);
+
+        return false;
+    }
 }
 
 public class SymbolTable
@@ -152,17 +160,7 @@ public class SymbolTable
         return _currentScope.LookupEntry(name);
     }
 
-    public bool IsInsideLoop() {
-        // Alternative use:
-        // .GetCurrentScope().scopeType == ScopeType.Loop
-
-        return _currentScope.scopeType == ScopeType.Loop;
-    }
-
-    public bool IsInsideFunction() {
-        // Alternative use:
-        // .GetCurrentScope().scopeType == ScopeType.FunctionBody
-
-        return _currentScope.scopeType == ScopeType.FunctionBody;
+    public bool IsInsideType(ScopeType scopeType) {
+        return _currentScope.IsInsideType(scopeType);
     }
 }

@@ -1,6 +1,6 @@
+using Data.ErrorHandling;
 using Data.Objects;
 using Data.IO;
-using Exceptions;
 
 
 namespace LexicalAnalyzer
@@ -41,7 +41,7 @@ namespace LexicalAnalyzer
 
 				if(SeparatorList.Contains(nextChar)) {
 					this.currentState.AddToken(ref TokenStream);
-					Token separatorToken = new Token(cursor, SeparatorList.Code(nextChar));
+					Token separatorToken = new Token(cursor, SeparatorList.Code(nextChar), char.ToString(nextChar));
 					TokenStream.Enqueue(separatorToken);
 
 				} else if (nextChar == '\n') {
@@ -67,63 +67,64 @@ namespace LexicalAnalyzer
 				} else
 					nextStateCode = this.currentState.ProccessSymbol(nextChar);
 
-				try {
-					if (nextStateCode != this.currentStateCode) {
-						if(!SeparatorList.Contains(nextChar))
-							this.currentState.AddToken(ref TokenStream);
+                try {
+                    if (nextStateCode != this.currentStateCode) {
+                        if (!SeparatorList.Contains(nextChar))
+                            this.currentState.AddToken(ref TokenStream);
 
-						this.currentStateCode = nextStateCode;
+                        this.currentStateCode = nextStateCode;
 
-						switch(nextStateCode) {
-							case StateCode.Start:
-								this.currentState = new StartState();
-								break;
+                        switch (nextStateCode) {
+                            case StateCode.Start:
+                                this.currentState = new StartState();
+                                break;
 
-							case StateCode.Identifier:
-								this.currentState = new IdentifierState(cursor, nextChar);
-								break;
+                            case StateCode.Identifier:
+                                this.currentState = new IdentifierState(cursor, nextChar);
+                                break;
 
-							case StateCode.Integer:
-								this.currentState = new IntegerState(cursor, nextChar);
-								break;
+                            case StateCode.Integer:
+                                this.currentState = new IntegerState(cursor, nextChar);
+                                break;
 
-							case StateCode.Less:
-								this.currentState = new LessState(cursor);
-								break;
+                            case StateCode.Less:
+                                this.currentState = new LessState(cursor);
+                                break;
 
-							case StateCode.Greater:
-								this.currentState = new GreaterState(cursor);
-								break;
+                            case StateCode.Greater:
+                                this.currentState = new GreaterState(cursor);
+                                break;
 
-							case StateCode.EqualOrOneliner:
-								this.currentState = new EqualState(cursor);
-								break;
+                            case StateCode.EqualOrOneliner:
+                                this.currentState = new EqualState(cursor);
+                                break;
 
-							case StateCode.DotOrRange:
-								this.currentState = new DotOrRangeState(cursor);
-								break;
+                            case StateCode.DotOrRange:
+                                this.currentState = new DotOrRangeState(cursor);
+                                break;
 
-							case StateCode.ColonOrAssignment:
-								this.currentState = new ColonOrAssignmentState(cursor);
-								break;
+                            case StateCode.ColonOrAssignment:
+                                this.currentState = new ColonOrAssignmentState(cursor);
+                                break;
 
-							case StateCode.DivOrNotEqual:
-								this.currentState = new DivOrNotEqualState(cursor);
-								break;
+                            case StateCode.DivOrNotEqual:
+                                this.currentState = new DivOrNotEqualState(cursor);
+                                break;
 
-							case StateCode.Error:
-								this.currentState = new StartState();
-								this.currentStateCode = StateCode.Start;
-								throw new UnexpectedTokenException(cursor, "LexicalAnalyzer");
-						}
-					}
-				} catch (UnexpectedTokenException e) {
-					e.Info();
-				} catch (Exception) {
-					Console.WriteLine("Unexpected Exception. Terminating...");
-					System.Environment.Exit(1);
-				}
-				cursor.NextChar();
+                            case StateCode.Error:
+                                this.currentState = new StartState();
+                                this.currentStateCode = StateCode.Start;
+                                
+                                ErrorHandling.UnexpectedTokenException(cursor, "LexicalAnalyzer");
+                                break;
+                        }
+                    }
+                } catch (Exception e) {
+                    Console.WriteLine(e.Message);
+                    System.Environment.Exit(1);
+                }
+
+                cursor.NextChar();
 			}
 			TokenStream.Enqueue(new Token(cursor, TokenCode.end_of_file));
         }
@@ -235,7 +236,7 @@ namespace LexicalAnalyzer
 		}
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
-			Token token = new Token(this.pos, TokenCode.logic_op);
+			Token token = new Token(this.pos, TokenCode.relation_op);
 			if (single)
 				token.Value("<");
 			else
@@ -263,7 +264,7 @@ namespace LexicalAnalyzer
 		}
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
-			Token token = new Token(this.pos, TokenCode.logic_op);
+			Token token = new Token(this.pos, TokenCode.relation_op);
 			if (single)
 				token.Value(">");
 			else
@@ -273,14 +274,19 @@ namespace LexicalAnalyzer
 	}
 
 	public class EqualState : ChoosingState {
-		public EqualState(Position pos) : base(pos) { }
+		bool state;
+		public EqualState(Position pos) : base(pos) => this.state = false;
 		
 		public override StateCode ProccessSymbol(char symbol) {
 			if (symbol == '>') {
 				this.single = false;
 				return StateCode.Start;
 			}
-			if (symbol == '=') return StateCode.Start;
+			if (symbol == '=') {
+				this.single = false;
+				this.state = true;
+				return StateCode.Start;
+			}
 			if (char.IsDigit(symbol)) return StateCode.Integer;
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
@@ -293,10 +299,14 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-				token = new Token(this.pos, TokenCode.logic_op, "==");
-			else
-				token = new Token(this.pos, TokenCode.one_line_body);
-			tokenQueue.Enqueue(token);
+				Console.WriteLine($"Unexpected token at {this.pos.Row()}, {this.pos.Col()}.");
+			else {
+				if(state)
+					token = new Token(this.pos, TokenCode.relation_op, "==");
+				else
+					token = new Token(this.pos, TokenCode.one_line_body);
+				tokenQueue.Enqueue(token);
+			}
 		}
 	}
 
@@ -323,7 +333,7 @@ namespace LexicalAnalyzer
 			if (single)
 				token = new Token(this.pos, TokenCode.factor_op, "/");
 			else
-				token = new Token(this.pos, TokenCode.logic_op, "/=");
+				token = new Token(this.pos, TokenCode.relation_op, "/=");
 			tokenQueue.Enqueue(token);
 		}
 	}
