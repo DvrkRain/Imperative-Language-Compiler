@@ -1,6 +1,5 @@
 using Data.Objects;
-
-namespace AST {
+namespace AST;
 public class PrimaryNode : Node {
 	public object value;
 
@@ -13,5 +12,4 @@ public class PrimaryNode : Node {
 		if (this.GetType().Name == "PrimaryNode") Console.WriteLine($"PrimaryNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), value={this.value})");
 		base.PrintInfo(indent);
 	}
-}
 }

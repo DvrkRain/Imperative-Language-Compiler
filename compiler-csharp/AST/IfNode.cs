@@ -1,6 +1,5 @@
 using Data.Objects;
-
-namespace AST {
+namespace AST;
 public class IfNode : Node {
 	public IfNode(Position pos) : base(pos) { }
 
@@ -39,5 +38,4 @@ public class IfNode : Node {
 		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
-}
 }

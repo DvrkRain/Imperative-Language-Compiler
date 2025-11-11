@@ -71,8 +71,21 @@ namespace Data.Objects {
 		end_of_file,
 	}
 
+	public static class Precedence {
+		private static Dictionary<TokenCode, int> _precedence =
+			new Dictionary<TokenCode, int>() {
+				{TokenCode.dot			, 0},
+				{TokenCode.factor_op	, 1},
+				{TokenCode.term_op		, 2},
+				{TokenCode.relation_op	, 3},
+				{TokenCode.logic_op		, 4},
+			};
+
+		public static int Order(TokenCode key) => _precedence[key];
+	}
+
 	public static class DedicatedWords {
-		private static Dictionary<string,TokenCode> dedicatedWords =
+		private static Dictionary<string,TokenCode> _dedicatedWords =
 			new Dictionary<string,TokenCode>() {
 				{"integer",		TokenCode.builtin_type},
 				{"real",		TokenCode.builtin_type},
@@ -105,13 +118,13 @@ namespace Data.Objects {
 			};
 
 		public static bool Keys(string key) =>
-			dedicatedWords.ContainsKey(key);
+			_dedicatedWords.ContainsKey(key);
 
 		public static bool Vals(TokenCode code) =>
-			dedicatedWords.ContainsValue(code);
+			_dedicatedWords.ContainsValue(code);
 
 		public static TokenCode Code(string key) =>
-			dedicatedWords[key];
+			_dedicatedWords[key];
 	}
 
 	public static class SeparatorList {

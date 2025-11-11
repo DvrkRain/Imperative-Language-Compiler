@@ -1,5 +1,5 @@
 using Data.Objects;
-namespace AST {
+namespace AST;
 public class RoutineNode : Node {
 	public RoutineNode(Position pos) : base(pos) { }
 
@@ -80,5 +80,4 @@ public class RoutineNode : Node {
 		if (this.GetType().Name == "RoutineNode") Console.WriteLine($"RoutineNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()})");
 		base.PrintInfo(indent);
 	}
-}
 }

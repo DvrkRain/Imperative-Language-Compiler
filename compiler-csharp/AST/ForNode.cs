@@ -1,5 +1,5 @@
 using Data.Objects;
-namespace AST {
+namespace AST;
 public class ForNode : Node {
 	protected bool reversed;
 	public ForNode(Position pos) : base(pos) => this.reversed = false;
@@ -61,5 +61,4 @@ public class ForNode : Node {
 		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
-}
 }

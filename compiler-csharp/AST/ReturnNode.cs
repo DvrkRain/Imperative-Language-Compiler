@@ -1,5 +1,5 @@
 using Data.Objects;
-namespace AST {
+namespace AST;
 public class ReturnNode : Node {
 	public ReturnNode(Position pos) : base(pos) { }
 
@@ -20,5 +20,4 @@ public class ReturnNode : Node {
 		if (this.GetType().Name == "ReturnNode") Console.WriteLine($"ReturnNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
-}
 }

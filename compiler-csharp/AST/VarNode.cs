@@ -1,5 +1,5 @@
 using Data.Objects;
-namespace AST {
+namespace AST;
 public class VarNode : Node {
 	protected string type;
 	protected bool explicit_type;
@@ -67,5 +67,4 @@ public class VarNode : Node {
 		if (this.GetType().Name == "VarNode") Console.WriteLine($"VarNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), type={this.type}, explicit={this.explicit_type})");
 		base.PrintInfo(indent);
 	}
-}
 }
