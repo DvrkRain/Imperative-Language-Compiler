@@ -18,6 +18,9 @@ namespace Data.Objects {
 		public void NextChar() {
 			this.col += 1;
 		}
+
+		public override string ToString() =>
+			$"({this.row},{this.col})";
 	}
 
 	public enum TokenCode {

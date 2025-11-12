@@ -44,6 +44,7 @@ namespace Compiler
             }
 
             // Syntax analysis
+			ErrorHandling.ChangeStage("Syntax analysis");
 			ProgramNode AST = new ProgramNode(new Position(0,0));
 			AST.Parse(ref stream);
             
@@ -56,6 +57,7 @@ namespace Compiler
 			if (treeOption == 1) AST.PrintInfo("");
 
 			// Semantic analysis
+			ErrorHandling.ChangeStage("Semantic analysis");
 		}
 	}
 }

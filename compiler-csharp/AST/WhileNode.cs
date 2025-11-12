@@ -37,12 +37,12 @@ public class WhileNode : Node {
     {
         base.Verify(ref symTab);
         if (this.childs.Count == 0) {
-            ErrorHandling.Add($"WhileNode({this.position.Row()}, {this.position.Col()}): No children");
+            ErrorHandling.Add("WhileNode", this.position, "No children");
             return;
         }
 
         if (this.childs[0] is not ExpressionNode) {
-            ErrorHandling.Add($"WhileNode({this.position.Row()}, {this.position.Col()}): Expected ExpressionNode");
+            ErrorHandling.Add($"WhileNode", this.position, "Expected ExpressionNode");
         }
         
         ExpressionNode expr = (ExpressionNode)this.childs[0];
