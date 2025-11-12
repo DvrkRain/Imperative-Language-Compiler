@@ -4,7 +4,9 @@ using SemanticAnalyzer.SymbolTable;
 
 namespace AST;
 public abstract class Node {
-    protected Position position;
+    protected Position position{get; set;}
+	public Position Position() =>
+		this.position;
 
     protected List<Node> childs;
 
@@ -14,11 +16,11 @@ public abstract class Node {
     public List<Node> GetChilds() => this.childs;
 
     protected void HandleUnexpectedToken(ref Queue<Token> tokenQueue, Position pos) {
-        ErrorHandling.UnexpectedTokenException(pos, this.GetType().Name);
+        ErrorHandling.UnexpectedTokenException(this.GetType().Name, pos);
         Token token = tokenQueue.Peek();
         while (token.Code() != TokenCode.semicolon && tokenQueue.Count > 0) {
             if (token.Code() == TokenCode.end_of_file) {
-                ErrorHandling.UnexpectedEOF(token.Position(), this.GetType().Name);
+                ErrorHandling.UnexpectedEOF(this.GetType().Name, token.Position());
                 break;
             }
 

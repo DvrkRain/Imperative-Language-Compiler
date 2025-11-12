@@ -115,7 +115,7 @@ namespace LexicalAnalyzer
                                 this.currentState = new StartState();
                                 this.currentStateCode = StateCode.Start;
                                 
-                                ErrorHandling.UnexpectedTokenException(cursor, "LexicalAnalyzer");
+                                ErrorHandling.UnexpectedTokenException("LexicalAnalyzer", cursor);
                                 break;
                         }
                     }

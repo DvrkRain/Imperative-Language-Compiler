@@ -1,4 +1,5 @@
 using Data.Objects;
+using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class ArrayNode : Node {
@@ -51,16 +52,15 @@ public class ArrayNode : Node {
 		int current_child_index = 0;
 		if(this.childs[current_child_index] is ExpressionNode expr) {
 			if(expr.Type() != "integer") {
-				ErrorHandling.Add($"ArrayNode({this.position.Row()},{this.position.Col()}): Expression representing array size should be of type integer.");
+				ErrorHandling.Add("ArrayNode", this.childs[current_child_index].Position(), "Expression representing array size should be of type integer.");
 			}
 			current_child_index = 1;
 		}
 
 		if(this.childs[current_child_index] is PrimaryNode identifier) {
-			if(symTab.FindEntry((string)identifier.value) is not SemanticAnalyzer.SymbolTable.Type) {
-				ErrorHandling.Add($"ArrayNode({this.position.Row()},{this.position.Col()}): Expected type identifier.");
-			}
+			if(symTab.FindEntry((string)identifier.value) is not SemanticAnalyzer.SymbolTable.Type)
+				ErrorHandling.Add("ArrayNode", this.childs[current_child_index].Position(), "Expected type identifier.");
 		} else
-			ErrorHandling.Add($"ArrayNode({this.position.Row()},{this.position.Col()}): Expected the PrimaryNode, got {this.childs[current_child_index].GetType().Name}.");
+			ErrorHandling.Add("ArrayNode", this.position, $"Expected the PrimaryNode, got {this.childs[current_child_index].GetType().Name}.");
 	}
 }

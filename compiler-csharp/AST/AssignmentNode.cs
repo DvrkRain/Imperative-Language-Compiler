@@ -1,4 +1,5 @@
 using Data.Objects;
+using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class AssignmentNode : Node {
@@ -29,9 +30,9 @@ public class AssignmentNode : Node {
 	}
 
 	public override void Verify(ref SymbolTable symTab) {
-		base(ref symTab);
+		base.Verify(ref symTab);
 
 		if(this.childs[0].Type() != this.childs[1].Type()) 
-			ErrorHandling.Add($"AssignmentNode({this.position.Row()},{this.position.Col()}): Trying to put value of type {this.childs[1].Type()} to variable of type {this.childs[0].Type()}.");
+			ErrorHandling.Add("AssignmentNode", this.position, $"Trying to put value of type {this.childs[1].Type()} to variable of type {this.childs[0].Type()}.");
 	}
 }
