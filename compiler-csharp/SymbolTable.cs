@@ -80,7 +80,11 @@ public class Scope
         _entries[entry.Name] = entry;
         return true;
     }
-    
+
+    public Entry? LookupLocalEntry(string name) {
+        return _entries.TryGetValue(name, out Entry entry) ? entry : null;
+    }
+
     public Entry? LookupEntry(string name)
     {
         if (_entries.TryGetValue(name, out var entry))
@@ -155,8 +159,8 @@ public class SymbolTable
         return _currentScope.AddEntry(entry);
     }
     
-    public Entry? FindEntry(string name)
-    {
+    public Entry? FindEntry(string name, bool local = false) {
+        if (local) return _currentScope.LookupLocalEntry(name);
         return _currentScope.LookupEntry(name);
     }
 
