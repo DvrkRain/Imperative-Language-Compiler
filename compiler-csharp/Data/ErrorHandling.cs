@@ -40,6 +40,7 @@ public static class ErrorHandling {
 
 
     public static void PrintErrors() {
+        Console.WriteLine($"{_stage}:");
         foreach (string error in _errorList) {
             Console.WriteLine(error);
         }

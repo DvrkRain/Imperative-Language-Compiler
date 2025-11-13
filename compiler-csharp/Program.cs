@@ -23,12 +23,12 @@ namespace Compiler
 			Console.WriteLine("Filename: " + reader.filename);
 
 			// Lexic analysis
+            ErrorHandling.ChangeStage("Lexical analysis");
 			Queue<Token> stream = new Queue<Token>();
 			Lexer lexer = new Lexer(reader);
 			lexer.ParseFile(ref stream);
 
             if (ErrorHandling.Count() > 0) {
-                Console.WriteLine("Lexical Analysis errors:");
                 ErrorHandling.PrintErrors();
                 return;
             }

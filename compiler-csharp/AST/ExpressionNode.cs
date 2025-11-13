@@ -48,7 +48,7 @@ public class ExpressionNode : Node {
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_parenthesis) {
 						if(operatorStack.Count() == 0) {
-							ErrorHandling.MismatchedParenthesis(token.Position(), this.GetType().Name);
+							ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
 							return;
 						}
 						token = operatorStack.Pop();
@@ -118,7 +118,7 @@ public class ExpressionNode : Node {
 		}
 		while(operatorStack.Count() > 0) {
 			if((token = operatorStack.Peek()).Code() == TokenCode.left_parenthesis) {
-				ErrorHandling.MismatchedParenthesis(token.Position(), this.GetType().Name);
+				ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
 				return;
 			}
 			token = operatorStack.Pop();

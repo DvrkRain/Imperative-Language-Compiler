@@ -34,11 +34,11 @@ public abstract class Node {
 
         for (int i = 0; i < this.childs.Count; i++) {
             if (i == this.childs.Count - 1) {
-                Console.Write(indent + "└── ");
+                Console.Write(indent + "L---");
                 this.childs[i].PrintInfo(indent + "    ");
             } else {
-                Console.Write(indent + "├── ");
-                this.childs[i].PrintInfo(indent + "│   ");
+                Console.Write(indent + "+---");
+                this.childs[i].PrintInfo(indent + "|   ");
             }
         }
     }
