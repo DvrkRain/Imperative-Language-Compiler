@@ -7,7 +7,7 @@ public static class ErrorHandling {
     private static List<string> _errorList = new();
 
 	private static void Error(string invoker, Position pos, string message) =>
-		_errorList.Add($"[{_stage}] {invoker}\t{pos.ToString()}:\t{message}");
+		_errorList.Add($"{invoker}\t{pos.ToString()}:\t{message}");
 
     public static void Add(string invoker, Position pos, string message) =>
         ErrorHandling.Error(invoker, pos, message);
@@ -40,7 +40,7 @@ public static class ErrorHandling {
 
 
     public static void PrintErrors() {
-        Console.WriteLine($"{_stage}:");
+		Console.WriteLine($"There are errors on {_stage} stage.");
         foreach (string error in _errorList) {
             Console.WriteLine(error);
         }
