@@ -48,6 +48,5 @@ public class WhileNode : Node {
         ExpressionNode expr = (ExpressionNode)this.childs[0];
         
         // TODO: check for expression type
-        return;
     }
 }

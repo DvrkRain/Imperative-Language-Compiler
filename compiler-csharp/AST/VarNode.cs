@@ -78,7 +78,7 @@ public class VarNode : Node {
             case 1:
                 // Check child type
                 if (this.childs[0] is not PrimaryNode) {
-                    ErrorHandling.Add($"VarNode({this.position.Row()}, {this.position.Col()}): Expected PrimaryNode");
+                    ErrorHandling.Add("VarNode", this.position, "Expected PrimaryNode");
                     return;
                 }
                 
@@ -86,13 +86,13 @@ public class VarNode : Node {
                 
                 // Check for redeclaration 
                 if (symTab.FindEntry((string)primary.value, true) != null) {
-                    ErrorHandling.Add($"VarNode({this.position.Row()}, {this.position.Col()}): Variable redeclaration exception");
+                    ErrorHandling.Add("VarNode", this.position, "Variable redeclaration exception");
                     return;
                 }
                 
                 // Check for variable type
                 if (symTab.FindEntry(this.type) == null) {
-                    ErrorHandling.Add($"VarNode({this.position.Row()}, {this.position.Col()}): Variable type not declared");
+                    ErrorHandling.Add("VarNode", this.position, "Variable type not declared");
                     return;
                 }
 
@@ -102,37 +102,31 @@ public class VarNode : Node {
             
             case 2:
                 if (this.childs[0] is not PrimaryNode) {
-                    ErrorHandling.Add($"VarNode({this.position.Row()}, {this.position.Col()}): Expected PrimaryNode");
+                    ErrorHandling.Add("VarNode", this.position, "Expected PrimaryNode");
                     return;
                 }
                 
                 primary = (PrimaryNode)this.childs[0];
 
                 if (symTab.FindEntry((string)primary.value, true) != null) {
-                    ErrorHandling.Add($"VarNode({this.position.Row()}, {this.position.Col()}): Variable redeclaration exception");
+                    ErrorHandling.Add("VarNode", this.position, "Variable redeclaration exception");
                     return;
                 }
 
                 if (symTab.FindEntry(this.type) == null) {
-                    ErrorHandling.Add($"VarNode({this.position.Row()}, {this.position.Col()}): Variable type not declared");
+                    ErrorHandling.Add("VarNode", this.position, "Variable type not declared");
                     return;
                 }
 
                 if (this.childs[1] is not ExpressionNode) {
-                    ErrorHandling.Add($"VarNode({this.position.Row()}, {this.position.Col()}): Expected ExpressionNode");
+                    ErrorHandling.Add("VarNode", this.position, "Expected ExpressionNode");
                     return;
                 }
-                
+
                 ExpressionNode expr = (ExpressionNode)this.childs[1];
-                
-                
-
-                
-
-
                 break;
             default:
-                ErrorHandling.Add($"VarNode({this.position.Row()}, {this.position.Col()}): Unexpected number of childs: {this.childs.Count}");
+                ErrorHandling.Add("VarNode", this.position, $"Unexpected number of childs: {this.childs.Count}");
                 break;
         }
 
