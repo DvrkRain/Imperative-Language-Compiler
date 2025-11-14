@@ -93,7 +93,10 @@ public class ExpressionNode : Node {
 					break;
 
 				case TokenCode.right_bracket:
-					if(_index) return;
+					if(_index) {
+						parsing = false;
+						break;
+					}
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_bracket) {
 						if(operatorStack.Peek().Code() == TokenCode.left_parenthesis) {
@@ -155,7 +158,6 @@ public class ExpressionNode : Node {
 					break;
 
 				case OperationNode oper:
-					Console.WriteLine(evaluationStack.Count());
 					if(evaluationStack.Count() >= oper.ArgNum()) {
 						for(int i=0; i<oper.ArgNum(); i++) {
 							oper.AddArgument(evaluationStack.Pop());
