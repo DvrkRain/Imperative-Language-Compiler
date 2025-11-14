@@ -28,6 +28,7 @@ public class FieldAccessNode : Node {
 			token = tokenQueue.Peek();
 		}
 		while(token.Code() == TokenCode.left_bracket) {
+			tokenQueue.Dequeue();
 			ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position());
 			expr.Parse(ref tokenQueue);
 			this.childs.Add(expr);
@@ -36,6 +37,7 @@ public class FieldAccessNode : Node {
 				HandleUnexpectedToken(ref tokenQueue, token.Position());
 				return;
 			}
+			tokenQueue.Dequeue();
 			token = tokenQueue.Peek();
 		}
 	}
