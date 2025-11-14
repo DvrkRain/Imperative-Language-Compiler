@@ -173,6 +173,10 @@ public class ExpressionNode : Node {
 					return;
 			}
 		}
+		this.childs.Clear();
+		while(evaluationStack.Count() > 0) {
+			this.childs.Add(evaluationStack.Pop());
+		}
 	}
 
 
