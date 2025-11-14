@@ -77,11 +77,13 @@ namespace Data.Objects {
 	public static class Precedence {
 		private static Dictionary<TokenCode, int> _precedence =
 			new Dictionary<TokenCode, int>() {
-				{TokenCode.dot			, 0},
-				{TokenCode.factor_op	, 1},
-				{TokenCode.term_op		, 2},
-				{TokenCode.relation_op	, 3},
-				{TokenCode.logic_op		, 4},
+				{TokenCode.dot				, 0},
+				{TokenCode.factor_op		, 1},
+				{TokenCode.term_op			, 2},
+				{TokenCode.relation_op		, 3},
+				{TokenCode.logic_op			, 4},
+				{TokenCode.left_parenthesis	, 5},
+				{TokenCode.left_bracket		, 5},
 			};
 
 		public static int Order(TokenCode key) => _precedence[key];
