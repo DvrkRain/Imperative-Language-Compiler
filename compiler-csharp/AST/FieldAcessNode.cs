@@ -29,7 +29,7 @@ public class FieldAccessNode : Node {
 		}
 		while(token.Code() == TokenCode.left_bracket) {
 			tokenQueue.Dequeue();
-			ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position());
+			ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position(), true);
 			expr.Parse(ref tokenQueue);
 			this.childs.Add(expr);
 			token = tokenQueue.Peek();
