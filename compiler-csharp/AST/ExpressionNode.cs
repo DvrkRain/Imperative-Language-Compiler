@@ -3,12 +3,15 @@ using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class ExpressionNode : Node {
+	protected bool _index;
 	private string _type;
 
 	public string Type() => this._type;
 
-	public ExpressionNode(Position pos) : base(pos) =>
+	public ExpressionNode(Position pos, bool enclosed = false) : base(pos) {
 		this._type = "void";
+		this._index = enclosed;
+	}
 
 	public override void PrintInfo(string indent) {
 		if (this.GetType().Name == "ExpressionNode") Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()})");
@@ -67,14 +70,15 @@ public class ExpressionNode : Node {
 					break;
 
 				case TokenCode.right_parenthesis:
+					if(_index) return;
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_parenthesis) {
+						token = operatorStack.Pop();
+						this.childs.Add(new OperationNode(token.Position(), token.Code(), 2, (string)token.Value()));
 						if(operatorStack.Count() == 0) {
 							ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
 							return;
 						}
-						token = operatorStack.Pop();
-						this.childs.Add(new OperationNode(token.Position(), token.Code(), 2, (string)token.Value()));
 					}
 					operatorStack.Pop();
 					if(operatorStack.Count() > 0 && operatorStack.Peek().Code() == TokenCode.identifier) {
@@ -98,9 +102,13 @@ public class ExpressionNode : Node {
 						}
 						token = operatorStack.Pop();
 						this.childs.Add(new OperationNode(token.Position(), token.Code(), 2, (string)token.Value()));
+						if(operatorStack.Count() == 0) {
+							ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
+							return;
+						}
 					}
 					token = operatorStack.Pop();
-					this.childs.Add(new OperationNode(token.Position(), token.Code(), 2, (string)token.Value()));
+					this.childs.Add(new OperationNode(token.Position(), token.Code(), 1, (string)token.Value()));
 					break;
 
 				// Operators
