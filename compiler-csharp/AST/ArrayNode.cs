@@ -24,7 +24,7 @@ public class ArrayNode : Node {
 		// Expression(optional) and right bracket
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.right_bracket) {
-			ExpressionNode expr = new ExpressionNode(token.Position());
+			ExpressionNode expr = new ExpressionNode(token.Position(), true);
 			expr.Parse(ref tokenQueue);
 			this.childs.Add(expr);
 			token = tokenQueue.Dequeue();
