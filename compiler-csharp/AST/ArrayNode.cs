@@ -19,20 +19,11 @@ public class ArrayNode : Node {
 			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
-		tokenQueue.Dequeue();
 
 		// Expression(optional) and right bracket
-		token = tokenQueue.Peek();
-		if(token.Code() != TokenCode.right_bracket) {
-			ExpressionNode expr = new ExpressionNode(token.Position());
-			expr.Parse(ref tokenQueue);
-			this.childs.Add(expr);
-			token = tokenQueue.Dequeue();
-			if(token.Code() != TokenCode.right_bracket) {
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
-				return;
-			}
-		} else tokenQueue.Dequeue();
+		ExpressionNode expr = new ExpressionNode(token.Position());
+		expr.Parse(ref tokenQueue);
+		this.childs.Add(expr);
 
 		// Typename
 		token = tokenQueue.Peek();
