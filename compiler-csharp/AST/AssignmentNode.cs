@@ -32,7 +32,7 @@ public class AssignmentNode : Node {
 	public override void Verify(ref SymbolTable symTab) {
 		base.Verify(ref symTab);
 
-		if(this.childs[0].Type() != this.childs[1].Type()) 
-			ErrorHandling.Add("AssignmentNode", this.position, $"Trying to put value of type {this.childs[1].Type()} to variable of type {this.childs[0].Type()}.");
+		// if(this.childs[0].Type() != this.childs[1].Type()) 
+		// 	ErrorHandling.Add("AssignmentNode", this.position, $"Trying to put value of type {this.childs[1].Type()} to variable of type {this.childs[0].Type()}.");
 	}
 }

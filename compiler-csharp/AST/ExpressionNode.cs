@@ -155,16 +155,17 @@ public class ExpressionNode : Node {
 					break;
 
 				case OperationNode oper:
+					Console.WriteLine(evaluationStack.Count());
 					if(evaluationStack.Count() >= oper.ArgNum()) {
 						for(int i=0; i<oper.ArgNum(); i++) {
 							oper.AddArgument(evaluationStack.Pop());
 						}
 					} else if (evaluationStack.Count() == 0) {
 						ErrorHandling.Add(this.GetType().Name, oper.Position(), $"Operation {oper.Operation()} does not have enough arguments.");
-					} else if (oper.Code() == TokenCode.term_op) {
+					} else if (oper.Code() == TokenCode.term_op || (oper.Code() == TokenCode.logic_op && oper.Operation() == "not")) {
 						oper.AddArgument(evaluationStack.Pop());
-					} else if (oper.Code() == TokenCode.logic_op && oper.Operation() == "not") {
-						oper.AddArgument(evaluationStack.Pop());
+					} else {
+						ErrorHandling.Add(this.GetType().Name, oper.Position(), $"Operation {oper.Operation()} does not have enough arguments.");
 					}
 					evaluationStack.Push(oper);
 					break;
