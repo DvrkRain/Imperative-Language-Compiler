@@ -1,4 +1,5 @@
 using Data.Objects;
+using Data.ErrorHandling;
 namespace AST;
 public class RoutineNode : Node {
 	public RoutineNode(Position pos) : base(pos) { }
@@ -47,6 +48,8 @@ public class RoutineNode : Node {
 			token = tokenQueue.Dequeue();
 			if(token.Code() == TokenCode.identifier || token.Code() == TokenCode.builtin_type)
 				this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
+			else
+				ErrorHandling.UnexpectedTokenException(this.GetType().Name, token.Position());
 			token = tokenQueue.Peek();
 		}
 
