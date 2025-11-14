@@ -70,7 +70,6 @@ public class ExpressionNode : Node {
 					break;
 
 				case TokenCode.right_parenthesis:
-					if(_index) return;
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_parenthesis) {
 						token = operatorStack.Pop();
@@ -94,6 +93,7 @@ public class ExpressionNode : Node {
 					break;
 
 				case TokenCode.right_bracket:
+					if(_index) return;
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_bracket) {
 						if(operatorStack.Peek().Code() == TokenCode.left_parenthesis) {
