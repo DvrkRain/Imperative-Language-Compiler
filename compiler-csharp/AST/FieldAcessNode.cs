@@ -43,7 +43,7 @@ public class FieldAccessNode : Node {
 	}
 
 
-	public override void Verify(ref SymbolTable symTab) {
-		base.Verify(ref symTab);
+	public override void Verify() {
+		base.Verify();
 	}
 }

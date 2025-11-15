@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
@@ -71,65 +72,82 @@ public class VarNode : Node {
 		base.PrintInfo(indent);
 	}
 
-    public override void Verify(ref SymbolTable symTab) {
-        base.Verify(ref symTab);
-
-        switch (this.childs.Count) {
-            case 1:
-                // Check child type
-                if (this.childs[0] is not PrimaryNode) {
-                    ErrorHandling.Add("VarNode", this.position, "Expected PrimaryNode");
-                    return;
-                }
-                
+    public override void Verify() {
+        base.Verify();
+        
+        // Variable declaration looks as follows:
+        // - var `Identifier` : `Type` [is `Expression`]
+        // - var `Identifier` is `Expression`
+        
+        // `Identifier` -> PrimaryNode
+        // `Type` -> this.type
+        // `Expression` -> ExpressionNode
+        
+        // We expect 2 setups:
+        switch (this.childs.Count()) {
+            case 1: // PrimaryNode
+                if (!VerifyIdentifier() || !VerifyType()) return;
                 PrimaryNode primary = (PrimaryNode)this.childs[0];
-                
-                // Check for redeclaration 
-                if (symTab.FindEntry((string)primary.value, true) != null) {
-                    ErrorHandling.Add("VarNode", this.position, "Variable redeclaration exception");
-                    return;
-                }
-                
-                // Check for variable type
-                if (symTab.FindEntry(this.type) == null) {
-                    ErrorHandling.Add("VarNode", this.position, "Variable type not declared");
-                    return;
-                }
 
-                Variable var = new Variable((string)primary.value, this.type);
-                symTab.DeclareEntry(var);
+                SymbolTable.DeclareEntry(new Variable((string)primary.value, this.type));
                 break;
             
-            case 2:
-                if (this.childs[0] is not PrimaryNode) {
-                    ErrorHandling.Add("VarNode", this.position, "Expected PrimaryNode");
-                    return;
-                }
-                
+            case 2: // PrimaryNode + ExpressionNode
+                if (!VerifyIdentifier() || !VerifyType() || !VerifyExpression()) return;
                 primary = (PrimaryNode)this.childs[0];
+                ExpressionNode expression = (ExpressionNode)this.childs[1];
 
-                if (symTab.FindEntry((string)primary.value, true) != null) {
-                    ErrorHandling.Add("VarNode", this.position, "Variable redeclaration exception");
-                    return;
-                }
-
-                if (symTab.FindEntry(this.type) == null) {
-                    ErrorHandling.Add("VarNode", this.position, "Variable type not declared");
-                    return;
-                }
-
-                if (this.childs[1] is not ExpressionNode) {
-                    ErrorHandling.Add("VarNode", this.position, "Expected ExpressionNode");
-                    return;
-                }
-
-                ExpressionNode expr = (ExpressionNode)this.childs[1];
+                SymbolTable.DeclareEntry(new Variable((string)primary.value, this.type, expression));
+                // TODO: put expression value if possible
                 break;
             default:
-                ErrorHandling.Add("VarNode", this.position, $"Unexpected number of childs: {this.childs.Count}");
-                break;
+                ErrorHandling.Add("VarNode", this.position, $"Expected 1 or 2 childs, got {this.childs.Count()}");
+                return;
+        }
+    }
+
+    private bool VerifyIdentifier() {
+        // Check child type
+        if (this.childs[0] is not PrimaryNode) {
+            ErrorHandling.Add("VarNode", this.position, "Expected PrimaryNode");
+            return false;
+        }
+                
+        PrimaryNode primary = (PrimaryNode)this.childs[0];
+                
+        // Check for redeclaration 
+        if (SymbolTable.FindEntry((string)primary.value, true) != null) {
+            ErrorHandling.Add("VarNode", this.position, "Variable redeclaration exception");
+            return false;
         }
 
+        return true;
+    }
 
+    private bool VerifyType() {
+        // Check for variable type
+        if (SymbolTable.FindEntry(this.type) == null && this.type != "void") {
+            ErrorHandling.Add("VarNode", this.position, "Variable type not declared");
+            return false;
+        }
+        return true;
+    }
+
+    private bool VerifyExpression() {
+        if (this.childs[1] is not ExpressionNode) {
+            ErrorHandling.Add("VarNode", this.position, "Expected ExpressionNode");
+            return false;
+        }
+
+        ExpressionNode expr = (ExpressionNode)this.childs[1];
+        
+        // Since this method called only in 2nd setup
+        // We can use 1st child w/o doubts
+        
+        PrimaryNode primary = (PrimaryNode)this.childs[0];
+                
+        // TODO: Add check variable type and expression type matching
+
+        return true;
     }
 }
