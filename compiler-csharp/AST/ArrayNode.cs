@@ -46,8 +46,8 @@ public class ArrayNode : Node {
 	}
 
 	
-	public override void Verify(ref SymbolTable symTab) {
-		base.Verify(ref symTab);
+	public override void Verify() {
+		base.Verify();
 
 		int current_child_index = 0;
 		if(this.childs[current_child_index] is ExpressionNode expr) {
@@ -58,7 +58,7 @@ public class ArrayNode : Node {
 		}
 
 		if(this.childs[current_child_index] is PrimaryNode identifier) {
-			if(symTab.FindEntry((string)identifier.value) is not SemanticAnalyzer.SymbolTable.Type)
+			if(SymbolTable.FindEntry((string)identifier.value) is not SemanticAnalyzer.SymbolTable.Type)
 				ErrorHandling.Add("ArrayNode", this.childs[current_child_index].Position(), "Expected type identifier.");
 		} else
 			ErrorHandling.Add("ArrayNode", this.position, $"Expected the PrimaryNode, got {this.childs[current_child_index].GetType().Name}.");

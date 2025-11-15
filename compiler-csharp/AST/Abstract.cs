@@ -44,8 +44,8 @@ public abstract class Node {
     }
 
     public abstract void Parse(ref Queue<Token> tokenQueue);
-	public virtual void Verify(ref SymbolTable symTab) {
+	public virtual void Verify() {
 		foreach(var child in childs)
-			child.Verify(ref symTab);
+			child.Verify();
 	}
 }

@@ -4,6 +4,7 @@ using Data.ErrorHandling;
 
 using LexicalAnalyzer;
 using AST;
+using SemanticAnalyzer.SymbolTable;
 
 namespace Compiler
 {
@@ -57,6 +58,7 @@ namespace Compiler
 			if (treeOption == 1) AST.PrintInfo("");
 
 			// Semantic analysis
+            SymbolTable.InitializeSymbolTable();
 			ErrorHandling.ChangeStage("Semantic analysis");
 		}
 	}

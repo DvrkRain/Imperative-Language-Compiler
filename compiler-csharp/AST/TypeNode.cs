@@ -1,4 +1,7 @@
+using Data.ErrorHandling;
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class TypeNode : Node {
 	
@@ -66,4 +69,26 @@ public class TypeNode : Node {
 		if (this.GetType().Name == "TypeNode") Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
+
+    public override void Verify() {
+        base.Verify();
+        
+        // Type declaration looks as follows:
+        // type `Identifier` is `Type`
+        
+        // `Identifier` ->  PrimaryNode
+        
+        // Type can be
+        // - PrimitiveType (integer, real, boolean) -> PrimaryNode
+        // - UserType (ArrayType, RecordType)-> ArrayNode, RecordNode
+        // - Identifier -> PrimaryNode
+        
+        // Thus, we expect childs to be
+        // PrimaryNode + (PrimaryNode/ArrayNode/RecordNode)
+
+        if (this.childs.Count() != 2) {
+            ErrorHandling.Add("TypeNode", this.position, $"Expected to have 2 childs, got {this.childs.Count()}");
+            return;
+        }
+    }
 }

@@ -29,8 +29,8 @@ public class AssignmentNode : Node {
 		tokenQueue.Dequeue();
 	}
 
-	public override void Verify(ref SymbolTable symTab) {
-		base.Verify(ref symTab);
+	public override void Verify() {
+		base.Verify();
 
 		// if(this.childs[0].Type() != this.childs[1].Type()) 
 		// 	ErrorHandling.Add("AssignmentNode", this.position, $"Trying to put value of type {this.childs[1].Type()} to variable of type {this.childs[0].Type()}.");

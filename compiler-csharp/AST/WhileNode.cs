@@ -33,20 +33,45 @@ public class WhileNode : Node {
 		base.PrintInfo(indent);
 	}
 
-    public override void Verify(ref SymbolTable symTab) 
+    public override void Verify() 
     {
-        base.Verify(ref symTab);
-        if (this.childs.Count == 0) {
-            ErrorHandling.Add("WhileNode", this.position, "No children");
+        base.Verify();
+        
+        // WhileLoop declaration looks like
+        // while `Expression` loop `Body` end
+        
+        // `Expression` -> ExpressionNode
+        // `Body` -> ProgramNode
+        
+        if (this.childs.Count != 2) {
+            ErrorHandling.Add("WhileNode", this.position, $"Expected 2 childs, got  {this.childs.Count}");
             return;
         }
 
+        if (!VerifyExpression()) return;
+        
+        ExpressionNode expressionNode = (ExpressionNode)this.childs[0];
+    }
+
+    private bool VerifyExpression() {
         if (this.childs[0] is not ExpressionNode) {
             ErrorHandling.Add($"WhileNode", this.position, "Expected ExpressionNode");
+            return false;
         }
         
         ExpressionNode expr = (ExpressionNode)this.childs[0];
         
-        // TODO: check for expression type
+        // TODO: check for expression result type == boolean
+
+        return true;
+    }
+
+    private bool VerifyBody() {
+        if (this.childs[1] is not ProgramNode) {
+            ErrorHandling.Add($"WhileNode", this.position, "Expected ProgramNode");
+            return false;
+        }
+        
+        return true;
     }
 }

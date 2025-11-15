@@ -104,33 +104,33 @@ public class Scope
     }
 }
 
-public class SymbolTable
+public static class SymbolTable
 {
-    private Scope _globalScope;
-    private Scope _currentScope;
+    private static Scope _globalScope;
+    private static Scope _currentScope;
     
-    public SymbolTable()
+    public static void InitializeSymbolTable()
     {
-        _globalScope = new Scope();
+        _globalScope = new Scope(null, ScopeType.Global);
         _currentScope = _globalScope;
         
         // Инициализация встроенных типов
         InitializePrimitiveTypes();
     }
     
-    private void InitializePrimitiveTypes()
+    private static void InitializePrimitiveTypes()
     {
         _globalScope.AddEntry(new Type("integer", "integer"));
         _globalScope.AddEntry(new Type("real", "real"));
         _globalScope.AddEntry(new Type("boolean", "boolean"));
     }
     
-    public void EnterScope()
+    public static void EnterScope(ScopeType scopeType)
     {
-        _currentScope = new Scope(_currentScope);
+        _currentScope = new Scope(_currentScope, scopeType);
     }
     
-    public void ExitScope()
+    public static void ExitScope()
     {
         if (_currentScope.Parent != null)
         {            
@@ -142,29 +142,29 @@ public class SymbolTable
         }
     }
     
-    public Scope GetCurrentScope()
+    public static Scope GetCurrentScope()
     {
         return _currentScope;
     }
     
 
-    public Scope GetGlobalScope()
+    public static Scope GetGlobalScope()
     {
         return _globalScope;
     }
     
 
-    public bool DeclareEntry(Entry entry)
+    public static bool DeclareEntry(Entry entry)
     {
         return _currentScope.AddEntry(entry);
     }
     
-    public Entry? FindEntry(string name, bool local = false) {
+    public static Entry? FindEntry(string name, bool local = false) {
         if (local) return _currentScope.LookupLocalEntry(name);
         return _currentScope.LookupEntry(name);
     }
 
-    public bool IsInsideType(ScopeType scopeType) {
+    public static bool IsInsideType(ScopeType scopeType) {
         return _currentScope.IsInsideType(scopeType);
     }
 }
