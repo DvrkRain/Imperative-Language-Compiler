@@ -4,8 +4,7 @@ public enum ScopeType {
     Global,
     Loop,
     Branch,
-    FunctionDeclaration,
-    FunctionBody
+    Routine
 }
 
 public abstract class Entry
@@ -34,7 +33,9 @@ public class Routine : Entry
 {
     public List<Variable> Parameters { get; } // Routine parameters contained in list to keep order
     public string? ReturnType { get; } // Each routine might have a return type
-    public Scope? BodyScope { get; } // Each routine migh have a body scope
+    public Scope? BodyScope { get; } // Each routine might have a body scope
+
+    public bool HasBody = false;
     
     public Routine(string name, List<Variable>? parameters = null, string? returnType = null) : base(name)
     {
@@ -47,7 +48,7 @@ public class Routine : Entry
 public class Type : Entry
 {
     public string BaseType { get; } // Each type has a base type (integer, real, boolean, array, record), type == baseType -> baseType in builtInTypes
-    public Scope? RecordScope { get; } // Each type might have its scope
+    public Scope? TypeScope { get; } // Each type might have its scope
     
     public Type(string name, string baseType) : base(name)
     {
@@ -164,7 +165,8 @@ public static class SymbolTable
         return _currentScope.LookupEntry(name);
     }
 
-    public static bool IsInsideType(ScopeType scopeType) {
+    public static bool IsInsideType(ScopeType scopeType, bool current = false) {
+        if (current) return _currentScope.scopeType == scopeType;
         return _currentScope.IsInsideType(scopeType);
     }
 }
