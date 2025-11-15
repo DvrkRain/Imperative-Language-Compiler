@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
@@ -117,7 +116,7 @@ public class VarNode : Node {
                 
         // Check for redeclaration 
         if (SymbolTable.FindEntry((string)primary.value, true) != null) {
-            ErrorHandling.Add("VarNode", this.position, "Variable redeclaration exception");
+            ErrorHandling.Add("VarNode", this.position, "Variable redeclaration");
             return false;
         }
 
@@ -125,11 +124,22 @@ public class VarNode : Node {
     }
 
     private bool VerifyType() {
+        // Special void check
+        if (this.type == "void" && !this.explicit_type) {
+            return true;
+        }
+
         // Check for variable type
-        if (SymbolTable.FindEntry(this.type) == null && this.type != "void") {
+        if (SymbolTable.FindEntry(this.type) == null && this.explicit_type) {
             ErrorHandling.Add("VarNode", this.position, "Variable type not declared");
             return false;
         }
+        
+        // Check if variable type is actually type
+        if (SymbolTable.FindEntry(this.type) is not SemanticAnalyzer.SymbolTable.Type) {
+            ErrorHandling.Add("VarNode", this.position, $"Type not declared, got {this.type}");
+        }
+
         return true;
     }
 
@@ -139,15 +149,19 @@ public class VarNode : Node {
             return false;
         }
 
-        ExpressionNode expr = (ExpressionNode)this.childs[1];
-        
-        // Since this method called only in 2nd setup
-        // We can use 1st child w/o doubts
-        
-        PrimaryNode primary = (PrimaryNode)this.childs[0];
-                
-        // TODO: Add check variable type and expression type matching
+        PrimaryNode identifier = (PrimaryNode)this.childs[0];
+        ExpressionNode expression = (ExpressionNode)this.childs[1];
 
+        // Dynamically assigned type case
+        if (this.type == "void" && !this.explicit_type) {
+            this.type = expression.Type();
+        }
+
+        if (this.type != expression.Type()) {
+            ErrorHandling.Add("VarNode", this.position, $"Mismatched variable type {this.type} != {expression.Type()}");
+            return false;
+        }
+        
         return true;
     }
 }

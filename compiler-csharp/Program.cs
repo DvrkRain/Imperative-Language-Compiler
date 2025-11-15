@@ -50,16 +50,23 @@ namespace Compiler
 			AST.Parse(ref stream);
             
             if (ErrorHandling.Count() > 0) {
-                Console.WriteLine("Syntax Analysis errors:");
                 ErrorHandling.PrintErrors();
                 return;
             }
 
-			if (treeOption == 1) AST.PrintInfo("");
+            if (treeOption == 1) {
+                AST.PrintInfo("");
+            }
 
 			// Semantic analysis
             SymbolTable.InitializeSymbolTable();
 			ErrorHandling.ChangeStage("Semantic analysis");
-		}
+            AST.Verify();
+
+            if (ErrorHandling.Count() > 0) {
+                ErrorHandling.PrintErrors();
+                return;
+            }
+        }
 	}
 }

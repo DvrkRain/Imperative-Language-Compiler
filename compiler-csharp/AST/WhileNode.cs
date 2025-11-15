@@ -35,6 +35,7 @@ public class WhileNode : Node {
 
     public override void Verify() 
     {
+        SymbolTable.EnterScope(ScopeType.Loop);
         base.Verify();
         
         // WhileLoop declaration looks like
@@ -45,12 +46,16 @@ public class WhileNode : Node {
         
         if (this.childs.Count != 2) {
             ErrorHandling.Add("WhileNode", this.position, $"Expected 2 childs, got  {this.childs.Count}");
+            SymbolTable.ExitScope();
             return;
         }
 
-        if (!VerifyExpression()) return;
-        
-        ExpressionNode expressionNode = (ExpressionNode)this.childs[0];
+        if (!VerifyExpression() || !VerifyBody()) {
+            SymbolTable.ExitScope();
+            return;
+        }
+
+        SymbolTable.ExitScope();
     }
 
     private bool VerifyExpression() {
@@ -59,9 +64,13 @@ public class WhileNode : Node {
             return false;
         }
         
-        ExpressionNode expr = (ExpressionNode)this.childs[0];
+        ExpressionNode expression = (ExpressionNode)this.childs[0];
         
-        // TODO: check for expression result type == boolean
+        // Check expression result type == boolean
+        if (expression.Type() != "boolean") {
+            ErrorHandling.Add("WhileNode", this.position, $"Expected boolean, got  {expression.Type()}");
+            return false;
+        }
 
         return true;
     }
