@@ -35,7 +35,7 @@ public class ExpressionNode : Node {
 		Stack<Token> operatorStack = new Stack<Token>();
 		Token token;
 		bool parsing = true;
-		int args = 1;
+		Stack<int> args = new Stack<int>();
 		while(tokenQueue.Count() > 0 && parsing) {
 			token = tokenQueue.Peek();
 			switch(token.Code()) {
@@ -55,15 +55,19 @@ public class ExpressionNode : Node {
 					break;
 
 				case TokenCode.left_parenthesis:
+					args.Push(1);
 					tokenQueue.Dequeue();
 					operatorStack.Push(token);
 					break;
 
 				case TokenCode.comma:
-                    if (operatorStack.Count() == 0) return;
+                    if (operatorStack.Count() == 0) {
+						ErrorHandling.MismatchedParenthesis("ExpressionNode", this.position);
+						return;
+					}
+					args.Push(args.Pop()+1);
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_parenthesis) {
-						++args;
 						token = operatorStack.Pop();
 						this.childs.Add(new OperationNode(token.Position(), token.Code(), 2, (string)token.Value()));
 					}
@@ -111,7 +115,7 @@ public class ExpressionNode : Node {
 						}
 					}
 					token = operatorStack.Pop();
-					this.childs.Add(new OperationNode(token.Position(), token.Code(), 1, (string)token.Value()));
+					this.childs.Add(new OperationNode(token.Position(), token.Code(), 2, (string)token.Value()));
 					break;
 
 				// Operators
@@ -194,6 +198,10 @@ public class ExpressionNode : Node {
 
 					case bool flag:
 						this._type = "boolean";
+						break;
+
+					case string type:
+						this._type = type;
 						break;
 
 					default: break;
