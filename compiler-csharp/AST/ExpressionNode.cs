@@ -177,14 +177,36 @@ public class ExpressionNode : Node {
 			}
 		}
 		this.childs.Clear();
-		while(evaluationStack.Count() > 0) {
-			this.childs.Add(evaluationStack.Pop());
-		}
+		this.childs.Add(evaluationStack.Pop());
+		if(evaluationStack.Count() > 0)
+			ErrorHandling.Add(this.GetType().Name, operatorStack.Peek().Position(), "Expression is not finilized.");
 	}
 
 
-	public override void Verify(ref SymbolTable symTab) {
-		base.Verify(ref symTab);
+	public override void Verify() {
+		base.Verify();
+		switch(this.childs[0]) {
+			case PrimaryNode prime:
+				switch(prime.value) {
+					case int num:
+						this._type = "integer";
+						break;
 
+					case bool flag:
+						this._type = "boolean";
+						break;
+
+					default: break;
+				}
+				break;
+
+			case OperationNode oper:
+				this._type = oper.Type();
+				this.childs[0] = oper.Value();
+				break;
+
+			default:
+				break;
+		}
 	}
 }
