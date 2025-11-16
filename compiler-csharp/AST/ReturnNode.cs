@@ -4,7 +4,11 @@ using SemanticAnalyzer.SymbolTable;
 
 namespace AST;
 public class ReturnNode : Node {
-	public ReturnNode(Position pos) : base(pos) { }
+    protected string? returnType;
+
+    public ReturnNode(Position pos, string? returnType = null) : base(pos) {
+        this.returnType = returnType;
+    }
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -29,7 +33,19 @@ public class ReturnNode : Node {
             ErrorHandling.Add("ReturnNode", this.position, "'return' used outside routine");
             return;
         }
-
+        
         base.Verify();
+
+        if (this.childs[0] is not ExpressionNode) {
+            ErrorHandling.Add("ReturnNode", this.position, "return doesn't have expression");
+            return;
+        }
+        
+        ExpressionNode returnExpression = (ExpressionNode)this.childs[0];
+
+        if (this.returnType != null && this.returnType != returnExpression.Type()) {
+            ErrorHandling.Add("ReturnNode", this.position, $"return type mismatch {this.returnType} != {returnExpression.Type()}");
+            return;
+        }
     }
 }

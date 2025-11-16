@@ -2,8 +2,11 @@ using Data.Objects;
 namespace AST;
 public class ProgramNode : Node {
 	public bool main;
+    protected string? returnType;
 
-	public ProgramNode(Position pos) : base(pos) { }
+    public ProgramNode(Position pos, string? returnType = null) : base(pos) {
+        this.returnType = returnType;
+    }
 
 	
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -79,7 +82,7 @@ public class ProgramNode : Node {
 				// Return
 				case TokenCode.return_statement:
 					tokenQueue.Dequeue();
-					ReturnNode ret = new ReturnNode(token.Position());
+					ReturnNode ret = new ReturnNode(token.Position(), this.returnType);
 					ret.Parse(ref tokenQueue);
 					this.childs.Add(ret);
 					break;
