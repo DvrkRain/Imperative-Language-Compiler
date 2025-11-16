@@ -32,12 +32,12 @@ public class Variable : Entry
 public class Routine : Entry
 {
     public List<Variable> Parameters { get; } // Routine parameters contained in list to keep order
-    public string? ReturnType { get; } // Each routine might have a return type
-    public Scope? BodyScope { get; } // Each routine might have a body scope
+    public string ReturnType { get; } // Each routine might have a return type
+    public Scope? BodyScope { get; } // Each routine migh have a body scope
 
     public bool HasBody = false;
     
-    public Routine(string name, List<Variable>? parameters = null, string? returnType = null) : base(name)
+    public Routine(string name, List<Variable>? parameters = null, string returnType = "void") : base(name)
     {
         Parameters = parameters ?? new List<Variable>();
         ReturnType = returnType;

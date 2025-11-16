@@ -4,9 +4,6 @@ using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class ExpressionNode : Node {
 	protected bool _index;
-	private string _type;
-
-	public string Type() => this._type;
 
 	public ExpressionNode(Position pos, bool enclosed = false) : base(pos) {
 		this._type = "void";
@@ -61,9 +58,9 @@ public class ExpressionNode : Node {
 					break;
 
 				case TokenCode.comma:
-                    if (operatorStack.Count() == 0) {
-						ErrorHandling.MismatchedParenthesis("ExpressionNode", this.position);
-						return;
+					if(args.Count() == 0) {
+						parsing = false;
+						break;
 					}
 					args.Push(args.Pop()+1);
 					tokenQueue.Dequeue();
@@ -86,9 +83,8 @@ public class ExpressionNode : Node {
 					operatorStack.Pop();
 					if(operatorStack.Count() > 0 && operatorStack.Peek().Code() == TokenCode.identifier) {
 						token = operatorStack.Pop();
-						this.childs.Add(new OperationNode(token.Position(), token.Code(), args, (string)token.Value()));
+						this.childs.Add(new OperationNode(token.Position(), token.Code(), args.Pop(), (string)token.Value()));
 					}
-					args = 1;
 					break;
 
 				case TokenCode.left_bracket:
@@ -192,16 +188,19 @@ public class ExpressionNode : Node {
 		switch(this.childs[0]) {
 			case PrimaryNode prime:
 				switch(prime.value) {
-					case int num:
+					case int:
 						this._type = "integer";
 						break;
 
-					case bool flag:
+					case bool:
 						this._type = "boolean";
+						break;
+					
+					case float:
+						this._type = "real";
 						break;
 
 					case string type:
-						this._type = type;
 						break;
 
 					default: break;

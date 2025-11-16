@@ -5,12 +5,18 @@ using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public abstract class Node {
     protected Position position{get; set;}
+	protected string _type;
+
+	public string Type() => this._type;
 	public Position Position() =>
 		this.position;
 
     protected List<Node> childs;
 
-    private Node() => this.childs = new List<Node>();
+    private Node() {
+		this.childs = new List<Node>();
+		this._type = "void";
+	}
     protected Node(Position pos) : this() => this.position = pos;
 
     public List<Node> GetChilds() => this.childs;
