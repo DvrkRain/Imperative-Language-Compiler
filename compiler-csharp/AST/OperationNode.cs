@@ -78,7 +78,8 @@ public class OperationNode : Node {
 
 		// If this operation is array index dereferencing
 		case TokenCode.left_bracket:
-			if(this.childs[0].Type() == "array") {
+			if (SymbolTable.FindEntry(this.childs[0].Type()) is SemanticAnalyzer.SymbolTable.Type atype
+					&& atype.BaseType == "array") {
 				if(this.childs[1].Type() != "integer") {
 				} else ErrorHandling.Add("Array dereferencing", this.position, "Array index expected to be of integer type");
 			} else ErrorHandling.Add("Array dereferencing", this.position,
@@ -181,6 +182,7 @@ public class OperationNode : Node {
 		}
 
 		// Calculating const expression (TODO)
+		return;
 		this.arg_number = 0;
 		if(this.arg_number == 1) {
 			if(((PrimaryNode)this.childs[0]).value is string) return;
