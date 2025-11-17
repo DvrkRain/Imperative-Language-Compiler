@@ -94,26 +94,32 @@ public class TypeNode : Node {
         
         PrimaryNode identifier = (PrimaryNode)this.childs[0];
         string baseType;
-        Scope? recordScope = null;
+        Scope? typeScope = null;
 
         switch (this.childs[1]) {
             case PrimaryNode primaryNode:
                 baseType = (string)primaryNode.value;
                 this.childs[1].Verify();
+
+                while (!DedicatedWords.BuiltIn(baseType))
+                    baseType = ((SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(baseType)).BaseType;
+
                 break;
             
             case ArrayNode:
                 baseType = "array";
                 this.childs[1].Verify();
+                
+                
                 break;
             
             case RecordNode:
                 baseType = "record";
                 SymbolTable.EnterScope(ScopeType.Record);
                 this.childs[1].Verify();
-                recordScope = SymbolTable.GetCurrentScope();
+                typeScope = SymbolTable.GetCurrentScope();
                 SymbolTable.ExitScope();
-                recordScope.Parent = null;
+                typeScope.Parent = null;
                 break;
             
             default:
@@ -125,7 +131,7 @@ public class TypeNode : Node {
         SemanticAnalyzer.SymbolTable.Type newType =
             new SemanticAnalyzer.SymbolTable.Type((string)identifier.value, baseType);
 
-        if (baseType == "record") newType.TypeScope = recordScope;
+        if (baseType == "record") newType.TypeScope = typeScope;
 
         SymbolTable.DeclareEntry(newType);
     }
@@ -158,7 +164,7 @@ public class TypeNode : Node {
         switch (this.childs[1]) {
             case PrimaryNode primaryNode:
                 if (SymbolTable.FindEntry((string)primaryNode.value) is not SemanticAnalyzer.SymbolTable.Type) {
-                    ErrorHandling.Add("TypeNode", this.position, $"Type's `Type` is not declared, got {(string)primaryNode.value}");
+                    ErrorHandling.Add("TypeNode", this.position, $"Type '{(string)primaryNode.value}' is not declared");
                     return false;
                 }
                 break;
@@ -168,7 +174,7 @@ public class TypeNode : Node {
                 PrimaryNode arrayType = (PrimaryNode)arrayNode.GetChilds()[arrayChilds - 1];
 
                 if (SymbolTable.FindEntry((string)arrayType.value) is not SemanticAnalyzer.SymbolTable.Type) {
-                    ErrorHandling.Add("TypeNode", this.position, $"Type's array type is not declared, got {(string)arrayType.value}");
+                    ErrorHandling.Add("TypeNode", this.position, $"Array type '{(string)arrayType.value}' is not declared");
                     return false;
                 }
                 break;
@@ -177,7 +183,7 @@ public class TypeNode : Node {
                 // TODO: Create a way to check if record is alright
                 break;
             default:
-                ErrorHandling.Add("TypeNode", this.position, $"Type is not expected type, got {this.childs[1].GetType().Name}");
+                ErrorHandling.Add("TypeNode", this.position, $"Unexpected type '{this.childs[1].GetType().Name}'");
                 return false;
         }
         
