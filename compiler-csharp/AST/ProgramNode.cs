@@ -1,3 +1,4 @@
+using Data.ErrorHandling;
 using Data.Objects;
 namespace AST;
 public class ProgramNode : Node {
@@ -126,4 +127,13 @@ public class ProgramNode : Node {
 		if (this.GetType().Name == "ProgramNode") Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), main={this.main})");
 		base.PrintInfo(indent);
 	}
+
+    public override void Verify() {
+        base.Verify();
+
+        if (returnType != null && !returned) {
+            ErrorHandling.Add("ProgramNode", this.position, $"ProgramNode should contain ReturnNode; returnType={returnType}");
+            return;
+        }
+    }
 }

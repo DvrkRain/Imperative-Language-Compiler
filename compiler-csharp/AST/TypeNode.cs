@@ -109,7 +109,8 @@ public class TypeNode : Node {
             case ArrayNode:
                 baseType = "array";
                 this.childs[1].Verify();
-                
+                typeScope = new Scope();
+                typeScope.AddEntry(new Variable("size", "integer"));
                 
                 break;
             

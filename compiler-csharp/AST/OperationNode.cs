@@ -181,7 +181,7 @@ public class OperationNode : Node {
 			} else ErrorHandling.Add("OperationNode", this.position, "Unexpected arguments on dot operation");
 		}
 
-		// Calculating const expression (TODO)
+		// TODO: Calculating const expression
 		return;
 		this.arg_number = 0;
 		if(this.arg_number == 1) {
