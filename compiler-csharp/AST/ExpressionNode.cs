@@ -165,6 +165,7 @@ public class ExpressionNode : Node {
 					} else if (evaluationStack.Count() == 0) {
 						ErrorHandling.Add(this.GetType().Name, oper.Position(), $"Operation {oper.Operation()} does not have enough arguments.");
 					} else if (oper.Code() == TokenCode.term_op || (oper.Code() == TokenCode.logic_op && oper.Operation() == "not")) {
+						oper.ArgNum(1);
 						oper.AddArgument(evaluationStack.Pop());
 					} else {
 						ErrorHandling.Add(this.GetType().Name, oper.Position(), $"Operation {oper.Operation()} does not have enough arguments.");
