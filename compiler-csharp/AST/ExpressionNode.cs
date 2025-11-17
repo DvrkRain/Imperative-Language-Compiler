@@ -188,24 +188,7 @@ public class ExpressionNode : Node {
 		base.Verify();
 		switch(this.childs[0]) {
 			case PrimaryNode prime:
-				switch(prime.value) {
-					case int:
-						this._type = "integer";
-						break;
-
-					case bool:
-						this._type = "boolean";
-						break;
-					
-					case float:
-						this._type = "real";
-						break;
-
-					case string type:
-						break;
-
-					default: break;
-				}
+				this._type = prime.Type();
 				break;
 
 			case OperationNode oper:
