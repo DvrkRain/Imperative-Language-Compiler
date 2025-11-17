@@ -3,6 +3,7 @@ namespace AST;
 public class ProgramNode : Node {
 	public bool main;
     protected string? returnType;
+    protected bool returned = false;
 
     public ProgramNode(Position pos, string? returnType = null) : base(pos) {
         this.returnType = returnType;
@@ -85,6 +86,7 @@ public class ProgramNode : Node {
 					ReturnNode ret = new ReturnNode(token.Position(), this.returnType);
 					ret.Parse(ref tokenQueue);
 					this.childs.Add(ret);
+                    this.returned = true;
 					break;
 
 				// Print
