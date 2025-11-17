@@ -38,7 +38,7 @@ public class ExpressionNode : Node {
 			switch(token.Code()) {
 				case TokenCode.constant_value:
 					tokenQueue.Dequeue();
-					this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
+					this.childs.Add(new PrimaryNode(token.Position(), token.Value(), true));
 					break;
 
 				case TokenCode.identifier:
@@ -46,7 +46,7 @@ public class ExpressionNode : Node {
 					if(tokenQueue.Peek().Code() == TokenCode.left_parenthesis)
 						operatorStack.Push(token);
 					else {
-						PrimaryNode identifier = new PrimaryNode(token.Position(), token.Value());
+						PrimaryNode identifier = new PrimaryNode(token.Position(), token.Value(), true);
 						this.childs.Add(identifier);
 					}
 					break;
