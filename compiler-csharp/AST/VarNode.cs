@@ -114,9 +114,9 @@ public class VarNode : Node {
                 
         PrimaryNode primary = (PrimaryNode)this.childs[0];
                 
-        // Check for redeclaration 
+        // Check if identifier already exists
         if (SymbolTable.FindEntry((string)primary.value, true) != null) {
-            ErrorHandling.Add("VarNode", this.position, "Variable redeclaration");
+            ErrorHandling.Add("VarNode", this.position, $"Identifier '{(string)primary.value}' already exists");
             return false;
         }
 

@@ -4,7 +4,8 @@ public enum ScopeType {
     Global,
     Loop,
     Branch,
-    Routine
+    Routine,
+    Record
 }
 
 public abstract class Entry
@@ -48,7 +49,7 @@ public class Routine : Entry
 public class Type : Entry
 {
     public string BaseType { get; } // Each type has a base type (integer, real, boolean, array, record), type == baseType -> baseType in builtInTypes
-    public Scope? TypeScope { get; } // Each type might have its scope
+    public Scope? TypeScope; // Each type might have its scope
     
     public Type(string name, string baseType) : base(name)
     {
@@ -62,8 +63,8 @@ public class Scope
     private Dictionary<string, Entry> _entries;
     
     public ScopeType? scopeType { get; }
-    
-    public Scope? Parent { get; }
+
+    public Scope? Parent;
     
     public Scope(Scope? parent = null, ScopeType? scopeType = null)
     {
