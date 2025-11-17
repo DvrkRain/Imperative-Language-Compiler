@@ -90,6 +90,8 @@ namespace Data.Objects {
 	}
 
 	public static class DedicatedWords {
+		private static List<string> _baseTypes =
+			new List<string>() { "integer", "real", "boolean", "void", "record", "array" };
 		private static Dictionary<string,TokenCode> _dedicatedWords =
 			new Dictionary<string,TokenCode>() {
 				{"integer",		TokenCode.builtin_type},
@@ -130,6 +132,9 @@ namespace Data.Objects {
 
 		public static TokenCode Code(string key) =>
 			_dedicatedWords[key];
+
+		public static bool BuiltIn(string type) =>
+			_baseTypes.Contains(type);
 	}
 
 	public static class SeparatorList {

@@ -2,9 +2,8 @@ using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class FieldAccessNode : Node {
-	protected bool call;
-
-	public FieldAccessNode(Position pos) : base(pos) => this.call = false;
+	private int depth;
+	public FieldAccessNode(Position pos) : base(pos) => this.depth = 0;
 	public FieldAccessNode(Position pos, Node init) : this(pos) =>
 		this.childs.Add(init);
 
@@ -26,6 +25,7 @@ public class FieldAccessNode : Node {
 			tokenQueue.Dequeue();
 			this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
 			token = tokenQueue.Peek();
+			this.depth++;
 		}
 		while(token.Code() == TokenCode.left_bracket) {
 			tokenQueue.Dequeue();
