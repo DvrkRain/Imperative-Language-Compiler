@@ -71,8 +71,7 @@ public class TypeNode : Node {
 	}
 
     public override void Verify() {
-        base.Verify();
-        
+        this.childs[0].Verify(); // check identifier
         // Type declaration looks as follows:
         // type `Identifier` is `Type`
         
@@ -95,26 +94,40 @@ public class TypeNode : Node {
         
         PrimaryNode identifier = (PrimaryNode)this.childs[0];
         string baseType;
+        Scope? recordScope = null;
 
         switch (this.childs[1]) {
             case PrimaryNode primaryNode:
                 baseType = (string)primaryNode.value;
+                this.childs[1].Verify();
                 break;
             
             case ArrayNode:
                 baseType = "array";
+                this.childs[1].Verify();
                 break;
             
             case RecordNode:
                 baseType = "record";
+                SymbolTable.EnterScope(ScopeType.Record);
+                this.childs[1].Verify();
+                recordScope = SymbolTable.GetCurrentScope();
+                SymbolTable.ExitScope();
+                recordScope.Parent = null;
                 break;
             
             default:
                 baseType = (string)identifier.value;
+                this.childs[1].Verify();
                 break;
         }
 
-        SymbolTable.DeclareEntry(new SemanticAnalyzer.SymbolTable.Type((string)identifier.value, baseType));
+        SemanticAnalyzer.SymbolTable.Type newType =
+            new SemanticAnalyzer.SymbolTable.Type((string)identifier.value, baseType);
+
+        if (baseType == "record") newType.TypeScope = recordScope;
+
+        SymbolTable.DeclareEntry(newType);
     }
 
     private bool VerifyIdentifier() {
