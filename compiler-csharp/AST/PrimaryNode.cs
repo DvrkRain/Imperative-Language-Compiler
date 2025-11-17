@@ -53,6 +53,20 @@ public class PrimaryNode : Node {
 			default:
 				break;
 		}
+		} else {
+		switch(this.value) {
+			case int val:
+				this._type = "integer";
+				this.value = val;
+				break;
+
+			case bool val:
+				this._type = "boolean";
+				this.value = val;
+				break;
+
+			default: break;
+		}
 		}
 	}
 }
