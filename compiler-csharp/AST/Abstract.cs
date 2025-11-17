@@ -1,6 +1,5 @@
 using Data.Objects;
 using Data.ErrorHandling;
-using SemanticAnalyzer.SymbolTable;
 
 namespace AST;
 public abstract class Node {
@@ -8,6 +7,8 @@ public abstract class Node {
 	protected string _type;
 
 	public string Type() => this._type;
+	public void Type(string str) => this._type = str;
+
 	public Position Position() =>
 		this.position;
 

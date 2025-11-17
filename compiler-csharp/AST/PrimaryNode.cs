@@ -3,10 +3,13 @@ using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class PrimaryNode : Node {
+	private bool _inExpression;
 	public object value;
 
-	public PrimaryNode(Position pos, object val) : base(pos) =>
+	public PrimaryNode(Position pos, object val, bool inExpr = false) : base(pos) {
 		this.value = val;
+		this._inExpression = inExpr;
+	}
 
 	public override void PrintInfo(string indent) {
 		if (this.GetType().Name == "PrimaryNode") Console.WriteLine($"PrimaryNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), value={this.value})");
@@ -33,21 +36,18 @@ public class PrimaryNode : Node {
 	public override void Parse(ref Queue<Token> tokenQueue) { }
 
 	public override void Verify() {
-		if(this.value is string id) {
+		if(!this._inExpression) return;
+		if(this.value is Variable var) {
+			this._type = var.Type;
+			if(var.Value is not null)
+				this.value = var.Value;
+			return;
+		} else if(this.value is string id) {
 		switch(SymbolTable.FindEntry(id)) {
 			case Variable vr:
-				switch(vr.Value) {
-					case int val:
-						this.value = val;
-						break;
-
-					case bool val:
-						this.value = val;
-						break;
-
-					default:
-						break;
-				}
+				this._type = vr.Type;
+				if(vr.Value is not null)
+					this.value = vr.Value;
 				break;
 
 			default:
