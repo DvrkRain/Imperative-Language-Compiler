@@ -50,8 +50,9 @@ public class OperationNode : Node {
 		bool flag = false;
 		PrimaryNode prime;
 
+		switch(this.op_code) {
 		// If this operation is routine call
-		if(this.op_code == TokenCode.identifier) {
+		case TokenCode.identifier:
 		switch(SymbolTable.FindEntry(this._operation)) {
 			case Routine rout:
 				if(this.arg_number != rout.Parameters.Count()) {
@@ -74,19 +75,18 @@ public class OperationNode : Node {
 				flag = true;
 				return;
 		}
-		}
 
 		// If this operation is array index dereferencing
-		else if(this.op_code == TokenCode.left_bracket) {
+		case TokenCode.left_bracket:
 			if(this.childs[0].Type() == "array") {
 				if(this.childs[1].Type() != "integer") {
 				} else ErrorHandling.Add("Array dereferencing", this.position, "Array index expected to be of integer type");
 			} else ErrorHandling.Add("Array dereferencing", this.position,
 					"Trying to access non-array variable with indexing.");
-		}
+			break;
 
 		// If this operation is record field access (or real number)
-		else if(this.op_code == TokenCode.dot) {
+		case TokenCode.dot:
 			if(this.childs[0].Type() == "integer" && this.childs[1].Type() == "integer") {
 				this._type = "real";
 			} else if (this.childs[0].Type() == "record"
@@ -107,6 +107,30 @@ public class OperationNode : Node {
 					&& (string)identifier.value == "size") {
 				this._type = "integer";
 			} else ErrorHandling.Add("OperationNode", this.position, "Unexpected arguments on dot operation");
+			break;
+			
+		case TokenCode.logic_op:
+			this._type = "boolean";
+			break;
+
+		case TokenCode.relation_op:
+			this._type = "boolean";
+			break;
+			
+		case TokenCode.factor_op:
+			this._type = "integer";
+			if(this.childs[0].Type() == "real") this._type = "real";
+			if(this.childs[1].Type() == "real") this._type = "real";
+			break;
+
+		case TokenCode.term_op:
+			this._type = "integer";
+			if(this.childs[0].Type() == "real") this._type = "real";
+			if(this.childs[1].Type() == "real") this._type = "real";
+			break;
+
+		default:
+			break;
 		}
 
 		// Checking if current operation calculatable at compile time
