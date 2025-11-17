@@ -132,7 +132,7 @@ public class ProgramNode : Node {
         base.Verify();
 
         if (returnType != null && !returned) {
-            ErrorHandling.Add("ProgramNode", this.position, $"ProgramNode should contain ReturnNode; returnType={returnType}");
+            ErrorHandling.Add("ProgramNode", this.position, $"ProgramNode should contain ReturnNode; returnType={returnType}, returned={returned}");
             return;
         }
     }
