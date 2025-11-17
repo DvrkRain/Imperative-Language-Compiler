@@ -120,13 +120,12 @@ public class OperationNode : Node {
 		case TokenCode.factor_op:
 			this._type = "integer";
 			if(this.childs[0].Type() == "real") this._type = "real";
-			if(this.childs[1].Type() == "real") this._type = "real";
 			break;
 
 		case TokenCode.term_op:
 			this._type = "integer";
 			if(this.childs[0].Type() == "real") this._type = "real";
-			if(this.childs[1].Type() == "real") this._type = "real";
+			if(this.arg_number == 2 && this.childs[1].Type() == "real") this._type = "real";
 			break;
 
 		default:
