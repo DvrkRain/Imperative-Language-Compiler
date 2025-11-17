@@ -1,3 +1,4 @@
+using Data.ErrorHandling;
 using Data.Objects;
 namespace AST;
 public class ForNode : Node {
@@ -13,6 +14,7 @@ public class ForNode : Node {
 		}
 		tokenQueue.Dequeue();
 		PrimaryNode id = new PrimaryNode(token.Position(), token.Value());
+        this.childs.Add(id);
 
 		// 'in' keyword
 		token = tokenQueue.Peek();
@@ -61,4 +63,20 @@ public class ForNode : Node {
 		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
+
+    public override void Verify() {
+        base.Verify();
+
+        ExpressionNode firstExpression = (ExpressionNode)this.childs[1];
+
+        if (firstExpression.Type() != "integer") {
+            ErrorHandling.Add("ForNode", this.position, "ForNode should iterate on integer values");
+            return;
+        }
+
+        if (this.childs[2] is ExpressionNode secondExpression && secondExpression.Type() != "integer") {
+            ErrorHandling.Add("ForNode", this.position, "ForNode should iterate on integer values");
+            return;
+        }
+    }
 }

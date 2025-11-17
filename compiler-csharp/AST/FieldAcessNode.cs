@@ -41,9 +41,4 @@ public class FieldAccessNode : Node {
 			token = tokenQueue.Peek();
 		}
 	}
-
-
-	public override void Verify() {
-		base.Verify();
-	}
 }

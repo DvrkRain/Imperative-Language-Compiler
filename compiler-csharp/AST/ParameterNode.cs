@@ -28,8 +28,11 @@ public class ParameterNode : Node {
 
 		// Type
 		token = tokenQueue.Dequeue();
+        
+        // Record or built-in types
 		if(token.Code() == TokenCode.identifier || token.Code() == TokenCode.builtin_type)
 			this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
+        // TODO: Add array case
 	}
 
 	public override void PrintInfo(string indent) {

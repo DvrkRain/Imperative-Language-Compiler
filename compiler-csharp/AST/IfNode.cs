@@ -1,3 +1,4 @@
+using Data.ErrorHandling;
 using Data.Objects;
 namespace AST;
 public class IfNode : Node {
@@ -38,4 +39,14 @@ public class IfNode : Node {
 		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
+
+    public override void Verify() {
+        base.Verify();
+
+        ExpressionNode expresison = (ExpressionNode)this.childs[0];
+        if (expresison.Type() != "boolean") {
+            ErrorHandling.Add("IfNode", this.position, $"IfNode should have a boolean expression");
+            return;
+        }
+    }
 }
