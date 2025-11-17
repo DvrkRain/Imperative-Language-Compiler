@@ -89,7 +89,8 @@ public class OperationNode : Node {
 		case TokenCode.dot:
 			if(this.childs[0].Type() == "integer" && this.childs[1].Type() == "integer") {
 				this._type = "real";
-			} else if (this.childs[0].Type() == "record"
+			} else if (SymbolTable.FindEntry(this.childs[0].Type()) is SemanticAnalyzer.SymbolTable.Type rtype
+					&& rtype.BaseType == "record"
 					&& this.childs[1] is PrimaryNode fieldName
 					&& fieldName.value is string id) {
 				if(this.childs[0] is PrimaryNode rec && rec.value is Scope strct) {
@@ -102,7 +103,8 @@ public class OperationNode : Node {
 						ErrorHandling.Add("OperationNode", this.position, $"Record does not have a field named {id}.");
 					else ErrorHandling.Add("OperationNode", this.position, "Record cannot contain non-variable fields");
 				} else ErrorHandling.Add("OperationNode", this.position, "Record is not properly changed or not contain scope.");
-			} else if (this.childs[0].Type() == "array"
+			} else if (SymbolTable.FindEntry(this.childs[0].Type()) is SemanticAnalyzer.SymbolTable.Type type
+					&& type.BaseType == "array"
 					&& this.childs[1] is PrimaryNode identifier
 					&& (string)identifier.value == "size") {
 				this._type = "integer";

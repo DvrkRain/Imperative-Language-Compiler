@@ -42,11 +42,6 @@ public class PrimaryNode : Node {
 				switch(SymbolTable.FindEntry(id)) {
 					case Variable vr:
 						this._type = vr.Type;
-						if(!DedicatedWords.BuiltIn(this._type)) {
-							if(SymbolTable.FindEntry(this._type) is SemanticAnalyzer.SymbolTable.Type type) {
-								this._type = type.BaseType;
-							} else ErrorHandling.Add("PrimaryNode", this.position, "Undeclared type");
-						}
 						if(vr.Value is not null)
 							this.value = vr.Value;
 						break;
