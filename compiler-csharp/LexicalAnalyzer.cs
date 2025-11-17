@@ -180,7 +180,11 @@ namespace LexicalAnalyzer
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
-			if(DedicatedWords.Keys(this.data))
+			if(this.data == "true") 
+				token = new Token(this.pos, DedicatedWords.Code(this.data), true);
+			else if(this.data == "false") 
+				token = new Token(this.pos, DedicatedWords.Code(this.data), false);
+			else if(DedicatedWords.Keys(this.data))
 				token = new Token(this.pos, DedicatedWords.Code(this.data), this.data);
 			else
 				token = new Token(this.pos, TokenCode.identifier, this.data);
