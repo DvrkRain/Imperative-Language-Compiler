@@ -255,19 +255,19 @@ public class RoutineNode : Node {
 
     private bool VerifyReturnType(List<int> returnTypeIndex) {
         string identifier = (string)((PrimaryNode)this.childs[0]).value;
+        string returnType = returnTypeIndex.Any() ? (string)((PrimaryNode)this.childs[returnTypeIndex[0]]).value : "void";
 
         if (SymbolTable.FindEntry(identifier) is Routine routine) {
-            if (returnTypeIndex.Any() != (routine.ReturnType == "void")) {
-                ErrorHandling.Add("RoutineNode", this.position, "Return type mismatch");
+            if (returnType != routine.ReturnType) {
+                ErrorHandling.Add("RoutineNode", this.position, $"Return type mismatch {returnType} != {routine.ReturnType}");
                 return false;
             }
         }
         
-        if (!returnTypeIndex.Any()) return true;
+        if (returnType == "void") return true;
         
-        PrimaryNode returnType = (PrimaryNode)this.childs[returnTypeIndex[0]];
-        if (SymbolTable.FindEntry((string)returnType.value) is not SemanticAnalyzer.SymbolTable.Type) {
-            ErrorHandling.Add("RoutineNode", this.position, $"Return type not declared, got {returnType.value}");
+        if (SymbolTable.FindEntry(returnType) is not SemanticAnalyzer.SymbolTable.Type) {
+            ErrorHandling.Add("RoutineNode", this.position, $"Return type not declared, got {returnType}");
             return false;
         }
 

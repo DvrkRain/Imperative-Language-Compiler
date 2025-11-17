@@ -140,7 +140,7 @@ end
 routine complexCalculation(a : integer, b : integer, c : integer) : real is
     var result : real is 0.0;
     var temp : integer;
-    var a is 100;
+    a := 100;
     
     if a > b then
         var x is a * 2;
