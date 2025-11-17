@@ -156,7 +156,16 @@ public class RoutineNode : Node {
                 foreach (int paramIndex in childsIndexes[1]) {
                     ParameterNode param = (ParameterNode)this.childs[paramIndex];
                     string paramName = (string)((PrimaryNode)param.GetChilds()[0]).value;
-                    string paramType = (string)((PrimaryNode)param.GetChilds()[1]).value;
+                    string paramType;
+                    if (param.GetChilds()[1] is PrimaryNode primaryNode) 
+                        paramType = (string)primaryNode.value;
+                    else if (param.GetChilds()[1] is ArrayNode arrayNode) 
+                        paramType = (string)((PrimaryNode)arrayNode.GetChilds()[arrayNode.GetChilds().Count() - 1]).value;
+                    else {
+                        ErrorHandling.Add("RoutineNode", this.position, "Wrong parameter type");
+                        return;
+                    }
+
                     parameters.Add(new Variable(paramName, paramType));
                 }
 
