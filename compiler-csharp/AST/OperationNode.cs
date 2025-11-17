@@ -80,8 +80,8 @@ public class OperationNode : Node {
 		case TokenCode.left_bracket:
 			if (SymbolTable.FindEntry(this.childs[0].Type()) is SemanticAnalyzer.SymbolTable.Type atype
 					&& atype.BaseType == "array") {
-				if(this.childs[1].Type() != "integer") {
-				} else ErrorHandling.Add("Array dereferencing", this.position, "Array index expected to be of integer type");
+				if(this.childs[1].Type() != "integer")
+					ErrorHandling.Add("Array dereferencing", this.position, "Array index expected to be of integer type");
 			} else ErrorHandling.Add("Array dereferencing", this.position,
 					"Trying to access non-array variable with indexing.");
 			break;
