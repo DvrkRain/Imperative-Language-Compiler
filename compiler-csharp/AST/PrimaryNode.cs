@@ -37,19 +37,20 @@ public class PrimaryNode : Node {
 
 	public override void Verify() {
 		if(!this._inExpression) return;
-		if(this.value is string id) {
-		switch(SymbolTable.FindEntry(id)) {
-			case Variable vr:
-				this._type = vr.Type;
-				if(vr.Value is not null)
-					this.value = vr.Value;
+		switch(this.value) {
+			case string id:
+				switch(SymbolTable.FindEntry(id)) {
+					case Variable vr:
+						this._type = vr.Type;
+						if(vr.Value is not null)
+							this.value = vr.Value;
+						break;
+
+					default:
+						break;
+				}
 				break;
 
-			default:
-				break;
-		}
-		} else {
-		switch(this.value) {
 			case Variable var:
 				this._type = var.Type;
 				if(var.Value is not null)
@@ -65,7 +66,6 @@ public class PrimaryNode : Node {
 				break;
 
 			default: break;
-		}
 		}
 	}
 }
