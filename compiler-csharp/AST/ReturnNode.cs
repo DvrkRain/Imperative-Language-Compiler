@@ -14,9 +14,11 @@ public class ReturnNode : Node {
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
-		ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position());
-		expr.Parse(ref tokenQueue);
-		this.childs.Add(expr);
+		if(this._type != "void") {
+			ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position());
+			expr.Parse(ref tokenQueue);
+			this.childs.Add(expr);
+		}
 
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.semicolon) {
