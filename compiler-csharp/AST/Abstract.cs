@@ -55,6 +55,4 @@ public abstract class Node {
 		foreach(var child in childs)
 			child.Verify();
 	}
-
-    public virtual void Unuse() {}
 }

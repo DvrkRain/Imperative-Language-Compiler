@@ -303,10 +303,4 @@ public class RoutineNode : Node {
 
         return true;
     }
-
-    public override void Unuse() {
-        string identifier = (string)((PrimaryNode)this.childs[0]).value;
-        SymbolTable.UnuseEntry(identifier);
-        base.Unuse();
-    }
 }

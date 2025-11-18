@@ -34,6 +34,11 @@ public class ReturnNode : Node {
             ErrorHandling.Add("ReturnNode", this.position, "'return' used outside routine");
             return;
         }
+
+        if (!this.childs.Any() && this._type == "void") return;
+        if (!this.childs.Any() && this._type == "void") {
+            ErrorHandling.Add("ReturnNode", this.position, $"return doesn't have expression of type {this._type}");
+        }
         
         base.Verify();
 
