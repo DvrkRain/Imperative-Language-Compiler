@@ -31,7 +31,7 @@ public class OperationNode : Node {
 		this.childs.Add(arg);
 
 	public Node Value() {
-		if(this.arg_number == 0 && this.childs.Count() == 1)
+		if(this.arg_number == 0)
 			return this.childs[0];
 		return this;
 	}
@@ -466,49 +466,42 @@ public class OperationNode : Node {
 				break;
 
 			case ".":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					int i2 = (int)((PrimaryNode)this.childs[1]).value;
+					prime = new PrimaryNode(this.position, (float)i1 + (float)i2 / Math.Pow(10, Math.Ceiling(Math.Log(i2, 10))));
+					prime.Type("real");
+					this.childs[0] = prime;
+				} else if(((PrimaryNode)this.childs[0]).value is Scope structure) {
+					if(((PrimaryNode)this.childs[1]).value is string id) {
+					switch(structure.LookupEntry(id)) {
+						case Variable var:
+							this._type = var.Type;
+							prime = new PrimaryNode(this.position, var);
+							prime.Verify();
+							this.childs[0] = prime;
+							break;
+
+						case null:
+							ErrorHandling.Add("Record field access", this.position, $"Record does not containt field {id}");
+							break;
+
+						default:
+							ErrorHandling.Add("Record field access", this.position, $"Record field is not variable");
+							break;
+					}
+					} else ErrorHandling.Add("Record field access", this.position, "Expected identifier as field name");
+				// } else if(this.childs[0].Type() == "array") {
+				// 	if(((PrimaryNode)this.childs[1]).value is string id && id == "size") {
+				// 		this._type = "integer";
+				// 		this.childs[0] = new PrimaryNode(this.position, );
+					// } else ErrorHandling.Add("Array dereferencing", this.position, "Array only have 'size' field");
+				} else ErrorHandling.Add("OperationNode", this.position, "Unexpected arguments on dot operation");
 				break;
 
 			default:
 				break;
 		}
 		this.arg_number = 0;
-		return;
-
-		if(this.op_code == TokenCode.dot) {
-			flag = true;
-			if(((PrimaryNode)this.childs[0]).value is int i1) {
-				this._type = "real";
-				if(((PrimaryNode)this.childs[0]).value is int i2) {
-					prime = new PrimaryNode(this.position, (float)i1 + (float)i2 / Math.Pow(10, Math.Ceiling(Math.Log(i2, 10))));
-					prime.Type("real");
-					this.childs[0] = prime;
-				} else {
-					ErrorHandling.Add("Real number", this.position, "Expected integer value at both parts of real number");
-				}
-			} else if (((PrimaryNode)this.childs[0]).value is Scope structure) {
-				if(((PrimaryNode)this.childs[1]).value is string id) {
-				switch(structure.LookupEntry(id)) {
-					case Variable var:
-						this._type = var.Type;
-						prime = new PrimaryNode(this.position, var);
-						prime.Verify();
-						this.childs[0] = prime;
-						break;
-
-					case null:
-						ErrorHandling.Add("Record field access", this.position, $"Record does not containt field {id}");
-						break;
-
-					default:
-						ErrorHandling.Add("Record field access", this.position, $"Record field is not variable");
-						break;
-				}
-				} else ErrorHandling.Add("Record field access", this.position, "Expected identifier as field name");
-			} else if(this.childs[0].Type() == "array") {
-				if(((PrimaryNode)this.childs[1]).value is string id && id == "size") {
-					// Array size
-				} else ErrorHandling.Add("Array dereferencing", this.position, "Array only have 'size' field");
-			} else ErrorHandling.Add("OperationNode", this.position, "Unexpected arguments on dot operation");
-		}
 	}
 }

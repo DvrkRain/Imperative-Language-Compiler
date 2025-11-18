@@ -61,7 +61,9 @@ namespace Compiler
 			// Semantic analysis
             SymbolTable.InitializeSymbolTable();
 			ErrorHandling.ChangeStage("Semantic analysis");
+			AST.PrintInfo("");
             AST.Verify();
+			AST.PrintInfo("");
 
             if (ErrorHandling.Count() > 0) {
                 ErrorHandling.PrintErrors();
