@@ -177,7 +177,10 @@ public class OperationNode : Node {
 
 		// Checking if current operation calculatable at compile time
 		foreach(var child in childs) {
-			if(child is not PrimaryNode) flag = true;
+			if(child is PrimaryNode prim)
+				if(prim.value is string)
+					flag = true;
+			else flag = true;
 		}
 		if(flag) return;
 
