@@ -161,7 +161,7 @@ public class OperationNode : Node {
 				ErrorHandling.Add("OperationNode", this.position, "Boolean operands on non-boolean operation");
 				return;
 			}
-			if(this.childs[1].Type() == "boolean") {
+			if(this.arg_number == 2 && this.childs[1].Type() == "boolean") {
 				ErrorHandling.Add("OperationNode", this.position, "Boolean operands on non-boolean operation");
 				return;
 			}
