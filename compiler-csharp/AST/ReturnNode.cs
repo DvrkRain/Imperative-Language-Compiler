@@ -4,11 +4,13 @@ using SemanticAnalyzer.SymbolTable;
 
 namespace AST;
 public class ReturnNode : Node {
-    protected string? returnType;
+    public ReturnNode(Position pos, string returnType = "void") : base(pos) =>
+		this._type = returnType;
 
-    public ReturnNode(Position pos, string? returnType = null) : base(pos) {
-        this.returnType = returnType;
-    }
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "ReturnNode") Console.WriteLine($"ReturnNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -23,10 +25,6 @@ public class ReturnNode : Node {
 		}
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ReturnNode") Console.WriteLine($"ReturnNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
 
     public override void Verify() {
         if (!SymbolTable.IsInsideType(ScopeType.Routine)) {
@@ -43,8 +41,8 @@ public class ReturnNode : Node {
         
         ExpressionNode returnExpression = (ExpressionNode)this.childs[0];
 
-        if (this.returnType != null && this.returnType != returnExpression.Type()) {
-            ErrorHandling.Add("ReturnNode", this.position, $"return type mismatch {this.returnType} != {returnExpression.Type()}");
+        if (this._type != "void" && this._type != returnExpression.Type()) {
+            ErrorHandling.Add("ReturnNode", this.position, $"return type mismatch {this._type} != {returnExpression.Type()}");
             return;
         }
     }

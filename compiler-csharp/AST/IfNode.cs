@@ -4,6 +4,11 @@ namespace AST;
 public class IfNode : Node {
 	public IfNode(Position pos) : base(pos) { }
 
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
+
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Condition
@@ -35,13 +40,16 @@ public class IfNode : Node {
 		}
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
 
     public override void Verify() {
         base.Verify();
+		if(this.childs.Count == 3 && Returning.Count() > 0) {
+			bool ret = Returning.Pop();
+			ret = ret || (
+					((ProgramNode)this.childs[1]).Returned()
+					&& ((ProgramNode)this.childs[2]).Returned());
+			Returning.Push(ret);
+		}
 
         ExpressionNode expresison = (ExpressionNode)this.childs[0];
         if (expresison.Type() != "boolean") {

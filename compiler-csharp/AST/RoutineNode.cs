@@ -63,7 +63,7 @@ public class RoutineNode : Node {
 
 			case TokenCode.is_assignment:
 				tokenQueue.Dequeue();
-                string? returnType = this.childs[this.childs.Count() - 1] is PrimaryNode ? (string)((PrimaryNode)this.childs[this.childs.Count() - 1]).value : null;
+                string returnType = this.childs[this.childs.Count() - 1] is PrimaryNode ? (string)((PrimaryNode)this.childs[this.childs.Count() - 1]).value : "void";
 				ProgramNode body = new ProgramNode(tokenQueue.Peek().Position(), returnType);
 				body.Parse(ref tokenQueue);
 				this.childs.Add(body);
