@@ -94,7 +94,7 @@ public class ProgramNode : Node {
 					this.childs.Add(ret);
                     this.returned = true;
 					while(tokenQueue.Peek().Code() != TokenCode.end_of_body
-							|| tokenQueue.Peek().Code() != TokenCode.end_of_file)
+							&& tokenQueue.Peek().Code() != TokenCode.end_of_file)
 						tokenQueue.Dequeue();
 					break;
 
@@ -104,7 +104,7 @@ public class ProgramNode : Node {
 					brk.Parse(ref tokenQueue);
 					this.childs.Add(brk);
 					while(tokenQueue.Peek().Code() != TokenCode.end_of_body
-							|| tokenQueue.Peek().Code() != TokenCode.end_of_file)
+							&& tokenQueue.Peek().Code() != TokenCode.end_of_file)
 						tokenQueue.Dequeue();
 					break;
 
@@ -114,7 +114,7 @@ public class ProgramNode : Node {
 					cnt.Parse(ref tokenQueue);
 					this.childs.Add(cnt);
 					while(tokenQueue.Peek().Code() != TokenCode.end_of_body
-							|| tokenQueue.Peek().Code() != TokenCode.end_of_file)
+							&& tokenQueue.Peek().Code() != TokenCode.end_of_file)
 						tokenQueue.Dequeue();
 					break;
 
