@@ -3,12 +3,17 @@ using Data.Objects;
 namespace AST;
 public class ProgramNode : Node {
 	public bool main;
-    protected string? returnType;
     protected bool returned = false;
 
-    public ProgramNode(Position pos, string? returnType = null) : base(pos) {
-        this.returnType = returnType;
-    }
+	public bool Returned() => returned;
+
+    public ProgramNode(Position pos, string returnType = "void") : base(pos) =>
+        this._type = returnType;
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "ProgramNode") Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), main={this.main})");
+		base.PrintInfo(indent);
+	}
 
 	
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -84,7 +89,7 @@ public class ProgramNode : Node {
 				// Return
 				case TokenCode.return_statement:
 					tokenQueue.Dequeue();
-					ReturnNode ret = new ReturnNode(token.Position(), this.returnType);
+					ReturnNode ret = new ReturnNode(token.Position(), this._type);
 					ret.Parse(ref tokenQueue);
 					this.childs.Add(ret);
                     this.returned = true;
@@ -123,16 +128,18 @@ public class ProgramNode : Node {
 		}
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ProgramNode") Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), main={this.main})");
-		base.PrintInfo(indent);
-	}
 
     public override void Verify() {
-        base.Verify();
+		if(this._type != "void")
+			Returning.Push(this.returned);
 
-        if (returnType != null && !returned) {
-            ErrorHandling.Add("ProgramNode", this.position, $"ProgramNode should contain ReturnNode; returnType={returnType}, returned={returned}");
+        base.Verify();
+		
+		if(this._type != "void")
+			this.returned = Returning.Pop();
+
+        if (this._type != "void" && !returned) {
+            ErrorHandling.Add("ProgramNode", this.position, $"No return statement (or returning is not guaranteed) in function returning {this._type}.");
             return;
         }
     }

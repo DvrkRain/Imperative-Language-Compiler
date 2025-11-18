@@ -5,6 +5,12 @@ public class ForNode : Node {
 	protected bool reversed;
 	public ForNode(Position pos) : base(pos) => this.reversed = false;
 
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
+
+
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Iterator identifier
 		Token token = tokenQueue.Peek();
@@ -59,13 +65,11 @@ public class ForNode : Node {
 		this.childs.Add(nested);
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
 
     public override void Verify() {
+		Returning.Push(true);
         base.Verify();
+		Returning.Pop();
 
         ExpressionNode firstExpression = (ExpressionNode)this.childs[1];
 

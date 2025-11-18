@@ -137,6 +137,20 @@ namespace Data.Objects {
 			_baseTypes.Contains(type);
 	}
 
+	public static class Returning {
+		private static Stack<bool> returning =
+			new Stack<bool>();
+
+		public static void Push(bool ret) =>
+			returning.Push(ret);
+
+		public static bool Pop() =>
+			returning.Pop();
+
+		public static int Count() =>
+			returning.Count();
+	}
+
 	public static class SeparatorList {
 		private static Dictionary<char, TokenCode> separatorCodes =
 			new Dictionary<char, TokenCode>() {

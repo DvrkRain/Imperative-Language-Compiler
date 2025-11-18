@@ -7,6 +7,11 @@ namespace AST;
 public class WhileNode : Node {
 	public WhileNode(Position pos) : base(pos) { }
 
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "WhileNode") Console.WriteLine($"WhileNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
+
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Condition expression
@@ -28,15 +33,13 @@ public class WhileNode : Node {
 		this.childs.Add(nested);
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "WhileNode") Console.WriteLine($"WhileNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
 
     public override void Verify() 
     {
         SymbolTable.EnterScope(ScopeType.Loop);
+		Returning.Push(true);
         base.Verify();
+		Returning.Pop();
         
         // WhileLoop declaration looks like
         // while `Expression` loop `Body` end
