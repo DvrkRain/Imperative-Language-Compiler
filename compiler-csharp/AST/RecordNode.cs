@@ -36,10 +36,4 @@ public class RecordNode : Node {
         }
         base.Verify();
     }
-
-    public override void Unuse() {
-        string identifier = (string)((PrimaryNode)this.childs[0]).value;
-        SymbolTable.UnuseEntry(identifier);
-        base.Unuse();
-    }
 }

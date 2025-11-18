@@ -101,7 +101,4 @@ public class ParameterNode : Node {
 
         return true;
     }
-
-    public override void Unuse() {
-    }
 }
