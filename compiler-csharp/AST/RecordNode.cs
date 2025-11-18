@@ -1,5 +1,7 @@
 using Data.ErrorHandling;
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class RecordNode : Node {
 	public RecordNode(Position pos) : base(pos) { }
@@ -33,5 +35,11 @@ public class RecordNode : Node {
             }
         }
         base.Verify();
+    }
+
+    public override void Unuse() {
+        string identifier = (string)((PrimaryNode)this.childs[0]).value;
+        SymbolTable.UnuseEntry(identifier);
+        base.Unuse();
     }
 }

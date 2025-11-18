@@ -56,6 +56,7 @@ namespace Compiler
 
             if (treeOption == 1) {
                 AST.PrintInfo("");
+                return;
             }
 
 			// Semantic analysis
