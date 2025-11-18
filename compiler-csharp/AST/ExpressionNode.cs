@@ -183,6 +183,10 @@ public class ExpressionNode : Node {
 			}
 		}
 		this.childs.Clear();
+		if(evaluationStack.Count() == 0) {
+			ErrorHandling.Add("ExpressionNode", this.position, "Blank expression");
+			return;
+		}
 		this.childs.Add(evaluationStack.Pop());
 		if(evaluationStack.Count() > 0)
 			ErrorHandling.Add(this.GetType().Name, operatorStack.Peek().Position(), "Expression is not finilized.");
