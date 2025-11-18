@@ -86,13 +86,36 @@ public class ProgramNode : Node {
 					this.childs.Add(asgnmt);
 					break;
 					
-				// Return
+				// Sequence break
 				case TokenCode.return_statement:
 					tokenQueue.Dequeue();
 					ReturnNode ret = new ReturnNode(token.Position(), this._type);
 					ret.Parse(ref tokenQueue);
 					this.childs.Add(ret);
                     this.returned = true;
+					while(tokenQueue.Peek().Code() != TokenCode.end_of_body
+							|| tokenQueue.Peek().Code() != TokenCode.end_of_file)
+						tokenQueue.Dequeue();
+					break;
+
+				case TokenCode.break_statement:
+					tokenQueue.Dequeue();
+					BreakNode brk = new BreakNode(token.Position());
+					brk.Parse(ref tokenQueue);
+					this.childs.Add(brk);
+					while(tokenQueue.Peek().Code() != TokenCode.end_of_body
+							|| tokenQueue.Peek().Code() != TokenCode.end_of_file)
+						tokenQueue.Dequeue();
+					break;
+
+				case TokenCode.continue_statement:
+					tokenQueue.Dequeue();
+					ContinueNode cnt = new ContinueNode(token.Position());
+					cnt.Parse(ref tokenQueue);
+					this.childs.Add(cnt);
+					while(tokenQueue.Peek().Code() != TokenCode.end_of_body
+							|| tokenQueue.Peek().Code() != TokenCode.end_of_file)
+						tokenQueue.Dequeue();
 					break;
 
 				// Print
