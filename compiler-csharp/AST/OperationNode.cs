@@ -178,11 +178,11 @@ public class OperationNode : Node {
 		// Checking if current operation calculatable at compile time
 		foreach(var child in childs) {
 			if(child is PrimaryNode prim) {
-				if(prim.value is string)
+				if(prim.value is string
+					|| prim.value is ExpressionNode)
 					flag = true;
 			} else flag = true;
 		}
-		Console.WriteLine(flag);
 		if(flag) return;
 
 		switch(this._operation) {
