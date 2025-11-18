@@ -11,6 +11,7 @@ public enum ScopeType {
 public abstract class Entry
 {
     public string Name { get; } // Each instance has its own name
+    public int used = 0;
     
     protected Entry(string name)
     {
@@ -169,5 +170,29 @@ public static class SymbolTable
     public static bool IsInsideType(ScopeType scopeType, bool current = false) {
         if (current) return _currentScope.scopeType == scopeType;
         return _currentScope.IsInsideType(scopeType);
+    }
+
+    public static bool UseEntry(string identifier) {
+        Entry? entry = FindEntry(identifier);
+
+        if (entry is null) return false;
+
+        entry.used += 1;
+        return true;
+    }
+
+    public static bool UnuseEntry(string identifier) {
+        Entry? entry = FindEntry(identifier);
+
+        if (entry is null || entry.used == 0) return false;
+        
+        entry.used -= 1;
+        return true;
+    }
+
+    public static bool IsUsed(string identifier, bool local = false) {
+        Entry? entry = FindEntry(identifier, local);
+        if (entry is null || entry.used == 0) return false;
+        return true;
     }
 }
