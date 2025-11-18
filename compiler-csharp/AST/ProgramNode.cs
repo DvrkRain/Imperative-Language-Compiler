@@ -103,6 +103,7 @@ public class ProgramNode : Node {
 					this.childs.Add(prt);
 					break;
 
+				// End of body
 				case TokenCode.end_of_body:
 					tokenQueue.Dequeue();
 					parsing = false;
