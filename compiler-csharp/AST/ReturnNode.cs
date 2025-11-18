@@ -23,6 +23,7 @@ public class ReturnNode : Node {
 			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
+		tokenQueue.Dequeue();
 	}
 
 
