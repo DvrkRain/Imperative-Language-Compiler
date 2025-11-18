@@ -217,6 +217,8 @@ routine demonstrateAllOperators(n : integer) is
     flag := i > 0 and j < 100 or i == j xor value > 0.0;
 end
 
+type Cube is array [5] Matrix;
+
 routine fillCube(c : Cube, value : integer) is
     var x : integer;
     var y : integer;
@@ -245,7 +247,7 @@ routine main(sex: boolean) is
     p2.x := 3;
     p2.y := 4;
     
-    dist := square(calculateDistance(p1, p2));
+    dist :=calculateDistance(p1, p2);
     print dist;
     
     for counter in 1..10 loop
