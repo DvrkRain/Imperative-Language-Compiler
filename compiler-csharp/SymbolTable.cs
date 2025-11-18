@@ -35,7 +35,7 @@ public class Routine : Entry
 {
     public List<Variable> Parameters { get; } // Routine parameters contained in list to keep order
     public string ReturnType { get; } // Each routine might have a return type
-    public Scope? BodyScope { get; } // Each routine migh have a body scope
+    public Scope? BodyScope; // Each routine might have a body scope
 
     public bool HasBody = false;
     
@@ -121,11 +121,19 @@ public static class SymbolTable
         InitializePrimitiveTypes();
     }
     
-    private static void InitializePrimitiveTypes()
-    {
-        _globalScope.AddEntry(new Type("integer", "integer"));
-        _globalScope.AddEntry(new Type("real", "real"));
-        _globalScope.AddEntry(new Type("boolean", "boolean"));
+    private static void InitializePrimitiveTypes() {
+        Type integer = new Type("integer", "integer");
+        Type real = new Type("real", "real");
+        Type boolean = new Type("boolean", "boolean");
+
+        integer.used = 1;
+        real.used = 1;
+        boolean.used = 1;
+        
+        _globalScope.AddEntry(integer);
+        _globalScope.AddEntry(real);
+        _globalScope.AddEntry(boolean);
+        
     }
     
     public static void EnterScope(ScopeType scopeType)
@@ -190,8 +198,8 @@ public static class SymbolTable
         return true;
     }
 
-    public static bool IsUsed(string identifier, bool local = false) {
-        Entry? entry = FindEntry(identifier, local);
+    public static bool IsUsed(string identifier) {
+        Entry? entry = FindEntry(identifier);
         if (entry is null || entry.used == 0) return false;
         return true;
     }

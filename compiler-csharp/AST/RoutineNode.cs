@@ -185,8 +185,12 @@ public class RoutineNode : Node {
         }
         
         SymbolTable.EnterScope(ScopeType.Routine);
+        Routine thisRoutine = (Routine)SymbolTable.FindEntry(identifier);
         base.Verify();
+        Scope curScope = SymbolTable.GetCurrentScope();
         SymbolTable.ExitScope();
+        curScope.Parent = null;
+        thisRoutine.BodyScope = curScope;
     }
 
     private bool VerifyIdentifier() {
@@ -298,5 +302,11 @@ public class RoutineNode : Node {
         }
 
         return true;
+    }
+
+    public override void Unuse() {
+        string identifier = (string)((PrimaryNode)this.childs[0]).value;
+        SymbolTable.UnuseEntry(identifier);
+        base.Unuse();
     }
 }
