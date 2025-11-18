@@ -1,6 +1,5 @@
 using Data.Objects;
 using Data.ErrorHandling;
-using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class ExpressionNode : Node {
 	protected bool _index;
@@ -13,6 +12,12 @@ public class ExpressionNode : Node {
 	public override void PrintInfo(string indent) {
 		if (this.GetType().Name == "ExpressionNode") Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()})");
 		base.PrintInfo(indent);
+	}
+
+	public Node Value() {
+		if(this.childs[0] is PrimaryNode)
+			return this.childs[0];
+		return this;
 	}
 
 	private void ParseOperation(ref Queue<Token> tokenQueue, ref Stack<Token> operatorStack, Token token) {

@@ -392,9 +392,9 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-				token = new Token(this.pos, TokenCode.dot);
+				token = new Token(this.pos, TokenCode.dot, ".");
 			else
-				token = new Token(this.pos, TokenCode.range_sign);
+				token = new Token(this.pos, TokenCode.range_sign, "..");
 			tokenQueue.Enqueue(token);
 		}
 	}

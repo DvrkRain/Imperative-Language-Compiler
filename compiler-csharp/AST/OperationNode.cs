@@ -38,6 +38,8 @@ public class OperationNode : Node {
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) { }
+
+
 	public override void Verify() {
 		this.childs.Reverse();
 		base.Verify();
@@ -84,6 +86,7 @@ public class OperationNode : Node {
 					ErrorHandling.Add("Array dereferencing", this.position, "Array index expected to be of integer type");
 			} else ErrorHandling.Add("Array dereferencing", this.position,
 					"Trying to access non-array variable with indexing.");
+			flag = true;
 			break;
 
 		// If this operation is record field access (or real number)
@@ -113,25 +116,62 @@ public class OperationNode : Node {
 			break;
 			
 		case TokenCode.logic_op:
+			this._type = "void";
+			if(this.childs[0].Type() != "boolean") {
+				ErrorHandling.Add("OperationNode", this.position, "Non-boolean operands on logic operation");
+				return;
+			}
+			if(this.childs[1].Type() != "boolean") {
+				ErrorHandling.Add("OperationNode", this.position, "Non-boolean operands on logic operation");
+				return;
+			}
 			this._type = "boolean";
 			break;
 
 		case TokenCode.relation_op:
+			this._type = "void";
+			if(		this.childs[0].Type() == "boolean"
+					&& this.childs[1].Type() != "boolean"
+					|| this.childs[1].Type() == "boolean"
+					&& this.childs[0].Type() != "boolean") {
+				ErrorHandling.Add("OperationNode", this.position, "Cannot compare numeric and boolean");
+				return;
+			}
 			this._type = "boolean";
 			break;
 			
 		case TokenCode.factor_op:
+			this._type = "void";
+			if(this.childs[0].Type() == "boolean") {
+				ErrorHandling.Add("OperationNode", this.position, "Boolean operands on non-boolean operation");
+				return;
+			}
+			if(this.childs[1].Type() == "boolean") {
+				ErrorHandling.Add("OperationNode", this.position, "Boolean operands on non-boolean operation");
+				return;
+			}
 			this._type = "integer";
 			if(this.childs[0].Type() == "real") this._type = "real";
+			if(this.childs[1].Type() == "real") this._type = "real";
 			break;
 
 		case TokenCode.term_op:
+			this._type = "void";
+			if(this.childs[0].Type() == "boolean") {
+				ErrorHandling.Add("OperationNode", this.position, "Boolean operands on non-boolean operation");
+				return;
+			}
+			if(this.childs[1].Type() == "boolean") {
+				ErrorHandling.Add("OperationNode", this.position, "Boolean operands on non-boolean operation");
+				return;
+			}
 			this._type = "integer";
 			if(this.childs[0].Type() == "real") this._type = "real";
 			if(this.arg_number == 2 && this.childs[1].Type() == "real") this._type = "real";
 			break;
 
 		default:
+			ErrorHandling.Add("OperationNode", this.position, "Unknown operation");
 			break;
 		}
 
@@ -139,11 +179,301 @@ public class OperationNode : Node {
 		foreach(var child in childs) {
 			if(child is not PrimaryNode) flag = true;
 		}
-		// TODO: Finish expression const calc
-		flag = true;
 		if(flag) return;
 
-		// If this operation is record field access (or real number)
+		switch(this._operation) {
+			// term operations
+			case "+":
+				if(this.arg_number != 1) {
+					if(((PrimaryNode)this.childs[0]).value is int) {
+						int i1 = (int)((PrimaryNode)this.childs[0]).value;
+						if(((PrimaryNode)this.childs[1]).value is int i2) {
+							this.childs[0] = new PrimaryNode(this.position, i1+i2);
+						} else {
+							float f2 = (float)((PrimaryNode)this.childs[1]).value;
+							this.childs[0] = new PrimaryNode(this.position, i1+f2);
+						}
+					} else {
+						float f1 = (float)((PrimaryNode)this.childs[0]).value;
+						if(((PrimaryNode)this.childs[1]).value is int i2) {
+							this.childs[0] = new PrimaryNode(this.position, f1+i2);
+						} else {
+							float f2 = (float)((PrimaryNode)this.childs[1]).value;
+							this.childs[0] = new PrimaryNode(this.position, f1+f2);
+						}
+					}
+				}
+				break;
+
+			case "-":
+				if(this.arg_number != 1) {
+					if(((PrimaryNode)this.childs[0]).value is int) {
+						int i1 = (int)((PrimaryNode)this.childs[0]).value;
+						if(((PrimaryNode)this.childs[1]).value is int i2) {
+							this.childs[0] = new PrimaryNode(this.position, i1-i2);
+						} else {
+							float f2 = (float)((PrimaryNode)this.childs[1]).value;
+							this.childs[0] = new PrimaryNode(this.position, i1-f2);
+						}
+					} else {
+						float f1 = (float)((PrimaryNode)this.childs[0]).value;
+						if(((PrimaryNode)this.childs[1]).value is int i2) {
+							this.childs[0] = new PrimaryNode(this.position, f1-i2);
+						} else {
+							float f2 = (float)((PrimaryNode)this.childs[1]).value;
+							this.childs[0] = new PrimaryNode(this.position, f1-f2);
+						}
+					}
+				} else {
+					if(((PrimaryNode)this.childs[0]).value is int) {
+						int i1 = (int)((PrimaryNode)this.childs[0]).value;
+						this.childs[0] = new PrimaryNode(this.position, -1*i1);
+					} else {
+						float f1 = (float)((PrimaryNode)this.childs[0]).value;
+						this.childs[0] = new PrimaryNode(this.position, -1*f1);
+					}
+				}
+				break;
+
+			// Factor operations
+			case "*":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, i1*i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, i1*f2);
+					}
+				} else {
+					float f1 = (float)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, f1*i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, f1*f2);
+					}
+				}
+				break;
+
+			case "/":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, i1/i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, i1/f2);
+					}
+				} else {
+					float f1 = (float)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, f1/i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, f1/f2);
+					}
+				}
+				break;
+
+			case "%":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, i1%i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, i1%f2);
+					}
+				} else {
+					float f1 = (float)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, f1%i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, f1%f2);
+					}
+				}
+				break;
+
+			// Relation operations
+			case "<":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, i1<i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, i1<f2);
+					}
+				} else if(((PrimaryNode)this.childs[0]).value is float) {
+					float f1 = (float)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, f1<i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, f1<f2);
+					}
+				} else {
+					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
+					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
+					this.childs[0] = new PrimaryNode(this.position, !b1&&b2);
+				}
+				break;
+
+			case "<=":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, i1<=i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, i1<=f2);
+					}
+				} else if(((PrimaryNode)this.childs[0]).value is float) {
+					float f1 = (float)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, f1<=i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, f1<=f2);
+					}
+				} else {
+					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
+					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
+					this.childs[0] = new PrimaryNode(this.position, !b1||b2);
+				}
+				break;
+
+			case "/=":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, i1!=i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, i1!=f2);
+					}
+				} else if(((PrimaryNode)this.childs[0]).value is float) {
+					float f1 = (float)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, f1!=i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, f1!=f2);
+					}
+				} else {
+					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
+					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
+					this.childs[0] = new PrimaryNode(this.position, b1!=b2);
+				}
+				break;
+
+			case "==":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, i1==i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, i1==f2);
+					}
+				} else if(((PrimaryNode)this.childs[0]).value is float) {
+					float f1 = (float)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, f1==i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, f1==f2);
+					}
+				} else {
+					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
+					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
+					this.childs[0] = new PrimaryNode(this.position, b1==b2);
+				}
+				break;
+
+			case ">=":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, i1>=i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, i1>=f2);
+					}
+				} else if(((PrimaryNode)this.childs[0]).value is float) {
+					float f1 = (float)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, f1>=i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, f1>=f2);
+					}
+				} else {
+					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
+					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
+					this.childs[0] = new PrimaryNode(this.position, b1||!b2);
+				}
+				break;
+
+			case ">":
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, i1>i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, i1>f2);
+					}
+				} else if(((PrimaryNode)this.childs[0]).value is float) {
+					float f1 = (float)((PrimaryNode)this.childs[0]).value;
+					if(((PrimaryNode)this.childs[1]).value is int i2) {
+						this.childs[0] = new PrimaryNode(this.position, f1>i2);
+					} else {
+						float f2 = (float)((PrimaryNode)this.childs[1]).value;
+						this.childs[0] = new PrimaryNode(this.position, f1>f2);
+					}
+				} else {
+					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
+					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
+					this.childs[0] = new PrimaryNode(this.position, b1&&!b2);
+				}
+				break;
+
+			// Logic operations
+			case "not":
+				bool l1 = (bool)((PrimaryNode)this.childs[0]).value;
+				this.childs[0] = new PrimaryNode(this.position, !l1);
+				break;
+
+			case "or":
+				l1 = (bool)((PrimaryNode)this.childs[0]).value;
+				bool l2 = (bool)((PrimaryNode)this.childs[0]).value;
+				this.childs[0] = new PrimaryNode(this.position, l1||l2);
+				break;
+
+			case "and":
+				l1 = (bool)((PrimaryNode)this.childs[0]).value;
+				l2 = (bool)((PrimaryNode)this.childs[0]).value;
+				this.childs[0] = new PrimaryNode(this.position, l1&&l2);
+				break;
+
+			case "xor":
+				l1 = (bool)((PrimaryNode)this.childs[0]).value;
+				l2 = (bool)((PrimaryNode)this.childs[0]).value;
+				this.childs[0] = new PrimaryNode(this.position, l1^l2);
+				break;
+
+			case ".":
+				break;
+
+			default:
+				break;
+		}
+		this.arg_number = 0;
+		return;
+
 		if(this.op_code == TokenCode.dot) {
 			flag = true;
 			if(((PrimaryNode)this.childs[0]).value is int i1) {
@@ -179,29 +509,6 @@ public class OperationNode : Node {
 					// Array size
 				} else ErrorHandling.Add("Array dereferencing", this.position, "Array only have 'size' field");
 			} else ErrorHandling.Add("OperationNode", this.position, "Unexpected arguments on dot operation");
-		}
-
-		// TODO: Calculating const expression
-		return;
-		this.arg_number = 0;
-		if(this.arg_number == 1) {
-			if(((PrimaryNode)this.childs[0]).value is string) return;
-			if(this._operation == "-")
-				((PrimaryNode)this.childs[0]).Negate();
-			else if(this._operation == "not")
-				((PrimaryNode)this.childs[0]).Not();
-		} else {
-		switch(this._operation) {
-			case "+":
-				break;
-
-			case "-":
-				break;
-
-			default:
-				ErrorHandling.Add("OperationNode", this.position, "Unknown operation");
-				break;
-		}
 		}
 	}
 }
