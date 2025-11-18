@@ -4,12 +4,11 @@ using SemanticAnalyzer.SymbolTable;
 
 namespace AST;
 public class VarNode : Node {
-	protected string type;
 	protected bool explicit_type;
 
 	public VarNode(Position pos) : base(pos) {
 		this.explicit_type = false;
-		this.type = "void";
+		this._type = "void";
 	}
 
 
@@ -32,7 +31,7 @@ public class VarNode : Node {
 			this.explicit_type = true;
 			token = tokenQueue.Peek();
 			if(token.Code() == TokenCode.builtin_type || token.Code() == TokenCode.identifier) {
-				this.type = (string)token.Value();
+				this._type = (string)token.Value();
 			} else {
 				HandleUnexpectedToken(ref tokenQueue, token.Position());
 				return;
@@ -67,7 +66,7 @@ public class VarNode : Node {
 	} 
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "VarNode") Console.WriteLine($"VarNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), type={this.type}, explicit={this.explicit_type})");
+		if (this.GetType().Name == "VarNode") Console.WriteLine($"VarNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), type={this._type}, explicit={this.explicit_type})");
 		base.PrintInfo(indent);
 	}
 
@@ -88,7 +87,7 @@ public class VarNode : Node {
                 if (!VerifyIdentifier() || !VerifyType()) return;
                 PrimaryNode primary = (PrimaryNode)this.childs[0];
 
-                SymbolTable.DeclareEntry(new Variable((string)primary.value, this.type));
+                SymbolTable.DeclareEntry(new Variable((string)primary.value, this._type));
                 break;
             
             case 2: // PrimaryNode + ExpressionNode
@@ -96,7 +95,10 @@ public class VarNode : Node {
                 primary = (PrimaryNode)this.childs[0];
                 ExpressionNode expression = (ExpressionNode)this.childs[1];
 
-                SymbolTable.DeclareEntry(new Variable((string)primary.value, this.type, expression));
+				if(expression.Value() is ExpressionNode)
+					SymbolTable.DeclareEntry(new Variable((string)primary.value, this._type, expression));
+				else if(expression.Value() is PrimaryNode prime)
+					SymbolTable.DeclareEntry(new Variable((string)primary.value, this._type, prime.value));
                 // TODO: put expression value if possible
                 break;
             default:
@@ -125,19 +127,19 @@ public class VarNode : Node {
 
     private bool VerifyType() {
         // Special void check
-        if (this.type == "void" && !this.explicit_type) {
+        if (this._type == "void" && !this.explicit_type) {
             return true;
         }
 
         // Check for variable type
-        if (SymbolTable.FindEntry(this.type) == null && this.explicit_type) {
+        if (SymbolTable.FindEntry(this._type) == null && this.explicit_type) {
             ErrorHandling.Add("VarNode", this.position, "Variable type not declared");
             return false;
         }
         
         // Check if variable type is actually type
-        if (SymbolTable.FindEntry(this.type) is not SemanticAnalyzer.SymbolTable.Type) {
-            ErrorHandling.Add("VarNode", this.position, $"Type not declared, got {this.type}");
+        if (SymbolTable.FindEntry(this._type) is not SemanticAnalyzer.SymbolTable.Type) {
+            ErrorHandling.Add("VarNode", this.position, $"Type not declared, got {this._type}");
         }
 
         return true;
@@ -153,12 +155,12 @@ public class VarNode : Node {
         ExpressionNode expression = (ExpressionNode)this.childs[1];
 
         // Dynamically assigned type case
-        if (this.type == "void" && !this.explicit_type) {
-            this.type = expression.Type();
+        if (this._type == "void" && !this.explicit_type) {
+            this._type = expression.Type();
         }
 
-        if (this.type != expression.Type()) {
-            ErrorHandling.Add("VarNode", this.position, $"Mismatched variable type {this.type} != {expression.Type()}");
+        if (this._type != expression.Type()) {
+            ErrorHandling.Add("VarNode", this.position, $"Mismatched variable type {this._type} != {expression.Type()}");
             return false;
         }
         

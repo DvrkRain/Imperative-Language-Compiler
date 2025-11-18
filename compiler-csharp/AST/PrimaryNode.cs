@@ -21,6 +21,13 @@ public class PrimaryNode : Node {
 	public override void Verify() {
 		if(!this._inExpression) return;
 		switch(this.value) {
+			case ExpressionNode expr:
+				if(expr.Value() is PrimaryNode prime) {
+					this.value = prime.value;
+					this._type = prime.Type();
+				}
+				break;
+
 			case string id:
 				switch(SymbolTable.FindEntry(id)) {
 					case Variable vr:

@@ -469,7 +469,7 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					int i2 = (int)((PrimaryNode)this.childs[1]).value;
-					prime = new PrimaryNode(this.position, (float)i1 + (float)i2 / Math.Pow(10, Math.Ceiling(Math.Log(i2, 10))));
+					prime = new PrimaryNode(this.position, (float)i1 + (float)i2 / (float)Math.Pow(10, Math.Ceiling(Math.Log(i2, 10))));
 					prime.Type("real");
 					this.childs[0] = prime;
 				} else if(((PrimaryNode)this.childs[0]).value is Scope structure) {
