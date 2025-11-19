@@ -1,9 +1,17 @@
+using Data.ErrorHandling;
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class ProgramNode : Node {
 	public bool main;
 
-	public ProgramNode(Position pos) : base(pos) { }
+    public ProgramNode(Position pos) : base(pos) { }
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "ProgramNode") Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), main={this.main})");
+		base.PrintInfo(indent);
+	}
 
 	
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -68,19 +76,34 @@ public class ProgramNode : Node {
 					if(token.Code() != TokenCode.bare_assignment) {
 						HandleUnexpectedToken(ref tokenQueue, token.Position());
 						parsing = false;
-					}
+                        break;
+                    }
 					tokenQueue.Dequeue();
 					AssignmentNode asgnmt = new AssignmentNode(token.Position(), access);
 					asgnmt.Parse(ref tokenQueue);
 					this.childs.Add(asgnmt);
 					break;
 					
-				// Return
+				// Sequence break
 				case TokenCode.return_statement:
 					tokenQueue.Dequeue();
 					ReturnNode ret = new ReturnNode(token.Position());
 					ret.Parse(ref tokenQueue);
 					this.childs.Add(ret);
+					break;
+
+				case TokenCode.break_statement:
+					tokenQueue.Dequeue();
+					BreakNode brk = new BreakNode(token.Position());
+					brk.Parse(ref tokenQueue);
+					this.childs.Add(brk);
+					break;
+
+				case TokenCode.continue_statement:
+					tokenQueue.Dequeue();
+					ContinueNode cnt = new ContinueNode(token.Position());
+					cnt.Parse(ref tokenQueue);
+					this.childs.Add(cnt);
 					break;
 
 				// Print
@@ -91,6 +114,7 @@ public class ProgramNode : Node {
 					this.childs.Add(prt);
 					break;
 
+				// End of body
 				case TokenCode.end_of_body:
 					tokenQueue.Dequeue();
 					parsing = false;
@@ -116,8 +140,22 @@ public class ProgramNode : Node {
 		}
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ProgramNode") Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), main={this.main})");
-		base.PrintInfo(indent);
-	}
+
+    public override void Verify() {
+        base.Verify();
+        
+        int lastIndex = this.childs.Count() - 1;
+        for (int i = 0; i <= lastIndex; i++) {
+            switch (this.childs[i]) {
+                case ReturnNode:
+                    if (SymbolTable.IsInsideType(ScopeType.Routine)) lastIndex = i;
+                    break;
+                case BreakNode or ContinueNode:
+                    if (SymbolTable.IsInsideType(ScopeType.Loop)) lastIndex = i;
+                    break;
+            }
+        }
+        
+        this.childs.RemoveRange(lastIndex + 1, this.childs.Count() - (lastIndex + 1));
+    }
 }

@@ -1,7 +1,13 @@
+using Data.ErrorHandling;
 using Data.Objects;
 namespace AST;
 public class IfNode : Node {
 	public IfNode(Position pos) : base(pos) { }
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -34,8 +40,28 @@ public class IfNode : Node {
 		}
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
+
+    public override void Verify() {
+		this.childs[0].Verify();
+		bool ret = false;
+		bool check = false;
+
+		if(this.childs.Count == 3 && Returning.Count() > 0 && !Returning.Peek().returned) {
+			check = true;
+			Returning.Push(ReturningStatus.Copy(Returning.Peek()));
+		}
+		this.childs[1].Verify();
+		if(check) ret = Returning.Pop().returned;
+
+		if(check) Returning.Push(ReturningStatus.Copy(Returning.Peek()));
+		if(this.childs.Count == 3) this.childs[2].Verify();
+		if(check) ret = ret && Returning.Pop().returned;
+
+		Returning.Push(new ReturningStatus(Returning.Peek().returned || ret, Returning.Pop().ret_type));
+
+        if (this.childs[0].Type() != "boolean") {
+            ErrorHandling.Add("IfNode", this.position, $"'if' statement should have a boolean expression");
+            return;
+        }
+    }
 }

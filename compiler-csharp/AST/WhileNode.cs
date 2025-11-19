@@ -1,7 +1,16 @@
+using System.Security.Cryptography;
+using Data.ErrorHandling;
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class WhileNode : Node {
 	public WhileNode(Position pos) : base(pos) { }
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "WhileNode") Console.WriteLine($"WhileNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -24,8 +33,59 @@ public class WhileNode : Node {
 		this.childs.Add(nested);
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "WhileNode") Console.WriteLine($"WhileNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
+
+    public override void Verify() 
+    {
+        SymbolTable.EnterScope(ScopeType.Loop);
+
+		Returning.Push(ReturningStatus.Copy(Returning.Peek()));
+        base.Verify();
+		Returning.Pop();
+
+        
+        // WhileLoop declaration looks like
+        // while `Expression` loop `Body` end
+        
+        // `Expression` -> ExpressionNode
+        // `Body` -> ProgramNode
+        
+        if (this.childs.Count != 2) {
+            ErrorHandling.Add("WhileNode", this.position, $"Expected 2 childs, got  {this.childs.Count}");
+            SymbolTable.ExitScope();
+            return;
+        }
+
+        if (!VerifyExpression() || !VerifyBody()) {
+            SymbolTable.ExitScope();
+            return;
+        }
+
+        SymbolTable.ExitScope();
+    }
+
+    private bool VerifyExpression() {
+        if (this.childs[0] is not ExpressionNode) {
+            ErrorHandling.Add($"WhileNode", this.position, "Expected ExpressionNode");
+            return false;
+        }
+        
+        ExpressionNode expression = (ExpressionNode)this.childs[0];
+        
+        // Check expression result type == boolean
+        if (expression.Type() != "boolean") {
+            ErrorHandling.Add("WhileNode", this.position, $"Expected boolean, got  {expression.Type()}");
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool VerifyBody() {
+        if (this.childs[1] is not ProgramNode) {
+            ErrorHandling.Add($"WhileNode", this.position, "Expected ProgramNode");
+            return false;
+        }
+        
+        return true;
+    }
 }

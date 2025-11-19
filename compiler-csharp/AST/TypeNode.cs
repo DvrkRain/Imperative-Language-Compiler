@@ -1,4 +1,7 @@
+using Data.ErrorHandling;
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class TypeNode : Node {
 	
@@ -66,4 +69,125 @@ public class TypeNode : Node {
 		if (this.GetType().Name == "TypeNode") Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
+
+    public override void Verify() {
+        this.childs[0].Verify(); // check identifier
+        // Type declaration looks as follows:
+        // type `Identifier` is `Type`
+        
+        // `Identifier` ->  PrimaryNode
+        
+        // Type can be
+        // - PrimitiveType (integer, real, boolean) -> PrimaryNode
+        // - UserType (ArrayType, RecordType)-> ArrayNode, RecordNode
+        // - Identifier -> PrimaryNode
+        
+        // Thus, we expect childs to be
+        // PrimaryNode + (PrimaryNode/ArrayNode/RecordNode)
+
+        if (this.childs.Count() != 2) {
+            ErrorHandling.Add("TypeNode", this.position, $"Expected to have 2 childs, got {this.childs.Count()}");
+            return;
+        }
+
+        if (!VerifyIdentifier() || !VerifyType()) return;
+        
+        PrimaryNode identifier = (PrimaryNode)this.childs[0];
+        string baseType;
+        Scope? typeScope = null;
+
+        switch (this.childs[1]) {
+            case PrimaryNode primaryNode:
+                baseType = (string)primaryNode.value;
+                this.childs[1].Verify();
+
+                while (!DedicatedWords.BuiltIn(baseType))
+                    baseType = ((SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(baseType)).BaseType;
+
+                break;
+            
+            case ArrayNode:
+                baseType = "array";
+                this.childs[1].Verify();
+                typeScope = new Scope();
+                typeScope.AddEntry(new Variable("size", "integer"));
+                
+                break;
+            
+            case RecordNode:
+                baseType = "record";
+                SymbolTable.EnterScope(ScopeType.Record);
+                this.childs[1].Verify();
+                typeScope = SymbolTable.GetCurrentScope();
+                SymbolTable.ExitScope();
+                typeScope.Parent = null;
+                break;
+            
+            default:
+                baseType = (string)identifier.value;
+                this.childs[1].Verify();
+                break;
+        }
+
+        SemanticAnalyzer.SymbolTable.Type newType =
+            new SemanticAnalyzer.SymbolTable.Type((string)identifier.value, baseType);
+
+        if (baseType == "record") newType.TypeScope = typeScope;
+
+        SymbolTable.DeclareEntry(newType);
+    }
+
+    private bool VerifyIdentifier() {
+        // Check identifier node type
+        if (this.childs[0] is not PrimaryNode) {
+            ErrorHandling.Add("TypeNode", this.position, "Expected PrimaryNode");
+            return false;
+        }
+        
+        PrimaryNode identifier = (PrimaryNode)this.childs[0];
+        
+        // Check for redeclaration
+        if (SymbolTable.FindEntry((string)identifier.value, true) != null) {
+            ErrorHandling.Add("TypeNode", this.position, "Type redeclaration");
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool VerifyType() {
+        // Type can be
+        // - PrimitiveType (integer, real, boolean) -> PrimaryNode
+        // - UserType (ArrayType, RecordType)-> ArrayNode, RecordNode
+        // - Identifier -> PrimaryNode
+        
+        // Check child type
+        switch (this.childs[1]) {
+            case PrimaryNode primaryNode:
+                if (SymbolTable.FindEntry((string)primaryNode.value) is not SemanticAnalyzer.SymbolTable.Type) {
+                    ErrorHandling.Add("TypeNode", this.position, $"Type '{(string)primaryNode.value}' is not declared");
+                    return false;
+                }
+                break;
+            
+            case ArrayNode arrayNode:
+                int arrayChilds = arrayNode.GetChilds().Count();
+                PrimaryNode arrayType = (PrimaryNode)arrayNode.GetChilds()[arrayChilds - 1];
+
+                if (SymbolTable.FindEntry((string)arrayType.value) is not SemanticAnalyzer.SymbolTable.Type) {
+                    ErrorHandling.Add("TypeNode", this.position, $"Array type '{(string)arrayType.value}' is not declared");
+                    return false;
+                }
+                break;
+            
+            case RecordNode recordNode:
+                // TODO: Create a way to check if record is alright
+                break;
+            default:
+                ErrorHandling.Add("TypeNode", this.position, $"Unexpected type '{this.childs[1].GetType().Name}'");
+                return false;
+        }
+        
+        return true;
+    }
 }

@@ -1,8 +1,17 @@
+using Data.ErrorHandling;
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class ForNode : Node {
 	protected bool reversed;
 	public ForNode(Position pos) : base(pos) => this.reversed = false;
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
+
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Iterator identifier
@@ -13,6 +22,7 @@ public class ForNode : Node {
 		}
 		tokenQueue.Dequeue();
 		PrimaryNode id = new PrimaryNode(token.Position(), token.Value());
+        this.childs.Add(id);
 
 		// 'in' keyword
 		token = tokenQueue.Peek();
@@ -57,8 +67,26 @@ public class ForNode : Node {
 		this.childs.Add(nested);
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
+
+    public override void Verify() {
+        SymbolTable.EnterScope(ScopeType.Loop);
+
+		Returning.Push(ReturningStatus.Copy(Returning.Peek()));
+        base.Verify();
+		Returning.Pop();
+
+        SymbolTable.ExitScope();
+
+        ExpressionNode firstExpression = (ExpressionNode)this.childs[1];
+
+        if (firstExpression.Type() != "integer") {
+            ErrorHandling.Add("ForNode", this.position, "ForNode should iterate on integer values");
+            return;
+        }
+
+        if (this.childs[2] is ExpressionNode secondExpression && secondExpression.Type() != "integer") {
+            ErrorHandling.Add("ForNode", this.position, "ForNode should iterate on integer values");
+            return;
+        }
+    }
 }

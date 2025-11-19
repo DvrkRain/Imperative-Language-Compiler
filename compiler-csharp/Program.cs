@@ -4,6 +4,7 @@ using Data.ErrorHandling;
 
 using LexicalAnalyzer;
 using AST;
+using SemanticAnalyzer.SymbolTable;
 
 namespace Compiler
 {
@@ -23,12 +24,12 @@ namespace Compiler
 			Console.WriteLine("Filename: " + reader.filename);
 
 			// Lexic analysis
+            ErrorHandling.ChangeStage("Lexical analysis");
 			Queue<Token> stream = new Queue<Token>();
 			Lexer lexer = new Lexer(reader);
 			lexer.ParseFile(ref stream);
 
             if (ErrorHandling.Count() > 0) {
-                Console.WriteLine("Lexical Analysis errors:");
                 ErrorHandling.PrintErrors();
                 return;
             }
@@ -44,18 +45,30 @@ namespace Compiler
             }
 
             // Syntax analysis
+			ErrorHandling.ChangeStage("Syntax analysis");
 			ProgramNode AST = new ProgramNode(new Position(0,0));
 			AST.Parse(ref stream);
             
             if (ErrorHandling.Count() > 0) {
-                Console.WriteLine("Syntax Analysis errors:");
                 ErrorHandling.PrintErrors();
                 return;
             }
 
-			if (treeOption == 1) AST.PrintInfo("");
+            if (treeOption == 1) {
+                AST.PrintInfo("");
+                return;
+            }
 
 			// Semantic analysis
-		}
+            SymbolTable.InitializeSymbolTable();
+			ErrorHandling.ChangeStage("Semantic analysis");
+            AST.Verify();
+			AST.PrintInfo("");
+
+            if (ErrorHandling.Count() > 0) {
+                ErrorHandling.PrintErrors();
+                return;
+            }
+        }
 	}
 }

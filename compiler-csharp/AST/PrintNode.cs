@@ -1,3 +1,4 @@
+using Data.ErrorHandling;
 using Data.Objects;
 namespace AST;
 public class PrintNode : Node {
@@ -28,4 +29,20 @@ public class PrintNode : Node {
 		if (this.GetType().Name == "PrintNode") Console.WriteLine($"PrintNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
 		base.PrintInfo(indent);
 	}
+
+    public override void Verify() {
+        base.Verify();
+
+        foreach (var child in childs) {
+            if (child is not ExpressionNode) {
+                ErrorHandling.Add("PrintNode", this.position, $"PrintNode should contain only ExpressionNodes");
+                return;
+            }
+
+            if (!DedicatedWords.BuiltIn(child.Type())) {
+                ErrorHandling.Add("PrintNode", this.position, $"PrintNode should receive only builtin_type");
+                return;
+            }
+        }
+    }
 }

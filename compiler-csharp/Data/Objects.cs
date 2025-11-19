@@ -18,6 +18,9 @@ namespace Data.Objects {
 		public void NextChar() {
 			this.col += 1;
 		}
+
+		public override string ToString() =>
+			$"({this.row},{this.col})";
 	}
 
 	public enum TokenCode {
@@ -69,22 +72,27 @@ namespace Data.Objects {
 		break_statement,
 		continue_statement,
 		end_of_file,
+		error,
 	}
 
 	public static class Precedence {
 		private static Dictionary<TokenCode, int> _precedence =
 			new Dictionary<TokenCode, int>() {
-				{TokenCode.dot			, 0},
-				{TokenCode.factor_op	, 1},
-				{TokenCode.term_op		, 2},
-				{TokenCode.relation_op	, 3},
-				{TokenCode.logic_op		, 4},
+				{TokenCode.dot				, 0},
+				{TokenCode.factor_op		, 1},
+				{TokenCode.term_op			, 2},
+				{TokenCode.relation_op		, 3},
+				{TokenCode.logic_op			, 4},
+				{TokenCode.left_parenthesis	, 5},
+				{TokenCode.left_bracket		, 5},
 			};
 
 		public static int Order(TokenCode key) => _precedence[key];
 	}
 
 	public static class DedicatedWords {
+		private static List<string> _baseTypes =
+			new List<string>() { "integer", "real", "boolean", "void", "record", "array" };
 		private static Dictionary<string,TokenCode> _dedicatedWords =
 			new Dictionary<string,TokenCode>() {
 				{"integer",		TokenCode.builtin_type},
@@ -125,6 +133,39 @@ namespace Data.Objects {
 
 		public static TokenCode Code(string key) =>
 			_dedicatedWords[key];
+
+		public static bool BuiltIn(string type) =>
+			_baseTypes.Contains(type);
+	}
+
+	public struct ReturningStatus {
+		public bool returned;
+		public string ret_type;
+
+		public ReturningStatus(bool ret, string type) {
+			this.returned = ret;
+			this.ret_type = type;
+		}
+
+		public static ReturningStatus Copy(ReturningStatus stat) =>
+			new ReturningStatus(false, stat.ret_type);
+	}
+
+	public static class Returning {
+		private static Stack<ReturningStatus> returning =
+			new Stack<ReturningStatus>();
+
+		public static void Push(ReturningStatus ret) =>
+			returning.Push(ret);
+
+		public static ReturningStatus Pop() =>
+			returning.Pop();
+
+		public static ReturningStatus Peek() =>
+			returning.Peek();
+
+		public static int Count() =>
+			returning.Count();
 	}
 
 	public static class SeparatorList {

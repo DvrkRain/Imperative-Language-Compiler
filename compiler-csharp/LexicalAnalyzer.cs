@@ -115,7 +115,7 @@ namespace LexicalAnalyzer
                                 this.currentState = new StartState();
                                 this.currentStateCode = StateCode.Start;
                                 
-                                ErrorHandling.UnexpectedTokenException(cursor, "LexicalAnalyzer");
+                                ErrorHandling.UnexpectedTokenException("LexicalAnalyzer", cursor);
                                 break;
                         }
                     }
@@ -180,7 +180,11 @@ namespace LexicalAnalyzer
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
-			if(DedicatedWords.Keys(this.data))
+			if(this.data == "true") 
+				token = new Token(this.pos, DedicatedWords.Code(this.data), true);
+			else if(this.data == "false") 
+				token = new Token(this.pos, DedicatedWords.Code(this.data), false);
+			else if(DedicatedWords.Keys(this.data))
 				token = new Token(this.pos, DedicatedWords.Code(this.data), this.data);
 			else
 				token = new Token(this.pos, TokenCode.identifier, this.data);
@@ -299,7 +303,7 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-				Console.WriteLine($"Unexpected token at {this.pos.Row()}, {this.pos.Col()}.");
+                ErrorHandling.UnexpectedTokenException("LexicalAnalyzer", this.pos);
 			else {
 				if(state)
 					token = new Token(this.pos, TokenCode.relation_op, "==");
@@ -388,9 +392,9 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-				token = new Token(this.pos, TokenCode.dot);
+				token = new Token(this.pos, TokenCode.dot, ".");
 			else
-				token = new Token(this.pos, TokenCode.range_sign);
+				token = new Token(this.pos, TokenCode.range_sign, "..");
 			tokenQueue.Enqueue(token);
 		}
 	}

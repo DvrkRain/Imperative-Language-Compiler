@@ -2,21 +2,48 @@ using Data.Objects;
 using Data.ErrorHandling;
 namespace AST;
 public class ExpressionNode : Node {
-	// private bool cnst;
+	protected bool _index;
 
-	public ExpressionNode(Position pos) : base(pos) { }
+	public ExpressionNode(Position pos, bool enclosed = false) : base(pos) {
+		this._type = "void";
+		this._index = enclosed;
+	}
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "ExpressionNode") Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()})");
+		base.PrintInfo(indent);
+	}
+
+	public Node Value() {
+		if(this.childs[0] is PrimaryNode)
+			return this.childs[0];
+		return this;
+	}
+
+	private void ParseOperation(ref Queue<Token> tokenQueue, ref Stack<Token> operatorStack, Token token) {
+		tokenQueue.Dequeue();
+		while(operatorStack.Count() > 0
+			&& operatorStack.Peek().Code() != TokenCode.left_parenthesis
+			&& Precedence.Order(token.Code()) >= Precedence.Order(operatorStack.Peek().Code())) {
+			Token temp = operatorStack.Pop();
+			this.childs.Add(new OperationNode(temp.Position(), temp.Code(), (string)temp.Value()));
+		}
+		operatorStack.Push(token);
+	}
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
+		// Shunting-yard algorithm
 		Stack<Token> operatorStack = new Stack<Token>();
 		Token token;
 		bool parsing = true;
+		Stack<int> args = new Stack<int>();
 		while(tokenQueue.Count() > 0 && parsing) {
 			token = tokenQueue.Peek();
 			switch(token.Code()) {
 				case TokenCode.constant_value:
 					tokenQueue.Dequeue();
-					this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
+					this.childs.Add(new PrimaryNode(token.Position(), token.Value(), true));
 					break;
 
 				case TokenCode.identifier:
@@ -24,19 +51,23 @@ public class ExpressionNode : Node {
 					if(tokenQueue.Peek().Code() == TokenCode.left_parenthesis)
 						operatorStack.Push(token);
 					else {
-						FieldAccessNode field = new FieldAccessNode(token.Position());
-						field.Parse(ref tokenQueue);
-						this.childs.Add(field);
+						PrimaryNode identifier = new PrimaryNode(token.Position(), token.Value(), true);
+						this.childs.Add(identifier);
 					}
 					break;
 
 				case TokenCode.left_parenthesis:
+					args.Push(1);
 					tokenQueue.Dequeue();
 					operatorStack.Push(token);
 					break;
 
 				case TokenCode.comma:
-                    if (operatorStack.Count() == 0) return;
+					if(args.Count() == 0) {
+						parsing = false;
+						break;
+					}
+					args.Push(args.Pop()+1);
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_parenthesis) {
 						token = operatorStack.Pop();
@@ -47,68 +78,66 @@ public class ExpressionNode : Node {
 				case TokenCode.right_parenthesis:
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_parenthesis) {
-						if(operatorStack.Count() == 0) {
-							ErrorHandling.MismatchedParenthesis(token.Position(), this.GetType().Name);
-							return;
-						}
 						token = operatorStack.Pop();
 						this.childs.Add(new OperationNode(token.Position(), token.Code(), (string)token.Value()));
+						if(operatorStack.Count() == 0) {
+							ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
+							return;
+						}
 					}
 					operatorStack.Pop();
 					if(operatorStack.Count() > 0 && operatorStack.Peek().Code() == TokenCode.identifier) {
 						token = operatorStack.Pop();
-						this.childs.Add(new OperationNode(token.Position(), token.Code(), (string)token.Value()));
+						this.childs.Add(new OperationNode(token.Position(), token.Code(), (string)token.Value(), args.Pop()));
 					}
+					break;
+
+				case TokenCode.left_bracket:
+					tokenQueue.Dequeue();
+					operatorStack.Push(token);
+					break;
+
+				case TokenCode.right_bracket:
+					if(_index) {
+						parsing = false;
+						break;
+					}
+					tokenQueue.Dequeue();
+					while(operatorStack.Peek().Code() != TokenCode.left_bracket) {
+						if(operatorStack.Peek().Code() == TokenCode.left_parenthesis) {
+							ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
+							return;
+						}
+						token = operatorStack.Pop();
+						this.childs.Add(new OperationNode(token.Position(), token.Code(), (string)token.Value()));
+						if(operatorStack.Count() == 0) {
+							ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
+							return;
+						}
+					}
+					token = operatorStack.Pop();
+					this.childs.Add(new OperationNode(token.Position(), token.Code(), (string)token.Value()));
 					break;
 
 				// Operators
 				case TokenCode.logic_op:
-					tokenQueue.Dequeue();
-					while(operatorStack.Count() > 0
-						&& operatorStack.Peek().Code() != TokenCode.left_parenthesis
-						&& Precedence.Order(token.Code()) >= Precedence.Order(operatorStack.Peek().Code())) {
-						Token temp = operatorStack.Pop();
-						this.childs.Add(new OperationNode(temp.Position(), temp.Code(), (string)temp.Value()));
-					}
-					operatorStack.Push(token);
+					this.ParseOperation(ref tokenQueue, ref operatorStack, token);
 					break;
 
 				case TokenCode.relation_op:
-					tokenQueue.Dequeue();
-					while(operatorStack.Count() > 0
-						&& operatorStack.Peek().Code() != TokenCode.left_parenthesis
-						&& Precedence.Order(token.Code()) >= Precedence.Order(operatorStack.Peek().Code())) {
-						Token temp = operatorStack.Pop();
-						this.childs.Add(new OperationNode(temp.Position(), temp.Code(), (string)temp.Value()));
-					}
-					operatorStack.Push(token);
+					this.ParseOperation(ref tokenQueue, ref operatorStack, token);
 					break;
 
 				case TokenCode.factor_op:
-					tokenQueue.Dequeue();
-					while(operatorStack.Count() > 0
-						&& operatorStack.Peek().Code() != TokenCode.left_parenthesis
-						&& Precedence.Order(token.Code()) >= Precedence.Order(operatorStack.Peek().Code())) {
-						Token temp = operatorStack.Pop();
-						this.childs.Add(new OperationNode(temp.Position(), temp.Code(), (string)temp.Value()));
-					}
-					operatorStack.Push(token);
+					this.ParseOperation(ref tokenQueue, ref operatorStack, token);
 					break;
 
 				case TokenCode.term_op:
-					tokenQueue.Dequeue();
-					while(operatorStack.Count() > 0
-						&& operatorStack.Peek().Code() != TokenCode.left_parenthesis
-						&& Precedence.Order(token.Code()) >= Precedence.Order(operatorStack.Peek().Code())) {
-						Token temp = operatorStack.Pop();
-						this.childs.Add(new OperationNode(temp.Position(), temp.Code(), (string)temp.Value()));
-					}
-					operatorStack.Push(token);
+					this.ParseOperation(ref tokenQueue, ref operatorStack, token);
 					break;
 
 				case TokenCode.dot:
-					tokenQueue.Dequeue();
-					operatorStack.Push(token);
+					this.ParseOperation(ref tokenQueue, ref operatorStack, token);
 					break;
 
 				default:
@@ -118,16 +147,66 @@ public class ExpressionNode : Node {
 		}
 		while(operatorStack.Count() > 0) {
 			if((token = operatorStack.Peek()).Code() == TokenCode.left_parenthesis) {
-				ErrorHandling.MismatchedParenthesis(token.Position(), this.GetType().Name);
+				ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
 				return;
 			}
 			token = operatorStack.Pop();
 			this.childs.Add(new OperationNode(token.Position(), token.Code(), (string)token.Value()));
 		}
+
+		// Parsing evaluation queue to expression AST
+		Stack<Node> evaluationStack = new Stack<Node>();
+		foreach(var child in childs) {
+			switch(child) {
+				case PrimaryNode:
+					evaluationStack.Push(child);
+					break;
+
+				case OperationNode oper:
+					if(evaluationStack.Count() >= oper.ArgNum()) {
+						for(int i=0; i<oper.ArgNum(); i++) {
+							oper.AddArgument(evaluationStack.Pop());
+						}
+					} else if (evaluationStack.Count() == 0) {
+						ErrorHandling.Add(this.GetType().Name, oper.Position(), $"Operation {oper.Operation()} does not have enough arguments.");
+					} else if (oper.Code() == TokenCode.term_op || (oper.Code() == TokenCode.logic_op && oper.Operation() == "not")) {
+						oper.ArgNum(1);
+						oper.AddArgument(evaluationStack.Pop());
+					} else {
+						ErrorHandling.Add(this.GetType().Name, oper.Position(), $"Operation {oper.Operation()} does not have enough arguments.");
+					}
+					evaluationStack.Push(oper);
+					break;
+
+				default:
+					return;
+			}
+		}
+		this.childs.Clear();
+		if(evaluationStack.Count() == 0) {
+			ErrorHandling.Add("ExpressionNode", this.position, "Blank expression");
+			return;
+		}
+		this.childs.Add(evaluationStack.Pop());
+		if(evaluationStack.Count() > 0)
+			ErrorHandling.Add(this.GetType().Name, operatorStack.Peek().Position(), "Expression is not finilized.");
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ExpressionNode") Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()})");
-		base.PrintInfo(indent);
+
+	public override void Verify() {
+		base.Verify();
+		switch(this.childs[0]) {
+			case PrimaryNode prime:
+				this._type = prime.Type();
+				break;
+
+			case OperationNode oper:
+				this._type = oper.Type();
+				this.childs[0] = oper.Value();
+				break;
+
+			default:
+				break;
+		}
 	}
 }

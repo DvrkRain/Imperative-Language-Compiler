@@ -4,13 +4,14 @@ public enum ScopeType {
     Global,
     Loop,
     Branch,
-    FunctionDeclaration,
-    FunctionBody
+    Routine,
+    Record
 }
 
 public abstract class Entry
 {
     public string Name { get; } // Each instance has its own name
+    public int used = 0;
     
     protected Entry(string name)
     {
@@ -33,10 +34,12 @@ public class Variable : Entry
 public class Routine : Entry
 {
     public List<Variable> Parameters { get; } // Routine parameters contained in list to keep order
-    public string? ReturnType { get; } // Each routine might have a return type
-    public Scope? BodyScope { get; } // Each routine migh have a body scope
+    public string ReturnType { get; } // Each routine might have a return type
+    public Scope? BodyScope; // Each routine might have a body scope
+
+    public bool HasBody = false;
     
-    public Routine(string name, List<Variable>? parameters = null, string? returnType = null) : base(name)
+    public Routine(string name, List<Variable>? parameters = null, string returnType = "void") : base(name)
     {
         Parameters = parameters ?? new List<Variable>();
         ReturnType = returnType;
@@ -47,7 +50,7 @@ public class Routine : Entry
 public class Type : Entry
 {
     public string BaseType { get; } // Each type has a base type (integer, real, boolean, array, record), type == baseType -> baseType in builtInTypes
-    public Scope? RecordScope { get; } // Each type might have its scope
+    public Scope? TypeScope; // Each type might have its scope
     
     public Type(string name, string baseType) : base(name)
     {
@@ -61,8 +64,8 @@ public class Scope
     private Dictionary<string, Entry> _entries;
     
     public ScopeType? scopeType { get; }
-    
-    public Scope? Parent { get; }
+
+    public Scope? Parent;
     
     public Scope(Scope? parent = null, ScopeType? scopeType = null)
     {
@@ -80,7 +83,11 @@ public class Scope
         _entries[entry.Name] = entry;
         return true;
     }
-    
+
+    public Entry? LookupLocalEntry(string name) {
+        return _entries.TryGetValue(name, out Entry entry) ? entry : null;
+    }
+
     public Entry? LookupEntry(string name)
     {
         if (_entries.TryGetValue(name, out var entry))
@@ -100,33 +107,41 @@ public class Scope
     }
 }
 
-public class SymbolTable
+public static class SymbolTable
 {
-    private Scope _globalScope;
-    private Scope _currentScope;
+    private static Scope _globalScope;
+    private static Scope _currentScope;
     
-    public SymbolTable()
+    public static void InitializeSymbolTable()
     {
-        _globalScope = new Scope();
+        _globalScope = new Scope(null, ScopeType.Global);
         _currentScope = _globalScope;
         
         // Инициализация встроенных типов
         InitializePrimitiveTypes();
     }
     
-    private void InitializePrimitiveTypes()
-    {
-        _globalScope.AddEntry(new Type("integer", "integer"));
-        _globalScope.AddEntry(new Type("real", "real"));
-        _globalScope.AddEntry(new Type("boolean", "boolean"));
+    private static void InitializePrimitiveTypes() {
+        Type integer = new Type("integer", "integer");
+        Type real = new Type("real", "real");
+        Type boolean = new Type("boolean", "boolean");
+
+        integer.used = 1;
+        real.used = 1;
+        boolean.used = 1;
+        
+        _globalScope.AddEntry(integer);
+        _globalScope.AddEntry(real);
+        _globalScope.AddEntry(boolean);
+        
     }
     
-    public void EnterScope()
+    public static void EnterScope(ScopeType scopeType)
     {
-        _currentScope = new Scope(_currentScope);
+        _currentScope = new Scope(_currentScope, scopeType);
     }
     
-    public void ExitScope()
+    public static void ExitScope()
     {
         if (_currentScope.Parent != null)
         {            
@@ -138,29 +153,54 @@ public class SymbolTable
         }
     }
     
-    public Scope GetCurrentScope()
+    public static Scope GetCurrentScope()
     {
         return _currentScope;
     }
     
 
-    public Scope GetGlobalScope()
+    public static Scope GetGlobalScope()
     {
         return _globalScope;
     }
     
 
-    public bool DeclareEntry(Entry entry)
+    public static bool DeclareEntry(Entry entry)
     {
         return _currentScope.AddEntry(entry);
     }
     
-    public Entry? FindEntry(string name)
-    {
+    public static Entry? FindEntry(string name, bool local = false) {
+        if (local) return _currentScope.LookupLocalEntry(name);
         return _currentScope.LookupEntry(name);
     }
 
-    public bool IsInsideType(ScopeType scopeType) {
+    public static bool IsInsideType(ScopeType scopeType, bool current = false) {
+        if (current) return _currentScope.scopeType == scopeType;
         return _currentScope.IsInsideType(scopeType);
+    }
+
+    public static bool UseEntry(string identifier) {
+        Entry? entry = FindEntry(identifier);
+
+        if (entry is null) return false;
+
+        entry.used += 1;
+        return true;
+    }
+
+    public static bool UnuseEntry(string identifier) {
+        Entry? entry = FindEntry(identifier);
+
+        if (entry is null || entry.used == 0) return false;
+        
+        entry.used -= 1;
+        return true;
+    }
+
+    public static bool IsUsed(string identifier) {
+        Entry? entry = FindEntry(identifier);
+        if (entry is null || entry.used == 0) return false;
+        return true;
     }
 }

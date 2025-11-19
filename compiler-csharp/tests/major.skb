@@ -1,0 +1,273 @@
+type Point is record
+    var x : integer;
+    var y : integer;
+end;
+
+type Circle is record
+    var center : Point;
+    var radius : real;
+end;
+
+
+
+type IntArray is array [] integer;
+
+type row is array[5] real;
+
+type Matrix is array [5] row;
+
+type PointArray is array [100] Point;
+
+type StaticArray is array [] integer;
+
+type NewInt is integer;
+
+
+var globalCounter : integer is 0;
+var pi : real is 3.14159;
+var isDebug : boolean is true;
+var e is 2.71;
+
+var origin : Point;
+var myCircle : Circle;
+var numbers : IntArray;
+var grid : Matrix;
+
+routine isEven(n : integer) : boolean;
+
+routine isOdd(n : integer) : boolean;
+
+routine initializeMatrix(m : Matrix, value : real) is
+    var i : integer;
+    var j : integer;
+    
+    for i in 1..5 loop
+        for j in 1..5 loop
+            m[i][j] := value;
+        end
+    end
+end
+
+routine fibonacci(n : integer) : integer is
+    var a is 0;
+    var b is 1;
+    var temp : integer;
+    var counter is 1;
+    
+    if n <= 0 then
+        return 0;
+    else
+        if n == 1 then
+            return 1;
+        else
+            while counter < n loop
+                temp := a + b;
+                a := b;
+                b := temp;
+                counter := counter + 1;
+            end
+            
+            return b;
+        end
+    end
+end
+
+routine calculateDistance(p1 : Point, p2 : Point) : real is
+    var dx is p1.x - p2.x;
+    var dy is p1.y - p2.y;
+    var result : real;
+    
+    result := (dx * dx + dy * dy);
+    return result;
+end
+
+routine bubbleSort(arr : StaticArray) is
+    var i : integer is 10;
+    var j : integer;
+    var temp : integer;
+    var n is 0;
+    var swapped : boolean;
+    
+    for i in 1..n loop
+        swapped := false;
+        
+        for j in 1..(n - i) loop
+            if arr[j] > arr[j + 1] then
+                temp := arr[j];
+                arr[j] := arr[j + 1];
+                arr[j + 1] := temp;
+                swapped := true;
+            end
+        end
+        
+        if not swapped then
+            return 0;
+        end
+    end
+end
+
+routine sumReverse(arr : IntArray) : integer is
+    var sum is 0;
+    var element : integer;
+    
+    for element in 0..10 reverse loop
+        sum := sum + element;
+    end
+    
+    return sum;
+end
+
+routine square(x : integer) : integer => x * x
+
+routine cube(x : integer) : integer => x * x * x
+
+routine isOdd(n : integer) : boolean is
+    if n == 0 then
+        return false;
+    else
+        return isEven(n - 1);
+    end
+end
+
+routine isEven(n : integer) : boolean is
+    if n == 0 then
+        return true;
+    else
+        return isOdd(n - 1);
+    end
+end
+
+routine complexCalculation(a : integer, b : integer, c : integer) : real is
+    var result : real is 0.0;
+    var temp : integer;
+    a := 100;
+    
+    if a > b then
+        var x is a * 2;
+        var y is b * 3;
+        
+        if x > y then
+            temp := x - y;
+        else
+            temp := y - x;
+        end
+        
+        result := temp + c;
+    else
+        var z is b - a;
+        
+        while z > 0 loop
+            var multiplier is 2;
+            result := result + z * multiplier;
+            z := z - 1;
+        end
+    end
+    
+    return result;
+end
+
+routine demonstrateAllOperators(n : integer) is
+    var i : integer;
+    var j : integer;
+    var flag : boolean;
+    var value : real;
+    
+    i := n + 10;
+    j := i - 5;
+    i := j * 2;
+    j := i / 3;
+    i := j % 4;
+    
+    flag := ((i > j) and (j <= n));
+    flag := flag or (i == 0);
+    flag := flag xor true;
+    flag := not flag;
+
+    if i < j then
+        print i;
+    end
+    
+    if i <= j then
+        print i;
+    end
+    
+    if i > j then
+        print i;
+    end
+    
+    if i >= j then
+        print i;
+    end
+    
+    if i == j then
+        print i;
+    end
+    
+    if i /= j then
+        print i;
+    end
+    
+    value := +3.14;
+    value := -value;
+    
+    i := square(5) + cube(2);
+    flag := isEven(i) and isOdd(j);
+    
+    value := i + j * 2.0 / i - j + 1;
+    flag := i > 0 and j < 100 or i == j xor value > 0.0;
+end
+
+type Cube is array [5] Matrix;
+
+routine fillCube(c : Cube, value : integer) is
+    var x : integer;
+    var y : integer;
+    var z : integer;
+    
+    for x in 1..3 loop
+        for y in 1..3 loop
+            for z in 1..3 loop
+                c[x][y][z] := value * (x + y + z);
+            end
+        end
+    end
+end
+
+routine main(sex: boolean) is
+    var arr : IntArray;
+    var m : Matrix;
+    var p1 : Point;
+    var p2 : Point;
+    var dist : real;
+    var result : integer;
+    var counter : integer;
+    
+    p1.x := 0;
+    p1.y := 0;
+    p2.x := 3;
+    p2.y := 4;
+    
+    dist :=calculateDistance(p1, p2);
+    print dist;
+    
+    for counter in 1..10 loop
+        arr[counter] := counter * counter;
+    end
+    
+    result := sumReverse(arr);
+    print result;
+    
+    print fibonacci(10), square(8), cube(3);
+    
+    result := initializeMatrix(m, 1.5);
+    
+    result := demonstrateAllOperators(42);
+    
+    if isEven(10) then
+        print true;
+    end
+    
+    if isOdd(7) then
+        print true;
+    end
+end

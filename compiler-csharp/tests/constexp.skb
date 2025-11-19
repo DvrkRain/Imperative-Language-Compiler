@@ -1,0 +1,4 @@
+var a:integer is 4*3+5;
+var b:boolean is 3*5<20;
+var c:real is 15.5*3;
+var d:boolean is b and true;
