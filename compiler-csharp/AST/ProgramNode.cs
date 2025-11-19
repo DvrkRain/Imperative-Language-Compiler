@@ -5,12 +5,8 @@ using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class ProgramNode : Node {
 	public bool main;
-    protected bool returned = false;
 
-	public bool Returned() => returned;
-
-    public ProgramNode(Position pos, string returnType = "void") : base(pos) =>
-        this._type = returnType;
+    public ProgramNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
 		if (this.GetType().Name == "ProgramNode") Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), main={this.main})");
@@ -91,10 +87,9 @@ public class ProgramNode : Node {
 				// Sequence break
 				case TokenCode.return_statement:
 					tokenQueue.Dequeue();
-					ReturnNode ret = new ReturnNode(token.Position(), this._type);
+					ReturnNode ret = new ReturnNode(token.Position());
 					ret.Parse(ref tokenQueue);
 					this.childs.Add(ret);
-                    this.returned = true;
 					break;
 
 				case TokenCode.break_statement:
@@ -147,18 +142,7 @@ public class ProgramNode : Node {
 
 
     public override void Verify() {
-		if(this._type != "void")
-			Returning.Push(this.returned);
-
         base.Verify();
-		
-		if(this._type != "void")
-			this.returned = Returning.Pop();
-
-        if (this._type != "void" && !returned) {
-            ErrorHandling.Add("ProgramNode", this.position, $"No return statement (or returning is not guaranteed) in function returning {this._type}.");
-            return;
-        }
         
         int lastIndex = this.childs.Count() - 1;
         for (int i = 0; i <= lastIndex; i++) {

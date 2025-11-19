@@ -39,7 +39,7 @@ public class PrintNode : Node {
                 return;
             }
 
-            if (DedicatedWords.Code(child.Type()) != TokenCode.builtin_type) {
+            if (!DedicatedWords.BuiltIn(child.Type())) {
                 ErrorHandling.Add("PrintNode", this.position, $"PrintNode should receive only builtin_type");
                 return;
             }

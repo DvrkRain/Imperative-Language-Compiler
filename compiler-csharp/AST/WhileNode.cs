@@ -37,9 +37,11 @@ public class WhileNode : Node {
     public override void Verify() 
     {
         SymbolTable.EnterScope(ScopeType.Loop);
-		Returning.Push(true);
+
+		Returning.Push(ReturningStatus.Copy(Returning.Peek()));
         base.Verify();
 		Returning.Pop();
+
         
         // WhileLoop declaration looks like
         // while `Expression` loop `Body` end

@@ -5,6 +5,11 @@ public class PrimaryNode : Node {
 	private bool _inExpression;
 	public object value;
 
+	public string Name() {
+		if(this.value is string name) return name;
+		return "unknown";
+	}
+
 	public PrimaryNode(Position pos, object val, bool inExpr = false) : base(pos) {
 		this.value = val;
 		this._inExpression = inExpr;

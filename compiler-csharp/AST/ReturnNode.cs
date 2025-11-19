@@ -4,8 +4,7 @@ using SemanticAnalyzer.SymbolTable;
 
 namespace AST;
 public class ReturnNode : Node {
-    public ReturnNode(Position pos, string returnType = "void") : base(pos) =>
-		this._type = returnType;
+    public ReturnNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
 		if (this.GetType().Name == "ReturnNode") Console.WriteLine($"ReturnNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
@@ -35,27 +34,27 @@ public class ReturnNode : Node {
 
     public override void Verify() {
         if (!SymbolTable.IsInsideType(ScopeType.Routine)) {
-            ErrorHandling.Add("ReturnNode", this.position, "'return' used outside routine");
+            ErrorHandling.Add("ReturnNode", this.position, "'return' is used outside the routine");
             return;
         }
 
-        if (!this.childs.Any() && this._type == "void") return;
-        if (!this.childs.Any() && this._type == "void") {
-            ErrorHandling.Add("ReturnNode", this.position, $"return doesn't have expression of type {this._type}");
-        }
-        
+		if(Returning.Count() == 0) return;
+		if(this.childs.Count() == 0) {
+            ErrorHandling.Add("ReturnNode", this.position, $"Routine should return the expression of type {this._type}.");
+			return;
+		}
         base.Verify();
 
-        if (this.childs[0] is not ExpressionNode) {
-            ErrorHandling.Add("ReturnNode", this.position, "return doesn't have expression");
-            return;
-        }
-        
-        ExpressionNode returnExpression = (ExpressionNode)this.childs[0];
+		ReturningStatus stat = Returning.Pop();
+		this._type = stat.ret_type;
 
-        if (this._type != "void" && this._type != returnExpression.Type()) {
-            ErrorHandling.Add("ReturnNode", this.position, $"return type mismatch {this._type} != {returnExpression.Type()}");
+        if (this._type != "void" && this._type != this.childs[0].Type()) {
+			Returning.Push(stat);
+            ErrorHandling.Add("ReturnNode", this.position, $"Return type mismatch: expected {this._type}, got {this.childs[0].Type()}.");
             return;
         }
+
+		stat.returned = true;
+		Returning.Push(stat);
     }
 }
