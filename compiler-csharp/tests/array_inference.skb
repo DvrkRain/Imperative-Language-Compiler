@@ -1,0 +1,11 @@
+﻿type IntArray is array[3] integer;
+
+var a1 : IntArray;
+var a2 : IntArray;
+
+a1[1] := 10;
+a2 := a1;
+
+a2[1] := 99;
+print a1[1];
+print a2[1];

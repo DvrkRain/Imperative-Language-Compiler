@@ -1,0 +1,7 @@
+﻿var t : boolean is true;
+var f : boolean is false;
+print t and f;
+print t or f;
+print t xor f;
+print not t;
+print not f;

@@ -1,0 +1,10 @@
+﻿type Point is record
+    var x : integer;
+    var y : integer;
+end;
+
+var p : Point;
+p.x := 3;
+p.y := 4;
+print p.x;
+print p.y;

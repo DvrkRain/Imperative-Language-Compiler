@@ -1,0 +1,5 @@
+﻿type MyInt is integer;
+
+var a : MyInt;
+a := 7;
+print a;

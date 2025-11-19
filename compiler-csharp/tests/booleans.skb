@@ -1,0 +1,4 @@
+﻿var t : boolean is true;
+var f : boolean is false;
+print t;
+print f;

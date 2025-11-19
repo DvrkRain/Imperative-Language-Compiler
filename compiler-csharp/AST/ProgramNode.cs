@@ -185,15 +185,10 @@ public class ProgramNode : Node {
         }
     
         // Process children
-        foreach (var child in this.childs)
-        {
-            child.Generate(ctx);
-        }
+        foreach (var child in this.childs) child.Generate(ctx);
     
         if (this.main && ctx.CurrentIL != null)
-        {
             ctx.CurrentIL.Emit(OpCodes.Ret);
-        }
     }
 
 }
