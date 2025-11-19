@@ -4,7 +4,17 @@ using SemanticAnalyzer.SymbolTable;
 
 namespace AST;
 public class ParameterNode : Node {
+	public string Name() {
+		if(this.childs[0] is PrimaryNode prime) return prime.Name();
+		return "unknown";
+	}
+
 	public ParameterNode(Position pos) : base(pos) { }
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "ParameterNode") Console.WriteLine($"ParameterNode(childs={this.childs.Count}, , pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
 	
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
@@ -39,66 +49,40 @@ public class ParameterNode : Node {
         } else HandleUnexpectedToken(ref tokenQueue, token.Position());
     }
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ParameterNode") Console.WriteLine($"ParameterNode(childs={this.childs.Count}, , pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
 
     public override void Verify() {
         base.Verify();
 
-        if (!VerifyType()) return;
+        if (this.childs.Count() != 2) {
+            ErrorHandling.Add("ParameterNode", this.position, $"Expected 2 childs, got {this.childs.Count()}");
+            return;
+        }
 
-        string paramName = (string)((PrimaryNode)this.childs[0]).value;
-        string paramTypeName;
-        
         switch (this.childs[1]) {
             case PrimaryNode primaryNode:
-                paramTypeName = (string)primaryNode.value;
+                this._type = primaryNode.Name();
                 break;
+
             case ArrayNode arrayNode:
-                paramTypeName = (string)((PrimaryNode)arrayNode.GetChilds().Last()).value;
+                this._type = arrayNode.Type();
                 break;
+
             default:
-                ErrorHandling.Add("ParameterNode", this.position, $"Expected parameter type as PrimaryNode or ArrayNode, got {this.childs[1].GetType().Name}");
+                ErrorHandling.Add("ParameterNode", this.position,
+						$"Expected parameter type as PrimaryNode or ArrayNode, got {this.childs[1].GetType().Name}");
                 return;
         }
 
-        SemanticAnalyzer.SymbolTable.Type paramType = (SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(paramTypeName);
+        if (SymbolTable.FindEntry(this._type) is not SemanticAnalyzer.SymbolTable.Type) {
+            ErrorHandling.Add("ParameterNode", this.position, $"Parameter type not declared, got {this._type}");
+            return;
+        }
+
+        SemanticAnalyzer.SymbolTable.Type paramType = (SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(this._type);
 
         Scope? typeScope = paramType.BaseType == "record" ? paramType.TypeScope : null;
-        Variable variable = new Variable(paramName, paramTypeName, typeScope);
+        Variable variable = new Variable(((PrimaryNode)this.childs[0]).Name(), this._type, typeScope);
         SymbolTable.DeclareEntry(variable);
     }
 
-    private bool VerifyType() {
-        if (this.childs.Count() != 2) {
-            ErrorHandling.Add("ParameterNode", this.position, $"Expected 2 childs, got {this.childs.Count()}");
-            return false;
-        }
-
-        string parameterType = "void";
-
-        // First child - identifier
-        // Second child - type
-
-        switch (this.childs[1]) {
-            case PrimaryNode primaryNode:
-                parameterType = (string)primaryNode.value;
-                break;
-            case ArrayNode arrayNode:
-                parameterType = (string)((PrimaryNode)arrayNode.GetChilds().Last()).value;
-                break;
-            default:
-                ErrorHandling.Add("ParameterNode", this.position, $"Expected parameter type as PrimaryNode or ArrayNode, got {this.childs[1].GetType().Name}");
-                return false;
-        }
-
-        if (SymbolTable.FindEntry(parameterType) is not SemanticAnalyzer.SymbolTable.Type) {
-            ErrorHandling.Add("ParameterNode", this.position, $"Parameter type not declared, got {parameterType}");
-            return false;
-        }
-
-        return true;
-    }
 }

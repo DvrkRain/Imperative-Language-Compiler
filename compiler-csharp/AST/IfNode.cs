@@ -42,18 +42,25 @@ public class IfNode : Node {
 
 
     public override void Verify() {
-        base.Verify();
-		if(this.childs.Count == 3 && Returning.Count() > 0) {
-			bool ret = Returning.Pop();
-			ret = ret || (
-					((ProgramNode)this.childs[1]).Returned()
-					&& ((ProgramNode)this.childs[2]).Returned());
-			Returning.Push(ret);
-		}
+		this.childs[0].Verify();
+		bool ret = false;
+		bool check = false;
 
-        ExpressionNode expresison = (ExpressionNode)this.childs[0];
-        if (expresison.Type() != "boolean") {
-            ErrorHandling.Add("IfNode", this.position, $"IfNode should have a boolean expression");
+		if(this.childs.Count == 3 && Returning.Count() > 0 && !Returning.Peek().returned) {
+			check = true;
+			Returning.Push(ReturningStatus.Copy(Returning.Peek()));
+		}
+		this.childs[1].Verify();
+		if(check) ret = Returning.Pop().returned;
+
+		if(check) Returning.Push(ReturningStatus.Copy(Returning.Peek()));
+		if(this.childs.Count == 3) this.childs[2].Verify();
+		if(check) ret = ret && Returning.Pop().returned;
+
+		Returning.Push(new ReturningStatus(Returning.Peek().returned || ret, Returning.Pop().ret_type));
+
+        if (this.childs[0].Type() != "boolean") {
+            ErrorHandling.Add("IfNode", this.position, $"'if' statement should have a boolean expression");
             return;
         }
     }

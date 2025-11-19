@@ -72,6 +72,7 @@ namespace Data.Objects {
 		break_statement,
 		continue_statement,
 		end_of_file,
+		error,
 	}
 
 	public static class Precedence {
@@ -137,15 +138,31 @@ namespace Data.Objects {
 			_baseTypes.Contains(type);
 	}
 
-	public static class Returning {
-		private static Stack<bool> returning =
-			new Stack<bool>();
+	public struct ReturningStatus {
+		public bool returned;
+		public string ret_type;
 
-		public static void Push(bool ret) =>
+		public ReturningStatus(bool ret, string type) {
+			this.returned = ret;
+			this.ret_type = type;
+		}
+
+		public static ReturningStatus Copy(ReturningStatus stat) =>
+			new ReturningStatus(false, stat.ret_type);
+	}
+
+	public static class Returning {
+		private static Stack<ReturningStatus> returning =
+			new Stack<ReturningStatus>();
+
+		public static void Push(ReturningStatus ret) =>
 			returning.Push(ret);
 
-		public static bool Pop() =>
+		public static ReturningStatus Pop() =>
 			returning.Pop();
+
+		public static ReturningStatus Peek() =>
+			returning.Peek();
 
 		public static int Count() =>
 			returning.Count();

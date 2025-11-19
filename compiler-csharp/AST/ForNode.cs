@@ -70,9 +70,11 @@ public class ForNode : Node {
 
     public override void Verify() {
         SymbolTable.EnterScope(ScopeType.Loop);
-		Returning.Push(true);
+
+		Returning.Push(ReturningStatus.Copy(Returning.Peek()));
         base.Verify();
 		Returning.Pop();
+
         SymbolTable.ExitScope();
 
         ExpressionNode firstExpression = (ExpressionNode)this.childs[1];

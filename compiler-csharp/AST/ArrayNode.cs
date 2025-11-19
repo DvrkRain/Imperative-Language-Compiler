@@ -60,6 +60,7 @@ public class ArrayNode : Node {
 		if(this.childs[current_child_index] is PrimaryNode identifier) {
 			if(SymbolTable.FindEntry((string)identifier.value) is not SemanticAnalyzer.SymbolTable.Type)
 				ErrorHandling.Add("ArrayNode", this.childs[current_child_index].Position(), "Expected type identifier.");
+			this._type = identifier.Name();
 		} else
 			ErrorHandling.Add("ArrayNode", this.position, $"Expected the PrimaryNode, got {this.childs[current_child_index].GetType().Name}.");
 	}
