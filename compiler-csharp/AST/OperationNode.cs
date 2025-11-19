@@ -49,7 +49,7 @@ public class OperationNode : Node {
 				this.childs[i] = oper.Value();
 		}
 
-		bool flag = false;
+		bool flag = false, flag2 = false;
 		PrimaryNode prime;
 
 		switch(this.op_code) {
@@ -106,8 +106,8 @@ public class OperationNode : Node {
 						this._type = var.Type;
 						prime = new PrimaryNode(this.position, var, true);
 						prime.Verify();
-						this.childs.Clear();
 						this.childs.Add(prime);
+						flag2 = true;
 					} else if(strct.LookupEntry(id) is null)
 						ErrorHandling.Add("OperationNode", this.position, $"Record does not have a field named {id}.");
 					else ErrorHandling.Add("OperationNode", this.position, "Record cannot contain non-variable fields");
@@ -184,6 +184,7 @@ public class OperationNode : Node {
 		foreach(var child in childs) {
 			if(child is PrimaryNode prim) {
 				if(prim.value is string
+					&& !flag2
 					|| prim.value is ExpressionNode)
 					flag = true;
 			} else flag = true;
