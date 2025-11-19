@@ -11,8 +11,6 @@ namespace AST;
 public class ProgramNode : Node {
 	public bool main;
 
-	public bool Returned() => returned;
-
     public ProgramNode(Position pos, string returnType = "void", bool main = false) : base(pos) {
         this._type = returnType;
         this.main = main;
@@ -98,7 +96,7 @@ public class ProgramNode : Node {
 				// Sequence break
 				case TokenCode.return_statement:
 					tokenQueue.Dequeue();
-					ReturnNode ret = new ReturnNode(token.Position(), this._type);
+					ReturnNode ret = new ReturnNode(token.Position());
 					ret.Parse(ref tokenQueue);
 					this.childs.Add(ret);
 					break;
