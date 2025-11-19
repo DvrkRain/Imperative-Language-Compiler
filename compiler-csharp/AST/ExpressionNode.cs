@@ -30,6 +30,7 @@ public class ExpressionNode : Node {
 		tokenQueue.Dequeue();
 		while(operatorStack.Count() > 0
 			&& operatorStack.Peek().Code() != TokenCode.left_parenthesis
+			&& operatorStack.Peek().Code() != TokenCode.left_bracket
 			&& Precedence.Order(token.Code()) >= Precedence.Order(operatorStack.Peek().Code())) {
 			Token temp = operatorStack.Pop();
 			this.childs.Add(new OperationNode(temp.Position(), temp.Code(), (string)temp.Value()));

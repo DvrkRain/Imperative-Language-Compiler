@@ -69,7 +69,13 @@ public class ParameterNode : Node {
                 break;
 
             case ArrayNode arrayNode:
-                this._type = arrayNode.Type();
+                this._type = $"%{arrayNode.Type()}array"; //i.e. %integerarray
+                Scope arrayScope = new Scope();
+                arrayScope.AddEntry(new Variable("size", "integer"));
+                arrayScope.AddEntry(new Variable("type", "void", arrayNode.Type()));
+                SemanticAnalyzer.SymbolTable.Type newArrayType = new SemanticAnalyzer.SymbolTable.Type(this._type, "array");
+                newArrayType.TypeScope = arrayScope;
+                SymbolTable.DeclareEntry(newArrayType);
                 break;
 
             default:

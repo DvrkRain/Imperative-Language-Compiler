@@ -1,6 +1,0 @@
-﻿routine hello(b : boolean)
-is
-    print 1
-end
-
-hello(true)

@@ -9,7 +9,7 @@ for test in tests/*.skb; do
     
     # Compile
     stage=2
-    bin/Debug/net9.0/compiler-csharp.exe "$test" $stage output.dll
+    bin/Debug/net9.0/compiler-csharp.exe "$test" $stage "output.dll"
     
     if [ $? -eq 0 ]; then
         echo "✓ Compilation successful"

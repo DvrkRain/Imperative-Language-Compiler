@@ -1,7 +1,7 @@
 ﻿type Point is record
     var x : integer;
     var y : integer;
-end
+end;
 
 var p1 : Point;
 var p2 : Point;
