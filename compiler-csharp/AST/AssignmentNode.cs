@@ -41,15 +41,19 @@ public class AssignmentNode : Node {
 	public override void Verify() {
 		base.Verify();
 
+		bool flag = false;
 		foreach(var child in childs) {
 			if(child.Type() == "void") {
-				ErrorHandling.Add("AssignmentNode", this.position, "Wrong type on assignment");
+				ErrorHandling.Add("AssignmentNode", this.position, "Wrong type on assignment.");
 				return;
 			}
-			if(DedicatedWords.Code(child.Type()) != TokenCode.builtin_type) {
-				ErrorHandling.Add("AssignmentNode", this.position, "Not built-in type in assignment");
-				return;
-			}
+			if(DedicatedWords.Code(child.Type()) != TokenCode.builtin_type)
+				flag = true;
+		}
+
+		if(flag && this.childs[0].Type() == this.childs[1].Type()) {
+			ErrorHandling.Add("AssignmentNode", this.position, "Non-built-in types on assignment cannot be casted to each other.");
+			return;
 		}
 	}
     
