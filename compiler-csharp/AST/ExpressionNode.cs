@@ -1,5 +1,11 @@
 using Data.Objects;
 using Data.ErrorHandling;
+
+using CodeGen;
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
 namespace AST;
 public class ExpressionNode : Node {
 	protected bool _index;
@@ -209,4 +215,22 @@ public class ExpressionNode : Node {
 				break;
 		}
 	}
+    
+    public override void Generate(CodeGenContext ctx)
+    {
+        if (this.childs.Count == 1 && this.childs[0] is PrimaryNode)
+        {
+            // Simple primary expression
+            this.childs[0].Generate(ctx);
+        }
+        else
+        {
+            // Complex expression with operations
+            foreach (var child in this.childs)
+            {
+                child.Generate(ctx);
+            }
+        }
+    }
+
 }

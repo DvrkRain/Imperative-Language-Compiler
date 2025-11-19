@@ -2,6 +2,13 @@ using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
 
+using CodeGen;
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
+using SystemType = System.Type;
+
 namespace AST;
 public class VarNode : Node {
 	protected bool explicit_type;
@@ -10,7 +17,6 @@ public class VarNode : Node {
 		this.explicit_type = false;
 		this._type = "void";
 	}
-
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Search for identifier
@@ -159,11 +165,59 @@ public class VarNode : Node {
             this._type = expression.Type();
         }
 
-        if (this._type != expression.Type()) {
+        SemanticAnalyzer.SymbolTable.Type type = (SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(this._type);
+        string baseType = type.BaseType;
+
+        if (this._type != expression.Type() && baseType != expression.Type()) {
             ErrorHandling.Add("VarNode", this.position, $"Mismatched variable type {this._type} != {expression.Type()}");
             return false;
         }
         
         return true;
     }
+    
+    public override void Generate(CodeGenContext ctx)
+    {
+        string varName = (string)((PrimaryNode)this.childs[0]).value;
+        SystemType varType = ctx.ResolveType(this._type);
+        
+        // Check if this is an array type
+        bool isArray = varType.IsArray || ctx.GetArraySize(this._type) > 0;
+        int arraySize = ctx.GetArraySize(this._type);
+    
+        if (ctx.CurrentMethod == null)
+        {
+            // Global variable: static field
+            var field = ctx.ProgramTypeBuilder.DefineField(
+                varName,
+                varType,
+                System.Reflection.FieldAttributes.Public | System.Reflection.FieldAttributes.Static);
+            ctx.GlobalFields[varName] = field;
+        
+            // Note: static field initialization needs .cctor or Main
+        }
+        else
+        {
+            // Local variable
+            var local = ctx.CurrentIL.DeclareLocal(varType);
+            ctx.LocalVariables[varName] = local;
+        
+            // Initialize array if needed
+            if (isArray && arraySize > 0)
+            {
+                // Create array: newarr elementType
+                SystemType elementType = varType.GetElementType();
+                CodeGen.ILHelper.EmitLoadInt(ctx.CurrentIL, arraySize);
+                ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Newarr, elementType);
+                ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Stloc, local);
+            }
+            else if (this.childs.Count > 1)
+            {
+                // Initialize with expression
+                this.childs[1].Generate(ctx);
+                ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Stloc, local);
+            }
+        }
+    }
+
 }

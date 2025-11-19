@@ -2,11 +2,22 @@ using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
 
+using CodeGen;
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
 namespace AST;
 public class ProgramNode : Node {
 	public bool main;
 
-    public ProgramNode(Position pos) : base(pos) { }
+	public bool Returned() => returned;
+
+    public ProgramNode(Position pos, string returnType = "void", bool main = false) : base(pos) {
+        this._type = returnType;
+        this.main = main;
+    }
+        
 
 	public override void PrintInfo(string indent) {
 		if (this.GetType().Name == "ProgramNode") Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), main={this.main})");
@@ -87,7 +98,7 @@ public class ProgramNode : Node {
 				// Sequence break
 				case TokenCode.return_statement:
 					tokenQueue.Dequeue();
-					ReturnNode ret = new ReturnNode(token.Position());
+					ReturnNode ret = new ReturnNode(token.Position(), this._type);
 					ret.Parse(ref tokenQueue);
 					this.childs.Add(ret);
 					break;
@@ -158,4 +169,33 @@ public class ProgramNode : Node {
         
         this.childs.RemoveRange(lastIndex + 1, this.childs.Count() - (lastIndex + 1));
     }
+
+    public override void Generate(CodeGenContext ctx)
+    {
+        if (this.main)
+        {
+            // Create Main method
+            var mainMethod = ctx.ProgramTypeBuilder.DefineMethod(
+                "Main",
+                MethodAttributes.Public | MethodAttributes.Static,
+                typeof(void),
+                new[] { typeof(string[]) });
+        
+            ctx.CurrentMethod = mainMethod;
+            ctx.CurrentIL = mainMethod.GetILGenerator();
+            ctx.LocalVariables.Clear();
+        }
+    
+        // Process children
+        foreach (var child in this.childs)
+        {
+            child.Generate(ctx);
+        }
+    
+        if (this.main && ctx.CurrentIL != null)
+        {
+            ctx.CurrentIL.Emit(OpCodes.Ret);
+        }
+    }
+
 }

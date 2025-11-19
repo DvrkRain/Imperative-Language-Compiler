@@ -2,6 +2,12 @@ using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
 
+using CodeGen;
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
+
 namespace AST;
 public class ForNode : Node {
 	protected bool reversed;
@@ -89,4 +95,44 @@ public class ForNode : Node {
             return;
         }
     }
+    
+    public override void Generate(CodeGenContext ctx)
+    {
+        string iterName = (string)((PrimaryNode)this.childs[0]).value;
+        var iterLocal = ctx.CurrentIL.DeclareLocal(typeof(int));
+        ctx.LocalVariables[iterName] = iterLocal;
+    
+        // Initialize: iter = start
+        this.childs[1].Generate(ctx);
+        ctx.CurrentIL.Emit(OpCodes.Stloc, iterLocal);
+    
+        Label startLabel = ctx.CurrentIL.DefineLabel();
+        Label endLabel = ctx.CurrentIL.DefineLabel();
+        Label continueLabel = ctx.CurrentIL.DefineLabel();
+    
+        ctx.EnterLoop(endLabel, continueLabel);
+    
+        ctx.CurrentIL.MarkLabel(startLabel);
+    
+        // Condition: iter <= end (or >= for reverse)
+        ctx.CurrentIL.Emit(OpCodes.Ldloc, iterLocal);
+        this.childs[2].Generate(ctx);
+        ctx.CurrentIL.Emit(this.reversed ? OpCodes.Clt : OpCodes.Cgt);
+        ctx.CurrentIL.Emit(OpCodes.Brtrue, endLabel);
+    
+        // Body
+        this.childs[3].Generate(ctx);
+    
+        // Increment/Decrement
+        ctx.CurrentIL.MarkLabel(continueLabel);
+        ctx.CurrentIL.Emit(OpCodes.Ldloc, iterLocal);
+        ctx.CurrentIL.Emit(OpCodes.Ldc_I4_1);
+        ctx.CurrentIL.Emit(this.reversed ? OpCodes.Sub : OpCodes.Add);
+        ctx.CurrentIL.Emit(OpCodes.Stloc, iterLocal);
+        ctx.CurrentIL.Emit(OpCodes.Br, startLabel);
+    
+        ctx.CurrentIL.MarkLabel(endLabel);
+        ctx.ExitLoop();
+    }
+
 }

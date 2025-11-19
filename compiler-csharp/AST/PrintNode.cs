@@ -1,5 +1,11 @@
 using Data.ErrorHandling;
 using Data.Objects;
+
+using CodeGen;
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
 namespace AST;
 public class PrintNode : Node {
 	public PrintNode(Position pos) : base(pos) { }
@@ -45,4 +51,21 @@ public class PrintNode : Node {
             }
         }
     }
+    
+    public override void Generate(CodeGenContext ctx)
+    {
+        foreach (var child in this.childs)
+        {
+            child.Generate(ctx); // Push value onto stack
+        
+            // Determine type and call appropriate WriteLine
+            Type exprType = ctx.ResolveType(child.Type());
+            var writeLineMethod = typeof(Console).GetMethod(
+                "WriteLine",
+                new[] { exprType });
+        
+            ctx.CurrentIL.Emit(OpCodes.Call, writeLineMethod);
+        }
+    }
+
 }

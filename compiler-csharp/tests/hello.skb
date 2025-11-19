@@ -1,0 +1,2 @@
+﻿var message : integer is 42;
+print message;

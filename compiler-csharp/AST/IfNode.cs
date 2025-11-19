@@ -1,5 +1,11 @@
 using Data.ErrorHandling;
 using Data.Objects;
+
+using CodeGen;
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
 namespace AST;
 public class IfNode : Node {
 	public IfNode(Position pos) : base(pos) { }
@@ -64,4 +70,29 @@ public class IfNode : Node {
             return;
         }
     }
+    
+    public override void Generate(CodeGenContext ctx)
+    {
+        Label elseLabel = ctx.CurrentIL.DefineLabel();
+        Label endLabel = ctx.CurrentIL.DefineLabel();
+    
+        // Condition
+        this.childs[0].Generate(ctx);
+        ctx.CurrentIL.Emit(OpCodes.Brfalse, this.childs.Count > 2 ? elseLabel : endLabel);
+    
+        // Then branch
+        this.childs[1].Generate(ctx);
+        if (this.childs.Count > 2)
+            ctx.CurrentIL.Emit(OpCodes.Br, endLabel);
+    
+        // Else branch (optional)
+        if (this.childs.Count > 2)
+        {
+            ctx.CurrentIL.MarkLabel(elseLabel);
+            this.childs[2].Generate(ctx);
+        }
+    
+        ctx.CurrentIL.MarkLabel(endLabel);
+    }
+
 }

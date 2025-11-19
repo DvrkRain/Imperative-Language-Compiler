@@ -1,3 +1,4 @@
+using CodeGen;
 using Data.Objects;
 using Data.ErrorHandling;
 
@@ -55,4 +56,9 @@ public abstract class Node {
 		foreach(var child in childs)
 			child.Verify();
 	}
+
+    public virtual void Generate(CodeGen.CodeGenContext context) {
+        foreach(var child in childs)
+            child.Generate(context);
+    }
 }

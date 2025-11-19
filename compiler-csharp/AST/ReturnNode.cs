@@ -2,6 +2,12 @@ using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
 
+using CodeGen;
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
+
 namespace AST;
 public class ReturnNode : Node {
     public ReturnNode(Position pos) : base(pos) { }
@@ -57,4 +63,14 @@ public class ReturnNode : Node {
 		stat.returned = true;
 		Returning.Push(stat);
     }
+    
+    public override void Generate(CodeGenContext ctx)
+    {
+        if (this.childs.Count > 0)
+        {
+            this.childs[0].Generate(ctx); // Push return value
+        }
+        ctx.CurrentIL.Emit(OpCodes.Ret);
+    }
+
 }

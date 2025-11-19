@@ -1,7 +1,12 @@
-using System.Security.Cryptography;
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
+
+using CodeGen;
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
 
 namespace AST;
 public class WhileNode : Node {
@@ -88,4 +93,27 @@ public class WhileNode : Node {
         
         return true;
     }
+    
+    public override void Generate(CodeGenContext ctx)
+    {
+        Label startLabel = ctx.CurrentIL.DefineLabel();
+        Label endLabel = ctx.CurrentIL.DefineLabel();
+    
+        ctx.EnterLoop(endLabel, startLabel);
+    
+        ctx.CurrentIL.MarkLabel(startLabel);
+    
+        // Condition
+        this.childs[0].Generate(ctx);
+        ctx.CurrentIL.Emit(OpCodes.Brfalse, endLabel);
+    
+        // Body
+        this.childs[1].Generate(ctx);
+        ctx.CurrentIL.Emit(OpCodes.Br, startLabel);
+    
+        ctx.CurrentIL.MarkLabel(endLabel);
+    
+        ctx.ExitLoop();
+    }
+
 }

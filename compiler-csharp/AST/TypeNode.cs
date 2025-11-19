@@ -2,6 +2,8 @@ using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
 
+using SystemType = System.Type; 
+
 namespace AST;
 public class TypeNode : Node {
 	
@@ -189,5 +191,96 @@ public class TypeNode : Node {
         }
         
         return true;
+    }
+    
+    public override void Generate(CodeGen.CodeGenContext ctx)
+    {
+        string typeName = (string)((PrimaryNode)this.childs[0]).value;
+        Node typeDefinition = this.childs[1];
+        
+        if (typeDefinition is PrimaryNode aliasNode)
+        {
+            // Type alias: type MyInt is integer
+            string baseTypeName = (string)aliasNode.value;
+            SystemType baseType = ctx.ResolveType(baseTypeName);
+            
+            // Register alias in context (add to type mapping)
+            ctx.RegisterTypeAlias(typeName, baseType);
+        }
+        else if (typeDefinition is ArrayNode arrayNode)
+        {
+            // Array type: type intarr is array [5] integer
+            GenerateArrayType(ctx, typeName, arrayNode);
+        }
+        else if (typeDefinition is RecordNode recordNode)
+        {
+            // Record type: type Person is record ... end
+            GenerateRecordType(ctx, typeName, recordNode);
+        }
+    }
+
+    private void GenerateArrayType(CodeGen.CodeGenContext ctx, string typeName, ArrayNode arrayNode)
+    {
+        // Get array size (childs[0] is size expression)
+        int arraySize = -1;
+        if (arrayNode.GetChilds().Count > 0)
+        {
+            var sizeNode = arrayNode.GetChilds()[0];
+            if (sizeNode is PrimaryNode sizeValue && sizeValue.value is int size)
+            {
+                arraySize = size;
+            }
+        }
+        
+        // Get element type (childs[1] is type)
+        string elementTypeName = (string)((PrimaryNode)arrayNode.GetChilds()[1]).value;
+        SystemType elementType = ctx.ResolveType(elementTypeName);
+        
+        // In .NET, arrays are built-in types: int[] for integer array
+        SystemType arrayType = elementType.MakeArrayType();
+        
+        // Register array type with metadata about size
+        ctx.RegisterArrayType(typeName, arrayType, arraySize);
+    }
+
+    private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName, RecordNode recordNode)
+    {
+        // Create a new class type for the record
+        var recordType = ctx.ModuleBuilder.DefineType(
+            typeName,
+            System.Reflection.TypeAttributes.Public | 
+            System.Reflection.TypeAttributes.Class |
+            System.Reflection.TypeAttributes.Sealed);
+        
+        // Add fields from record definition
+        foreach (var child in recordNode.GetChilds())
+        {
+            if (child is VarNode fieldNode)
+            {
+                string fieldName = (string)((PrimaryNode)fieldNode.GetChilds()[0]).value;
+                string fieldTypeName = fieldNode.Type();
+                SystemType fieldType = ctx.ResolveType(fieldTypeName);
+                
+                recordType.DefineField(
+                    fieldName,
+                    fieldType,
+                    System.Reflection.FieldAttributes.Public);
+            }
+        }
+        
+        // Create default constructor
+        var ctor = recordType.DefineConstructor(
+            System.Reflection.MethodAttributes.Public,
+            System.Reflection.CallingConventions.Standard,
+            SystemType.EmptyTypes);
+        
+        var ctorIL = ctor.GetILGenerator();
+        ctorIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_0);
+        ctorIL.Emit(System.Reflection.Emit.OpCodes.Call, 
+            typeof(object).GetConstructor(SystemType.EmptyTypes));
+        ctorIL.Emit(System.Reflection.Emit.OpCodes.Ret);
+        
+        // Register the type
+        ctx.RegisterUserType(typeName, recordType);
     }
 }

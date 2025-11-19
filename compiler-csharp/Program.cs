@@ -10,24 +10,22 @@ namespace Compiler
 {
 	class Program
 	{
-		static void Main(string[] args)
-		{
-			if (args.Length < 2)
-			{
-				Console.WriteLine("Usage: compiler-csharp <source-file-path> <tree-option>");
-				return;
-			}
-            
-            // Read file
-			string filepath = args[0];
-			FileReader reader = new FileReader(filepath);
-			Console.WriteLine("Filename: " + reader.filename);
+        static void Main(string[] args) {
+            if (args.Length < 2) {
+                Console.WriteLine("Usage: compiler-csharp <source-file-path> <tree-option>");
+                return;
+            }
 
-			// Lexic analysis
+            // Read file
+            string filepath = args[0];
+            FileReader reader = new FileReader(filepath);
+            Console.WriteLine("Filename: " + reader.filename);
+
+            // Lexic analysis
             ErrorHandling.ChangeStage("Lexical analysis");
-			Queue<Token> stream = new Queue<Token>();
-			Lexer lexer = new Lexer(reader);
-			lexer.ParseFile(ref stream);
+            Queue<Token> stream = new Queue<Token>();
+            Lexer lexer = new Lexer(reader);
+            lexer.ParseFile(ref stream);
 
             if (ErrorHandling.Count() > 0) {
                 ErrorHandling.PrintErrors();
@@ -45,10 +43,10 @@ namespace Compiler
             }
 
             // Syntax analysis
-			ErrorHandling.ChangeStage("Syntax analysis");
-			ProgramNode AST = new ProgramNode(new Position(0,0));
-			AST.Parse(ref stream);
-            
+            ErrorHandling.ChangeStage("Syntax analysis");
+            ProgramNode AST = new ProgramNode(new Position(0, 0), main: true);
+            AST.Parse(ref stream);
+
             if (ErrorHandling.Count() > 0) {
                 ErrorHandling.PrintErrors();
                 return;
@@ -59,16 +57,35 @@ namespace Compiler
                 return;
             }
 
-			// Semantic analysis
+            // Semantic analysis
             SymbolTable.InitializeSymbolTable();
-			ErrorHandling.ChangeStage("Semantic analysis");
+            ErrorHandling.ChangeStage("Semantic analysis");
             AST.Verify();
-			AST.PrintInfo("");
+            AST.PrintInfo("");
 
             if (ErrorHandling.Count() > 0) {
                 ErrorHandling.PrintErrors();
                 return;
             }
+
+            // Code generation
+
+            ErrorHandling.ChangeStage("Code generation");
+
+            string outputFileName = args.Length > 2 ? args[2] : "output.dll";
+
+            var codeGen = new CodeGen.CodeGenContext("CompiledProgram");
+
+            try {
+                AST.Generate(codeGen);
+                codeGen.Save(outputFileName);
+                Console.WriteLine($"Code generation successful. Output: {outputFileName}");
+            } catch (Exception ex) {
+                ErrorHandling.Add("CodeGen", new Position(0, 0),
+                    $"Code generation failed: {ex.Message}");
+                ErrorHandling.PrintErrors();
+                return;
+            }
         }
-	}
+    }
 }

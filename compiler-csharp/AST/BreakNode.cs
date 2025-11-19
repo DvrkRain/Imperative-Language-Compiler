@@ -2,6 +2,12 @@
 using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
 
+using CodeGen;
+using System;
+using System.Reflection;
+using System.Reflection.Emit;
+
+
 namespace AST;
 
 public class BreakNode : Node {
@@ -31,5 +37,10 @@ public class BreakNode : Node {
         }
 
         base.Verify();
+    }
+    
+    public override void Generate(CodeGenContext ctx)
+    {
+        ctx.CurrentIL.Emit(OpCodes.Br, ctx.CurrentLoop.BreakLabel);
     }
 }
