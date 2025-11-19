@@ -80,6 +80,20 @@ public class FieldAccessNode : Node {
 		}
 		}
 
+		switch(SymbolTable.FindEntry(this._type)) {
+			case Type type:
+				if(type.TypeScope != null) this.variable = type.TypeScope;
+				break;
+
+			case null:
+				ErrorHandling.Add("FieldAccessNode", this.Position(), "Expected type identifier.");
+				break;
+
+			default:
+				ErrorHandling.Add("FieldAccessNode", this.Position(), "Undeclared type.");
+				break;
+		}
+
 		for(int i=1; i<this.childs.Count(); i++) {
 		if(this.childs[i] is PrimaryNode prime) {
 		if(this.variable is Scope scope) {
