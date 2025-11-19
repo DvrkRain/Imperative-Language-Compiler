@@ -79,6 +79,7 @@ public class ForNode : Node {
 
 		if(Returning.Count() > 0)
 			Returning.Push(ReturningStatus.Copy(Returning.Peek()));
+		SymbolTable.DeclareEntry(new Variable((string)(((PrimaryNode)this.childs[0]).value), "integer"));
         base.Verify();
 		if(Returning.Count() > 0)
 			Returning.Pop();
@@ -97,6 +98,7 @@ public class ForNode : Node {
             return;
         }
     }
+
     
     public override void Generate(CodeGenContext ctx)
     {
