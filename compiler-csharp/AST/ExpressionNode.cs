@@ -99,8 +99,7 @@ public class ExpressionNode : Node {
 					break;
 
 				case TokenCode.left_bracket:
-					tokenQueue.Dequeue();
-					operatorStack.Push(token);
+					this.ParseOperation(ref tokenQueue, ref operatorStack, token);
 					break;
 
 				case TokenCode.right_bracket:
