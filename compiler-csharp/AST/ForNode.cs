@@ -1,5 +1,7 @@
 using Data.ErrorHandling;
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class ForNode : Node {
 	protected bool reversed;
@@ -67,9 +69,11 @@ public class ForNode : Node {
 
 
     public override void Verify() {
+        SymbolTable.EnterScope(ScopeType.Loop);
 		Returning.Push(true);
         base.Verify();
 		Returning.Pop();
+        SymbolTable.ExitScope();
 
         ExpressionNode firstExpression = (ExpressionNode)this.childs[1];
 
