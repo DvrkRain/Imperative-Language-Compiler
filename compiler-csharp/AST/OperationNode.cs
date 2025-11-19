@@ -84,6 +84,10 @@ public class OperationNode : Node {
 					&& atype.BaseType == "array") {
 				if(this.childs[1].Type() != "integer")
 					ErrorHandling.Add("Array dereferencing", this.position, "Array index expected to be of integer type");
+				if(atype.TypeScope != null) {
+					this._type = (string)((Variable)atype.TypeScope.LookupEntry("type")).Value;
+					if(this._type == null) this._type = "void";
+				}
 			} else ErrorHandling.Add("Array dereferencing", this.position,
 					"Trying to access non-array variable with indexing.");
 			flag = true;

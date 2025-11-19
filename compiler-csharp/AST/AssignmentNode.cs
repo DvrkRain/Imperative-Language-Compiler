@@ -37,13 +37,23 @@ public class AssignmentNode : Node {
 		tokenQueue.Dequeue();
 	}
 
+
 	public override void Verify() {
 		base.Verify();
 
-		if(this.childs[0].Type() != this.childs[1].Type()) 
-			ErrorHandling.Add("AssignmentNode", this.position, $"Trying to put value of type {this.childs[1].Type()} to variable of type {this.childs[0].Type()}.");
+		foreach(var child in childs) {
+			if(child.Type() == "void") {
+				ErrorHandling.Add("AssignmentNode", this.position, "Wrong type on assignment");
+				return;
+			}
+			if(DedicatedWords.Code(child.Type()) != TokenCode.builtin_type) {
+				ErrorHandling.Add("AssignmentNode", this.position, "Not built-in type in assignment");
+				return;
+			}
+		}
 	}
     
+	
     public override void Generate(CodeGen.CodeGenContext ctx)
     {
         var target = (FieldAccessNode)this.childs[0];
