@@ -63,7 +63,7 @@ public class IfNode : Node {
 		if(this.childs.Count == 3) this.childs[2].Verify();
 		if(check) ret = ret && Returning.Pop().returned;
 
-		Returning.Push(new ReturningStatus(Returning.Peek().returned || ret, Returning.Pop().ret_type));
+		if(check) Returning.Push(new ReturningStatus(Returning.Peek().returned || ret, Returning.Pop().ret_type));
 
         if (this.childs[0].Type() != "boolean") {
             ErrorHandling.Add("IfNode", this.position, $"'if' statement should have a boolean expression");

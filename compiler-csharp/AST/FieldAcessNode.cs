@@ -1,4 +1,5 @@
 using Data.Objects;
+using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
 
 using CodeGen;
@@ -6,12 +7,16 @@ using System;
 using System.Reflection;
 using System.Reflection.Emit;
 
+using Type = SemanticAnalyzer.SymbolTable.Type;
 using SystemType = System.Type;
 
 namespace AST;
 public class FieldAccessNode : Node {
-	private int depth;
-	public FieldAccessNode(Position pos) : base(pos) => this.depth = 0;
+	protected object variable;
+
+	public FieldAccessNode(Position pos) : base(pos) =>
+	   this.variable = "";
+
 	public FieldAccessNode(Position pos, Node init) : this(pos) =>
 		this.childs.Add(init);
 
@@ -23,32 +28,111 @@ public class FieldAccessNode : Node {
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		Token token = tokenQueue.Peek();
-		while(token.Code() == TokenCode.dot) {
-			tokenQueue.Dequeue();
-			token = tokenQueue.Peek();
-			if(token.Code() != TokenCode.identifier) {
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
-				return;
+		while(true) {
+			while(token.Code() == TokenCode.dot) {
+				tokenQueue.Dequeue();
+				token = tokenQueue.Peek();
+				if(token.Code() != TokenCode.identifier) {
+					HandleUnexpectedToken(ref tokenQueue, token.Position());
+					return;
+				}
+				tokenQueue.Dequeue();
+				this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
+				token = tokenQueue.Peek();
 			}
-			tokenQueue.Dequeue();
-			this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
-			token = tokenQueue.Peek();
-			this.depth++;
-		}
-		while(token.Code() == TokenCode.left_bracket) {
-			tokenQueue.Dequeue();
-			ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position(), true);
-			expr.Parse(ref tokenQueue);
-			this.childs.Add(expr);
-			token = tokenQueue.Peek();
-			if(token.Code() != TokenCode.right_bracket) {
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
-				return;
+			while(token.Code() == TokenCode.left_bracket) {
+				tokenQueue.Dequeue();
+				ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position(), true);
+				expr.Parse(ref tokenQueue);
+				this.childs.Add(expr);
+				token = tokenQueue.Peek();
+				if(token.Code() != TokenCode.right_bracket) {
+					HandleUnexpectedToken(ref tokenQueue, token.Position());
+					return;
+				}
+				tokenQueue.Dequeue();
+				token = tokenQueue.Peek();
 			}
-			tokenQueue.Dequeue();
-			token = tokenQueue.Peek();
+			if(token.Code() != TokenCode.dot && token.Code() != TokenCode.left_bracket) break;
 		}
 	}
+
+	
+	public override void Verify() {
+		base.Verify();
+
+		bool flag = false;
+		if(this.childs[0] is PrimaryNode primary) {
+		switch(SymbolTable.FindEntry(primary.Name())) {
+			case Variable var:
+				this._type = var.Type;
+				if(var.Value != null)
+					this.variable = var.Value;
+				break;
+
+			case null:
+				ErrorHandling.Add("FieldAccessNode", primary.Position(), "Undeclared variable.");
+				return;
+
+			default:
+				ErrorHandling.Add("FieldAccessNode", primary.Position(), "Expected variable identifier.");
+				return;
+		}
+		}
+
+		for(int i=1; i<this.childs.Count(); i++) {
+		if(this.childs[i] is PrimaryNode prime) {
+		if(this.variable is Scope scope) {
+			switch(scope.LookupEntry(prime.Name())) {
+				case Variable vr:
+					this._type = vr.Type;
+					this.variable = vr.Value;
+					break;
+
+				case null:
+					ErrorHandling.Add("FieldAccessNode", prime.Position(), $"Record {this._type} does not have field {prime.Name()}.");
+					break;
+
+				default:
+					ErrorHandling.Add("FieldAccessNode", prime.Position(), "Expected variable identifier.");
+					break;
+			}
+		} else {
+			ErrorHandling.Add("FieldAccessNode", prime.Position(), "Cannot access member");
+			return;
+		}
+
+		} else if(this.childs[i] is ExpressionNode expr) {
+		flag = true;
+		if(expr.Type() != "integer") {
+			ErrorHandling.Add("FieldAccessNode", this.position, "Array index should be of type integer");
+			return;
+		}
+		if(this.variable is Scope scope) {
+			this._type = (string)((Variable)scope.LookupEntry("type")).Value;
+			this._type = this._type == null ? "void" : this._type;
+			switch(SymbolTable.FindEntry(this._type)) {
+				case Type type:
+					if(type.TypeScope != null)
+						this.variable = type.TypeScope;
+					break;
+
+				case null:
+					ErrorHandling.Add("FieldAccessNode", expr.Position(), $"Undeclared type {this._type}.");
+					return;
+
+				default:
+					ErrorHandling.Add("FieldAccessNode", expr.Position(), "Expected type identifier");
+					return;
+			}
+		} else {
+			ErrorHandling.Add("FieldAccessNode", expr.Position(), "Cannot access member");
+			return;
+		}
+		}
+		}
+	}
+
     
     public override void Generate(CodeGen.CodeGenContext ctx)
     {

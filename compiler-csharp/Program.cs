@@ -66,6 +66,7 @@ namespace Compiler
             AST.Verify();
             
             if (ErrorHandling.Count() > 0) {
+                AST.PrintInfo("");
                 ErrorHandling.PrintErrors();
                 return;
             }
