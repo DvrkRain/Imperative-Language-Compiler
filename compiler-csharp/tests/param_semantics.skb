@@ -1,0 +1,22 @@
+﻿type IntArray is array[3] integer;
+
+routine inc_first(a : array[] integer)
+is
+    a[1] := a[1] + 1;
+end
+
+routine inc_value(x : integer)
+is
+    x := x + 1;
+end
+
+var arr : IntArray;
+arr[1] := 10;
+
+var v : integer is 10;
+
+inc_first(arr);
+inc_value(v);
+
+print arr[1];
+print v;

@@ -2,7 +2,7 @@
 var b : integer is 3;
 print a < b;
 print a <= b;
-print a = b;
+print a == b;
 print a /= b;
 print a > b;
 print a >= b;

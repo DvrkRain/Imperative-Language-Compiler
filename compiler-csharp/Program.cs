@@ -6,7 +6,7 @@ using LexicalAnalyzer;
 using AST;
 using SemanticAnalyzer.SymbolTable;
 
-#pragma warning disable 0169, 0414, anyothernumber
+#pragma warning disable
 
 namespace Compiler
 {

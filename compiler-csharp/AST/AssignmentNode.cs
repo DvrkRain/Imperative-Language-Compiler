@@ -51,7 +51,7 @@ public class AssignmentNode : Node {
 				flag = true;
 		}
 
-		if(flag && this.childs[0].Type() == this.childs[1].Type()) {
+		if(flag && this.childs[0].Type() != this.childs[1].Type()) {
 			ErrorHandling.Add("AssignmentNode", this.position, "Non-built-in types on assignment cannot be casted to each other.");
 			return;
 		}

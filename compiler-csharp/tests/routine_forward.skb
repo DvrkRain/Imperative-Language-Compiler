@@ -1,0 +1,5 @@
+﻿routine f(x : integer) : integer;
+
+print f(5);
+
+routine f(x : integer) : integer => x * 2

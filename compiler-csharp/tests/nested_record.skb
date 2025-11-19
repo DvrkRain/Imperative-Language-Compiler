@@ -1,0 +1,22 @@
+﻿type Point is record
+    var x : integer;
+    var y : integer;
+end;
+
+type Pair is array [2] integer;
+
+type Shape is record
+    var center : Point;
+    var values : Pair;
+end;
+
+var s : Shape;
+s.center.x := 1;
+s.center.y := 2;
+s.values[1] := 10;
+s.values[2] := 20;
+
+print s.center.x;
+print s.center.y;
+print s.values[1];
+print s.values[2];

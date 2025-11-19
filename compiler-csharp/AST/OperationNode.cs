@@ -104,7 +104,7 @@ public class OperationNode : Node {
 				if(this.childs[0] is PrimaryNode rec && rec.value is Scope strct) {
 					if(strct.LookupEntry(id) is Variable var) {
 						this._type = var.Type;
-						prime = new PrimaryNode(this.position, var);
+						prime = new PrimaryNode(this.position, var, true);
 						prime.Verify();
 						this.childs[0] = prime;
 					} else if(strct.LookupEntry(id) is null)
