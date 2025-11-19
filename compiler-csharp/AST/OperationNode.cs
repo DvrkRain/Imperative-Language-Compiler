@@ -1,5 +1,4 @@
-using Data.Objects;
-using Data.ErrorHandling;
+using Data.Objects; using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
 namespace AST;
 public class OperationNode : Node {
@@ -47,6 +46,8 @@ public class OperationNode : Node {
 		for(int i=0; i<this.childs.Count(); i++) {
 			if(this.childs[i] is OperationNode oper)
 				this.childs[i] = oper.Value();
+			if(this.childs[i] is PrimaryNode)
+				this.childs[i].Verify();
 		}
 
 		bool flag = false, flag2 = false;
@@ -198,18 +199,18 @@ public class OperationNode : Node {
 					if(((PrimaryNode)this.childs[0]).value is int) {
 						int i1 = (int)((PrimaryNode)this.childs[0]).value;
 						if(((PrimaryNode)this.childs[1]).value is int i2) {
-							this.childs[0] = new PrimaryNode(this.position, i1+i2);
+							this.childs[0] = new PrimaryNode(this.position, i1+i2, true);
 						} else {
 							float f2 = (float)((PrimaryNode)this.childs[1]).value;
-							this.childs[0] = new PrimaryNode(this.position, i1+f2);
+							this.childs[0] = new PrimaryNode(this.position, i1+f2, true);
 						}
 					} else {
 						float f1 = (float)((PrimaryNode)this.childs[0]).value;
 						if(((PrimaryNode)this.childs[1]).value is int i2) {
-							this.childs[0] = new PrimaryNode(this.position, f1+i2);
+							this.childs[0] = new PrimaryNode(this.position, f1+i2, true);
 						} else {
 							float f2 = (float)((PrimaryNode)this.childs[1]).value;
-							this.childs[0] = new PrimaryNode(this.position, f1+f2);
+							this.childs[0] = new PrimaryNode(this.position, f1+f2, true);
 						}
 					}
 				}
@@ -220,27 +221,27 @@ public class OperationNode : Node {
 					if(((PrimaryNode)this.childs[0]).value is int) {
 						int i1 = (int)((PrimaryNode)this.childs[0]).value;
 						if(((PrimaryNode)this.childs[1]).value is int i2) {
-							this.childs[0] = new PrimaryNode(this.position, i1-i2);
+							this.childs[0] = new PrimaryNode(this.position, i1-i2, true);
 						} else {
 							float f2 = (float)((PrimaryNode)this.childs[1]).value;
-							this.childs[0] = new PrimaryNode(this.position, i1-f2);
+							this.childs[0] = new PrimaryNode(this.position, i1-f2, true);
 						}
 					} else {
 						float f1 = (float)((PrimaryNode)this.childs[0]).value;
 						if(((PrimaryNode)this.childs[1]).value is int i2) {
-							this.childs[0] = new PrimaryNode(this.position, f1-i2);
+							this.childs[0] = new PrimaryNode(this.position, f1-i2, true);
 						} else {
 							float f2 = (float)((PrimaryNode)this.childs[1]).value;
-							this.childs[0] = new PrimaryNode(this.position, f1-f2);
+							this.childs[0] = new PrimaryNode(this.position, f1-f2, true);
 						}
 					}
 				} else {
 					if(((PrimaryNode)this.childs[0]).value is int) {
 						int i1 = (int)((PrimaryNode)this.childs[0]).value;
-						this.childs[0] = new PrimaryNode(this.position, -1*i1);
+						this.childs[0] = new PrimaryNode(this.position, -1*i1, true);
 					} else {
 						float f1 = (float)((PrimaryNode)this.childs[0]).value;
-						this.childs[0] = new PrimaryNode(this.position, -1*f1);
+						this.childs[0] = new PrimaryNode(this.position, -1*f1, true);
 					}
 				}
 				break;
@@ -250,18 +251,18 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, i1*i2);
+						this.childs[0] = new PrimaryNode(this.position, i1*i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, i1*f2);
+						this.childs[0] = new PrimaryNode(this.position, i1*f2, true);
 					}
 				} else {
 					float f1 = (float)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, f1*i2);
+						this.childs[0] = new PrimaryNode(this.position, f1*i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, f1*f2);
+						this.childs[0] = new PrimaryNode(this.position, f1*f2, true);
 					}
 				}
 				break;
@@ -270,18 +271,18 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, i1/i2);
+						this.childs[0] = new PrimaryNode(this.position, i1/i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, i1/f2);
+						this.childs[0] = new PrimaryNode(this.position, i1/f2, true);
 					}
 				} else {
 					float f1 = (float)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, f1/i2);
+						this.childs[0] = new PrimaryNode(this.position, f1/i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, f1/f2);
+						this.childs[0] = new PrimaryNode(this.position, f1/f2, true);
 					}
 				}
 				break;
@@ -290,18 +291,18 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, i1%i2);
+						this.childs[0] = new PrimaryNode(this.position, i1%i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, i1%f2);
+						this.childs[0] = new PrimaryNode(this.position, i1%f2, true);
 					}
 				} else {
 					float f1 = (float)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, f1%i2);
+						this.childs[0] = new PrimaryNode(this.position, f1%i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, f1%f2);
+						this.childs[0] = new PrimaryNode(this.position, f1%f2, true);
 					}
 				}
 				break;
@@ -311,23 +312,23 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, i1<i2);
+						this.childs[0] = new PrimaryNode(this.position, i1<i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, i1<f2);
+						this.childs[0] = new PrimaryNode(this.position, i1<f2, true);
 					}
 				} else if(((PrimaryNode)this.childs[0]).value is float) {
 					float f1 = (float)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, f1<i2);
+						this.childs[0] = new PrimaryNode(this.position, f1<i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, f1<f2);
+						this.childs[0] = new PrimaryNode(this.position, f1<f2, true);
 					}
 				} else {
 					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
 					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
-					this.childs[0] = new PrimaryNode(this.position, !b1&&b2);
+					this.childs[0] = new PrimaryNode(this.position, !b1&&b2, true);
 				}
 				break;
 
@@ -335,23 +336,23 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, i1<=i2);
+						this.childs[0] = new PrimaryNode(this.position, i1<=i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, i1<=f2);
+						this.childs[0] = new PrimaryNode(this.position, i1<=f2, true);
 					}
 				} else if(((PrimaryNode)this.childs[0]).value is float) {
 					float f1 = (float)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, f1<=i2);
+						this.childs[0] = new PrimaryNode(this.position, f1<=i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, f1<=f2);
+						this.childs[0] = new PrimaryNode(this.position, f1<=f2, true);
 					}
 				} else {
 					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
 					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
-					this.childs[0] = new PrimaryNode(this.position, !b1||b2);
+					this.childs[0] = new PrimaryNode(this.position, !b1||b2, true);
 				}
 				break;
 
@@ -359,23 +360,23 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, i1!=i2);
+						this.childs[0] = new PrimaryNode(this.position, i1!=i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, i1!=f2);
+						this.childs[0] = new PrimaryNode(this.position, i1!=f2, true);
 					}
 				} else if(((PrimaryNode)this.childs[0]).value is float) {
 					float f1 = (float)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, f1!=i2);
+						this.childs[0] = new PrimaryNode(this.position, f1!=i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, f1!=f2);
+						this.childs[0] = new PrimaryNode(this.position, f1!=f2, true);
 					}
 				} else {
 					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
 					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
-					this.childs[0] = new PrimaryNode(this.position, b1!=b2);
+					this.childs[0] = new PrimaryNode(this.position, b1!=b2, true);
 				}
 				break;
 
@@ -383,23 +384,23 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, i1==i2);
+						this.childs[0] = new PrimaryNode(this.position, i1==i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, i1==f2);
+						this.childs[0] = new PrimaryNode(this.position, i1==f2, true);
 					}
 				} else if(((PrimaryNode)this.childs[0]).value is float) {
 					float f1 = (float)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, f1==i2);
+						this.childs[0] = new PrimaryNode(this.position, f1==i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, f1==f2);
+						this.childs[0] = new PrimaryNode(this.position, f1==f2, true);
 					}
 				} else {
 					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
 					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
-					this.childs[0] = new PrimaryNode(this.position, b1==b2);
+					this.childs[0] = new PrimaryNode(this.position, b1==b2, true);
 				}
 				break;
 
@@ -407,23 +408,23 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, i1>=i2);
+						this.childs[0] = new PrimaryNode(this.position, i1>=i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, i1>=f2);
+						this.childs[0] = new PrimaryNode(this.position, i1>=f2, true);
 					}
 				} else if(((PrimaryNode)this.childs[0]).value is float) {
 					float f1 = (float)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, f1>=i2);
+						this.childs[0] = new PrimaryNode(this.position, f1>=i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, f1>=f2);
+						this.childs[0] = new PrimaryNode(this.position, f1>=f2, true);
 					}
 				} else {
 					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
 					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
-					this.childs[0] = new PrimaryNode(this.position, b1||!b2);
+					this.childs[0] = new PrimaryNode(this.position, b1||!b2, true);
 				}
 				break;
 
@@ -431,55 +432,55 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, i1>i2);
+						this.childs[0] = new PrimaryNode(this.position, i1>i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, i1>f2);
+						this.childs[0] = new PrimaryNode(this.position, i1>f2, true);
 					}
 				} else if(((PrimaryNode)this.childs[0]).value is float) {
 					float f1 = (float)((PrimaryNode)this.childs[0]).value;
 					if(((PrimaryNode)this.childs[1]).value is int i2) {
-						this.childs[0] = new PrimaryNode(this.position, f1>i2);
+						this.childs[0] = new PrimaryNode(this.position, f1>i2, true);
 					} else {
 						float f2 = (float)((PrimaryNode)this.childs[1]).value;
-						this.childs[0] = new PrimaryNode(this.position, f1>f2);
+						this.childs[0] = new PrimaryNode(this.position, f1>f2, true);
 					}
 				} else {
 					bool b1 = (bool)((PrimaryNode)this.childs[0]).value;
 					bool b2 = (bool)((PrimaryNode)this.childs[1]).value;
-					this.childs[0] = new PrimaryNode(this.position, b1&&!b2);
+					this.childs[0] = new PrimaryNode(this.position, b1&&!b2, true);
 				}
 				break;
 
 			// Logic operations
 			case "not":
 				bool l1 = (bool)((PrimaryNode)this.childs[0]).value;
-				this.childs[0] = new PrimaryNode(this.position, !l1);
+				this.childs[0] = new PrimaryNode(this.position, !l1, true);
 				break;
 
 			case "or":
 				l1 = (bool)((PrimaryNode)this.childs[0]).value;
 				bool l2 = (bool)((PrimaryNode)this.childs[0]).value;
-				this.childs[0] = new PrimaryNode(this.position, l1||l2);
+				this.childs[0] = new PrimaryNode(this.position, l1||l2, true);
 				break;
 
 			case "and":
 				l1 = (bool)((PrimaryNode)this.childs[0]).value;
 				l2 = (bool)((PrimaryNode)this.childs[0]).value;
-				this.childs[0] = new PrimaryNode(this.position, l1&&l2);
+				this.childs[0] = new PrimaryNode(this.position, l1&&l2, true);
 				break;
 
 			case "xor":
 				l1 = (bool)((PrimaryNode)this.childs[0]).value;
 				l2 = (bool)((PrimaryNode)this.childs[0]).value;
-				this.childs[0] = new PrimaryNode(this.position, l1^l2);
+				this.childs[0] = new PrimaryNode(this.position, l1^l2, true);
 				break;
 
 			case ".":
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					int i2 = (int)((PrimaryNode)this.childs[1]).value;
-					prime = new PrimaryNode(this.position, (float)i1 + (float)i2 / (float)Math.Pow(10, Math.Ceiling(Math.Log(i2, 10))));
+					prime = new PrimaryNode(this.position, (float)i1 + (float)i2 / (float)Math.Pow(10, Math.Ceiling(Math.Log(i2, 10))), true);
 					prime.Type("real");
 					this.childs[0] = prime;
 				} else if(((PrimaryNode)this.childs[0]).value is Scope structure) {
@@ -487,7 +488,7 @@ public class OperationNode : Node {
 					switch(structure.LookupEntry(id)) {
 						case Variable var:
 							this._type = var.Type;
-							prime = new PrimaryNode(this.position, var);
+							prime = new PrimaryNode(this.position, var, true);
 							prime.Verify();
 							this.childs[0] = prime;
 							break;
