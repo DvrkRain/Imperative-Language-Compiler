@@ -108,7 +108,8 @@ public class VarNode : Node {
 				}
 				break;
 
-			case SemanticAnalyzer.SymbolTable.Type:
+			case SemanticAnalyzer.SymbolTable.Type type:
+				if(DedicatedWords.BuiltIn(type.BaseType)) this._type = type.BaseType;
 				break;
 
 			default:
