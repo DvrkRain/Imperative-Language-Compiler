@@ -1,5 +1,7 @@
 using Data.ErrorHandling;
 using Data.Objects;
+using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class ProgramNode : Node {
 	public bool main;
@@ -93,10 +95,6 @@ public class ProgramNode : Node {
 					ret.Parse(ref tokenQueue);
 					this.childs.Add(ret);
                     this.returned = true;
-					while(tokenQueue.Peek().Code() != TokenCode.end_of_body
-							&& tokenQueue.Peek().Code() != TokenCode.else_statement
-							&& tokenQueue.Peek().Code() != TokenCode.end_of_file)
-						tokenQueue.Dequeue();
 					break;
 
 				case TokenCode.break_statement:
@@ -104,10 +102,6 @@ public class ProgramNode : Node {
 					BreakNode brk = new BreakNode(token.Position());
 					brk.Parse(ref tokenQueue);
 					this.childs.Add(brk);
-					while(tokenQueue.Peek().Code() != TokenCode.end_of_body
-							&& tokenQueue.Peek().Code() != TokenCode.else_statement
-							&& tokenQueue.Peek().Code() != TokenCode.end_of_file)
-						tokenQueue.Dequeue();
 					break;
 
 				case TokenCode.continue_statement:
@@ -115,10 +109,6 @@ public class ProgramNode : Node {
 					ContinueNode cnt = new ContinueNode(token.Position());
 					cnt.Parse(ref tokenQueue);
 					this.childs.Add(cnt);
-					while(tokenQueue.Peek().Code() != TokenCode.end_of_body
-							&& tokenQueue.Peek().Code() != TokenCode.else_statement
-							&& tokenQueue.Peek().Code() != TokenCode.end_of_file)
-						tokenQueue.Dequeue();
 					break;
 
 				// Print
@@ -169,5 +159,19 @@ public class ProgramNode : Node {
             ErrorHandling.Add("ProgramNode", this.position, $"No return statement (or returning is not guaranteed) in function returning {this._type}.");
             return;
         }
+        
+        int lastIndex = this.childs.Count() - 1;
+        for (int i = 0; i <= lastIndex; i++) {
+            switch (this.childs[i]) {
+                case ReturnNode:
+                    if (SymbolTable.IsInsideType(ScopeType.Routine)) lastIndex = i;
+                    break;
+                case BreakNode or ContinueNode:
+                    if (SymbolTable.IsInsideType(ScopeType.Loop)) lastIndex = i;
+                    break;
+            }
+        }
+        
+        this.childs.RemoveRange(lastIndex + 1, this.childs.Count() - (lastIndex + 1));
     }
 }
