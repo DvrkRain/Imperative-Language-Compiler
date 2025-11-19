@@ -7,6 +7,8 @@
 [Bb]in/
 test*.skb
 *.txt
+*.exe
+*.dll
 
 # CSharp editor config
 .editorconfig

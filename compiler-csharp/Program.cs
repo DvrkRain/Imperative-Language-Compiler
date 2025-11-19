@@ -16,7 +16,7 @@ namespace Compiler
                 return;
             }
 
-            // Read file
+            // Read args[0] file
             string filepath = args[0];
             FileReader reader = new FileReader(filepath);
             Console.WriteLine("Filename: " + reader.filename);
@@ -33,6 +33,8 @@ namespace Compiler
             }
 
             int treeOption = int.Parse(args[1]);
+            
+            // If args[1] == 0 print tokens
             if (treeOption == 0) {
                 while (stream.Count > 0) {
                     Token token = stream.Dequeue();
@@ -52,6 +54,7 @@ namespace Compiler
                 return;
             }
 
+            // If args[1] == 1 print syntax ast tree
             if (treeOption == 1) {
                 AST.PrintInfo("");
                 return;
@@ -61,15 +64,20 @@ namespace Compiler
             SymbolTable.InitializeSymbolTable();
             ErrorHandling.ChangeStage("Semantic analysis");
             AST.Verify();
-            AST.PrintInfo("");
-
+            
             if (ErrorHandling.Count() > 0) {
                 ErrorHandling.PrintErrors();
                 return;
             }
 
+            // If args[1] == 2 print semantic ast tree
+            if (treeOption == 2) {
+                AST.PrintInfo("");
+                return;
+            }
+            
+            
             // Code generation
-
             ErrorHandling.ChangeStage("Code generation");
 
             string outputFileName = args.Length > 2 ? args[2] : "output.dll";
