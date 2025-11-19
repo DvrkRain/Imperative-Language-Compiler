@@ -77,9 +77,11 @@ public class ForNode : Node {
     public override void Verify() {
         SymbolTable.EnterScope(ScopeType.Loop);
 
-		Returning.Push(ReturningStatus.Copy(Returning.Peek()));
+		if(Returning.Count() > 0)
+			Returning.Push(ReturningStatus.Copy(Returning.Peek()));
         base.Verify();
-		Returning.Pop();
+		if(Returning.Count() > 0)
+			Returning.Pop();
 
         SymbolTable.ExitScope();
 
