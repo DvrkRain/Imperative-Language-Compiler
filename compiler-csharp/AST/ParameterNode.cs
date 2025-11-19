@@ -9,6 +9,11 @@ public class ParameterNode : Node {
 		return "unknown";
 	}
 
+	public new string Type() {
+		if(this.childs[1] is PrimaryNode prime) return prime.Name();
+		return "unknown";
+	}
+
 	public ParameterNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
