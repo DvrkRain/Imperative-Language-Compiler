@@ -120,6 +120,7 @@ public class VarNode : Node {
 		// Expression (if present)
 		object? val=null;
 		if(this.childs.Count() > 1) {
+		this.childs[1] = ((ExpressionNode)this.childs[1]).Value();
 		if(!this.explicit_type) this._type = this.childs[1].Type();
 		switch(this.childs[1]) {
 			case PrimaryNode prime:
