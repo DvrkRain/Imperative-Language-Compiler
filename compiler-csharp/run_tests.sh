@@ -7,16 +7,17 @@ for test in tests/*.skb; do
     echo "Testing: $test"
     
     # Compile
-    dotnet run -- "$test" 3 output.dll
+    stage=2
+    dotnet run -- "$test" $stage output.dll
     
-    if [ $? -eq 0 ]; then
+    if [ \( $? -eq 0 \) -a \( $stage -eq 3 \) ]; then
         echo "✓ Compilation successful"
         
         # Run generated DLL
         echo "Output:"
         dotnet output.dll
     else
-        echo "✗ Compilation failed"
+        echo "✗ Compilation failed in $test"
         return
     fi
     
