@@ -6,8 +6,13 @@ using SystemType = System.Type;
 
 namespace AST;
 public class TypeNode : Node {
-	
 	public TypeNode(Position pos) : base(pos) { }
+
+	public override void PrintInfo(string indent) {
+		if (this.GetType().Name == "TypeNode") Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		base.PrintInfo(indent);
+	}
+
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Identifier
@@ -67,10 +72,6 @@ public class TypeNode : Node {
 		tokenQueue.Dequeue();
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "TypeNode") Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
 
     public override void Verify() {
         this.childs[0].Verify(); // check identifier
@@ -100,19 +101,20 @@ public class TypeNode : Node {
 
         switch (this.childs[1]) {
             case PrimaryNode primaryNode:
-                baseType = (string)primaryNode.value;
-                this.childs[1].Verify();
+                primaryNode.Verify();
+                baseType = primaryNode.Name();
 
                 while (!DedicatedWords.BuiltIn(baseType))
                     baseType = ((SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(baseType)).BaseType;
 
                 break;
             
-            case ArrayNode:
+            case ArrayNode arr:
                 baseType = "array";
-                this.childs[1].Verify();
+                arr.Verify();
                 typeScope = new Scope();
                 typeScope.AddEntry(new Variable("size", "integer"));
+                typeScope.AddEntry(new Variable("type", "void", arr.Type()));
                 
                 break;
             
@@ -132,7 +134,7 @@ public class TypeNode : Node {
         }
 
         SemanticAnalyzer.SymbolTable.Type newType =
-            new SemanticAnalyzer.SymbolTable.Type((string)identifier.value, baseType);
+            new SemanticAnalyzer.SymbolTable.Type((string)identifier.value, baseType, typeScope);
 
         if (baseType == "record") newType.TypeScope = typeScope;
 
@@ -185,6 +187,7 @@ public class TypeNode : Node {
             case RecordNode recordNode:
                 // TODO: Create a way to check if record is alright
                 break;
+
             default:
                 ErrorHandling.Add("TypeNode", this.position, $"Unexpected type '{this.childs[1].GetType().Name}'");
                 return false;

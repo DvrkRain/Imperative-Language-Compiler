@@ -70,6 +70,7 @@ namespace Compiler
             AST.Verify();
             
             if (ErrorHandling.Count() > 0) {
+                AST.PrintInfo("");
                 ErrorHandling.PrintErrors();
                 Environment.Exit(1);
                 return;

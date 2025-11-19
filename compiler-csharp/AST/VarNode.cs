@@ -100,6 +100,7 @@ public class VarNode : Node {
         }
 
 		// Check type
+		object? val=null;
 		switch(SymbolTable.FindEntry(this._type)) {
 			case null:
 				if (this.explicit_type) {
@@ -109,7 +110,9 @@ public class VarNode : Node {
 				break;
 
 			case SemanticAnalyzer.SymbolTable.Type type:
-				if(DedicatedWords.BuiltIn(type.BaseType)) this._type = type.BaseType;
+				if(DedicatedWords.Code(type.BaseType) == TokenCode.builtin_type)
+					this._type = type.BaseType;
+				val = type.TypeScope;
 				break;
 
 			default:
@@ -118,7 +121,6 @@ public class VarNode : Node {
 		}
 
 		// Expression (if present)
-		object? val=null;
 		if(this.childs.Count() > 1) {
 		this.childs[1] = ((ExpressionNode)this.childs[1]).Value();
 		if(!this.explicit_type) this._type = this.childs[1].Type();

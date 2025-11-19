@@ -26,8 +26,8 @@ public class Variable : Entry
     
     public Variable(string name, string type, object? value = null) : base(name)
     {
-        Type = type;
-        Value = value;
+        this.Type = type;
+        this.Value = value;
     }
 }
 
@@ -52,8 +52,9 @@ public class Type : Entry
     public string BaseType { get; } // Each type has a base type (integer, real, boolean, array, record), type == baseType -> baseType in builtInTypes
     public Scope? TypeScope; // Each type might have its scope
     
-    public Type(string name, string baseType) : base(name)
+    public Type(string name, string baseType, Scope? scope = null) : base(name)
     {
+		this.TypeScope = scope;
         BaseType = baseType;
     }
 }

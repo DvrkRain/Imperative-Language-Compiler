@@ -131,8 +131,10 @@ namespace Data.Objects {
 		public static bool Vals(TokenCode code) =>
 			_dedicatedWords.ContainsValue(code);
 
-		public static TokenCode Code(string key) =>
-			_dedicatedWords[key];
+		public static TokenCode Code(string key) {
+			if(!DedicatedWords.Keys(key)) return TokenCode.error;
+			return _dedicatedWords[key];
+			}
 
 		public static bool BuiltIn(string type) =>
 			_baseTypes.Contains(type);
