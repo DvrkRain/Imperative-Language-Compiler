@@ -106,7 +106,8 @@ public class OperationNode : Node {
 						this._type = var.Type;
 						prime = new PrimaryNode(this.position, var);
 						prime.Verify();
-						this.childs[0] = prime;
+						this.childs.Clear();
+						this.childs.Add(prime);
 					} else if(strct.LookupEntry(id) is null)
 						ErrorHandling.Add("OperationNode", this.position, $"Record does not have a field named {id}.");
 					else ErrorHandling.Add("OperationNode", this.position, "Record cannot contain non-variable fields");
