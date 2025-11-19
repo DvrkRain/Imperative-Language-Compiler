@@ -6,6 +6,8 @@ using LexicalAnalyzer;
 using AST;
 using SemanticAnalyzer.SymbolTable;
 
+#pragma warning disable 0169, 0414, anyothernumber
+
 namespace Compiler
 {
 	class Program
@@ -29,6 +31,7 @@ namespace Compiler
 
             if (ErrorHandling.Count() > 0) {
                 ErrorHandling.PrintErrors();
+                Environment.Exit(1);
                 return;
             }
 
@@ -51,6 +54,7 @@ namespace Compiler
 
             if (ErrorHandling.Count() > 0) {
                 ErrorHandling.PrintErrors();
+                Environment.Exit(1);
                 return;
             }
 
@@ -67,6 +71,7 @@ namespace Compiler
             
             if (ErrorHandling.Count() > 0) {
                 ErrorHandling.PrintErrors();
+                Environment.Exit(1);
                 return;
             }
 
@@ -89,10 +94,9 @@ namespace Compiler
                 codeGen.Save(outputFileName);
                 Console.WriteLine($"Code generation successful. Output: {outputFileName}");
             } catch (Exception ex) {
-                ErrorHandling.Add("CodeGen", new Position(0, 0),
-                    $"Code generation failed: {ex.Message}");
+                ErrorHandling.Add("CodeGen", new Position(0, 0), $"Code generation failed: {ex.Message}");
                 ErrorHandling.PrintErrors();
-                return;
+                Environment.Exit(1);
             }
         }
     }
