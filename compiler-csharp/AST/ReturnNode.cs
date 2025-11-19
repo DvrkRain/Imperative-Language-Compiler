@@ -14,19 +14,23 @@ public class ReturnNode : Node {
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
-		if(this._type != "void") {
-			ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position());
-			expr.Parse(ref tokenQueue);
-			this.childs.Add(expr);
-		}
-
 		Token token = tokenQueue.Peek();
-		if(token.Code() != TokenCode.semicolon) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
-			return;
-		}
-		tokenQueue.Dequeue();
-	}
+
+        if (token.Code() != TokenCode.semicolon) {
+            ExpressionNode expression = new ExpressionNode(token.Position());
+            expression.Parse(ref tokenQueue);
+            this.childs.Add(expression);
+        }
+
+        token = tokenQueue.Peek();
+
+        if (token.Code() != TokenCode.semicolon) {
+            HandleUnexpectedToken(ref tokenQueue, token.Position());
+            return;
+        }
+        
+        tokenQueue.Dequeue();
+    }
 
 
     public override void Verify() {
