@@ -6,6 +6,7 @@ using CodeGen;
 using System;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.Loader;
 
 namespace AST;
 public class ProgramNode : Node {
@@ -177,7 +178,7 @@ public class ProgramNode : Node {
                 "Main",
                 MethodAttributes.Public | MethodAttributes.Static,
                 typeof(void),
-                new[] { typeof(string[]) });
+                System.Type.EmptyTypes);
         
             ctx.CurrentMethod = mainMethod;
             ctx.CurrentIL = mainMethod.GetILGenerator();

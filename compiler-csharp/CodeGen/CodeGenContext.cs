@@ -53,7 +53,7 @@ namespace CodeGen
             typeMap = new Dictionary<string, Type>
             {
                 { "integer", typeof(int) },
-                { "real", typeof(double) },
+                { "real", typeof(float) },
                 { "boolean", typeof(bool) },
                 { "void", typeof(void) }
             };

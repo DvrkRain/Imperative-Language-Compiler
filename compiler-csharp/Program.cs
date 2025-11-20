@@ -1,4 +1,6 @@
-﻿using Data.Objects;
+﻿using System.Reflection;
+using System.Runtime.Loader;
+using Data.Objects;
 using Data.IO;
 using Data.ErrorHandling;
 
@@ -13,7 +15,10 @@ namespace Compiler
 	class Program
 	{
         static void Main(string[] args) {
-            if (args.Length < 2) {
+            if (Environment.GetCommandLineArgs().Contains("--auto")) {
+                args = new string[] {"test.skb", "3", "main.dll"};
+            }
+            if (args.Length < 3) {
                 Console.WriteLine("Usage: compiler-csharp <source-file-path> <tree-option>");
                 return;
             }
@@ -89,16 +94,19 @@ namespace Compiler
             string outputFileName = args.Length > 2 ? args[2] : "output.dll";
 
             var codeGen = new CodeGen.CodeGenContext("CompiledProgram");
-
-            try {
-                AST.Generate(codeGen);
-                codeGen.Save(outputFileName);
-                Console.WriteLine($"Code generation successful. Output: {outputFileName}");
-            } catch (Exception ex) {
-                ErrorHandling.Add("CodeGen", new Position(0, 0), $"Code generation failed: {ex.Message}");
-                ErrorHandling.PrintErrors();
-                Environment.Exit(1);
-            }
+            
+            AST.Generate(codeGen);
+            codeGen.Save(outputFileName);
+            Console.WriteLine($"Code generation successful. Output: {outputFileName}");
+            
+            var asmPath = Path.GetFullPath(outputFileName);
+            var asm = AssemblyLoadContext.Default.LoadFromAssemblyPath(asmPath);
+            var programType = asm.GetType("Program");
+            var mainMethod = programType.GetMethod("Main",
+                BindingFlags.Public | BindingFlags.Static);
+            
+            Console.WriteLine($"Running Program.Main from {outputFileName}:");
+            mainMethod.Invoke(null, null);
         }
     }
 }

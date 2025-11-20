@@ -81,8 +81,8 @@ public class PrimaryNode : Node {
                 CodeGen.ILHelper.EmitLoadInt(ctx.CurrentIL, intVal);
                 break;
                 
-            case double dblVal:
-                CodeGen.ILHelper.EmitLoadReal(ctx.CurrentIL, dblVal);
+            case float fltVal:
+                CodeGen.ILHelper.EmitLoadReal(ctx.CurrentIL, fltVal);
                 break;
                 
             case bool boolVal:

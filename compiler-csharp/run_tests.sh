@@ -8,7 +8,7 @@ for test in tests/*.skb; do
     echo "Testing: $test"
     
     # Compile
-    stage=2
+    stage=$1
     bin/Debug/net9.0/compiler-csharp.exe "$test" $stage "output.dll"
     
     if [ $? -eq 0 ]; then
@@ -17,7 +17,7 @@ for test in tests/*.skb; do
         # Run generated DLL
         if [ $stage -eq 3 ]; then
           echo "Output:"
-          dotnet output.dll
+#          dotnet output.dll
         fi
     else
         echo "✗ Compilation failed in $test"
