@@ -1,5 +1,6 @@
 using Data.Objects; using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
+using System.Reflection;
 using System.Reflection.Emit;
 using CodeGen;
 namespace AST;
@@ -596,8 +597,10 @@ public class OperationNode : Node {
 				break;
 
 			case string id:
-				if(this.op_code == TokenCode.identifier) 
-					ctx.CurrentIL.Emit(OpCodes.Call, id);
+				// TODO: make function call
+				System.Type type = Assembly.GetExecutingAssembly().GetType("Program");
+				MethodInfo method = type.GetMethod(id, BindingFlags.Public | BindingFlags.Static);
+				ctx.CurrentIL.Emit(OpCodes.Call, method);
 				break;
 
 			default:
