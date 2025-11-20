@@ -13,6 +13,8 @@ using SystemType = System.Type;
 namespace AST;
 public class FieldAccessNode : Node {
 	protected object variable;
+	public object Variable() =>
+		this.variable;
 
 	public FieldAccessNode(Position pos) : base(pos) =>
 	   this.variable = "";
@@ -66,8 +68,7 @@ public class FieldAccessNode : Node {
 		switch(SymbolTable.FindEntry(primary.Name())) {
 			case Variable var:
 				this._type = var.Type;
-				if(var.Value != null)
-					this.variable = var.Value;
+				this.variable = var;
 				break;
 
 			case null:
