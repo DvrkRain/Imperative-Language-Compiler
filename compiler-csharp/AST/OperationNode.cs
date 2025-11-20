@@ -598,8 +598,7 @@ public class OperationNode : Node {
 
 			case string id:
 				// TODO: make function call
-				System.Type type = Assembly.GetExecutingAssembly().GetType("Program");
-				MethodInfo method = type.GetMethod(id, BindingFlags.Public | BindingFlags.Static);
+				MethodInfo method = ctx.Methods[id];
 				ctx.CurrentIL.Emit(OpCodes.Call, method);
 				break;
 
