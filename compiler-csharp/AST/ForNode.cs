@@ -98,11 +98,8 @@ public class ForNode : Node {
             return;
         }
 
-		if(this.childs.Count() == 4 && this.reversed) {
-			Node temp = this.childs[1];
-			this.childs[1] = this.childs[2];
-			this.childs[2] = temp;
-		}
+		if(this.childs.Count() == 4 && this.reversed)
+			(this.childs[1], this.childs[2]) = (this.childs[2], this.childs[1]);
     }
 
     
