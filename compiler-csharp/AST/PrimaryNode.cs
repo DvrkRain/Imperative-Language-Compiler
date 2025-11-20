@@ -45,6 +45,7 @@ public class PrimaryNode : Node {
 				switch(SymbolTable.FindEntry(id)) {
 					case Variable vr:
 						this._type = vr.Type;
+						if(vr.used > 0) return;
 						if(vr.Value is not null)
 							this.value = vr.Value;
 						break;
@@ -72,6 +73,7 @@ public class PrimaryNode : Node {
 			default: break;
 		}
 	}
+
     
     public override void Generate(CodeGen.CodeGenContext ctx)
     {

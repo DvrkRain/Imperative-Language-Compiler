@@ -61,13 +61,14 @@ public class FieldAccessNode : Node {
 	public override void Verify() {
 		base.Verify();
 
-		bool flag = false;
+		// bool flag = false;
 		if(this.childs[0] is PrimaryNode primary) {
 		switch(SymbolTable.FindEntry(primary.Name())) {
 			case Variable var:
 				this._type = var.Type;
 				if(var.Value != null)
 					this.variable = var.Value;
+				SymbolTable.UseEntry(primary.Name());
 				break;
 
 			case null:
