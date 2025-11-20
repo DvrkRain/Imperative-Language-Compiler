@@ -11,7 +11,7 @@ using SystemType = System.Type;
 
 namespace AST;
 public class RoutineNode : Node {
-	protected bool forward = false;
+	protected bool has_body = false;
 	protected bool redecl = false;
 	public RoutineNode(Position pos) : base(pos) { }
 
@@ -134,7 +134,7 @@ public class RoutineNode : Node {
         }
 
         List<Variable> parameters = new List<Variable>();
-		this.forward = this.childs.Count() == 2+param_number;
+		this.has_body = this.childs.Count() == 2+param_number;
 		string identifier = (string)((PrimaryNode)this.childs[0]).value;
 
         if (!VerifyParameters(param_number)) return;
@@ -145,7 +145,7 @@ public class RoutineNode : Node {
 		Returning.Push(new ReturningStatus(false, this._type));
         base.Verify();
 		ReturningStatus stat = Returning.Pop();
-		if(this._type != "void" && this.forward && this.childs.Last() is not ExpressionNode && !stat.returned) {
+		if(this._type != "void" && this.has_body && this.childs.Last() is not ExpressionNode && !stat.returned) {
 			ErrorHandling.Add("RoutineNode", this.position, "Routine has returning type, but return is not guaranteed");
 			SymbolTable.ExitScope();
 			return;
@@ -162,7 +162,7 @@ public class RoutineNode : Node {
 				return;
 
 			case Routine routine:
-				if(!this.forward) {
+				if(!this.has_body) {
 					ErrorHandling.Add("RoutineNode", this.position, "Forward routine redeclaration");
 					return;
 				} else if(routine.ReturnType != this._type) {
@@ -182,7 +182,7 @@ public class RoutineNode : Node {
                 }
 
                 Routine newRoutine = new Routine(identifier, parameters, this._type);
-                newRoutine.HasBody = this.forward;
+                newRoutine.HasBody = this.has_body;
 
                 SymbolTable.DeclareEntry(newRoutine);
 				break;
@@ -268,7 +268,7 @@ public class RoutineNode : Node {
 			ctx.Methods[routineName] = method;
 		}
     
-		if(this.redecl || !this.forward) {
+		if(this.redecl || this.has_body) {
 			int idx = 1;
 			while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
 			{
