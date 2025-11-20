@@ -33,6 +33,7 @@ public class PrimaryNode : Node {
 
 	public override void Verify() {
 		if(!this._inExpression) return;
+		if(SymbolTable.IsInsideType(ScopeType.Loop)) return;
 		switch(this.value) {
 			case ExpressionNode expr:
 				if(expr.Value() is PrimaryNode prime) {
