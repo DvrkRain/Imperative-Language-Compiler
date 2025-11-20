@@ -1,5 +1,7 @@
 using Data.Objects; using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
+using System.Reflection.Emit;
+using CodeGen;
 namespace AST;
 public class OperationNode : Node {
 	protected TokenCode op_code;
@@ -515,5 +517,82 @@ public class OperationNode : Node {
 				break;
 		}
 		this.arg_number = 0;
+	}
+
+
+	public override void Generate(CodeGenContext ctx) {
+		base.Generate(ctx);
+
+		switch(this._operation) {
+			// Term operations
+			case "+":
+				ctx.CurrentIL.Emit(OpCodes.Add);
+				break;
+
+			case "-":
+				ctx.CurrentIL.Emit(OpCodes.Sub);
+				break;
+
+			// Factor operations
+			case "*":
+				ctx.CurrentIL.Emit(OpCodes.Mul);
+				break;
+
+			case "/":
+				ctx.CurrentIL.Emit(OpCodes.Div);
+				break;
+
+			case "%":
+				ctx.CurrentIL.Emit(OpCodes.Rem);
+				break;
+
+			// Relation operation
+			case "/=":
+				ctx.CurrentIL.Emit(OpCodes.Ceq);
+				ctx.CurrentIL.Emit(OpCodes.Neg);
+				break;
+
+			case "<":
+				ctx.CurrentIL.Emit(OpCodes.Clt);
+				break;
+
+			case "<=":
+				ctx.CurrentIL.Emit(OpCodes.Cgt);
+				ctx.CurrentIL.Emit(OpCodes.Neg);
+				break;
+
+			case "==":
+				ctx.CurrentIL.Emit(OpCodes.Ceq);
+				break;
+
+			case ">=":
+				ctx.CurrentIL.Emit(OpCodes.Clt);
+				ctx.CurrentIL.Emit(OpCodes.Neg);
+				break;
+
+			case ">":
+				ctx.CurrentIL.Emit(OpCodes.Cgt);
+				break;
+
+			// Logic operation
+			case "not":
+				ctx.CurrentIL.Emit(OpCodes.Neg);
+				break;
+
+			case "and":
+				ctx.CurrentIL.Emit(OpCodes.And);
+				break;
+
+			case "or":
+				ctx.CurrentIL.Emit(OpCodes.Or);
+				break;
+
+			case "xor":
+				ctx.CurrentIL.Emit(OpCodes.Xor);
+				break;
+
+			default:
+				break;
+		}
 	}
 }
