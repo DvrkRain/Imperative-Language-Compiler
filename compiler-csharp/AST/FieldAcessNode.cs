@@ -61,7 +61,7 @@ public class FieldAccessNode : Node {
 	public override void Verify() {
 		base.Verify();
 
-		// bool flag = false;
+		bool flag = false;
 		if(this.childs[0] is PrimaryNode primary) {
 		switch(SymbolTable.FindEntry(primary.Name())) {
 			case Variable var:
@@ -117,8 +117,8 @@ public class FieldAccessNode : Node {
 			return;
 		}
 
-		} else if(this.childs[i] is ExpressionNode expr) {
-		flag = true;
+		} else if(this.childs[i] is ExpressionNode expr) { 
+			flag = true;
 		if(expr.Type() != "integer") {
 			ErrorHandling.Add("FieldAccessNode", this.position, "Array index should be of type integer");
 			return;
