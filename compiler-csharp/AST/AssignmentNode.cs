@@ -55,11 +55,6 @@ public class AssignmentNode : Node {
 			ErrorHandling.Add("AssignmentNode", this.position, "Non-built-in types on assignment cannot be casted to each other.");
 			return;
 		}
-
-		if(this.childs[0] is FieldAccessNode lhs
-				&& lhs.Variable() is Variable var) {
-			var.Value = this.childs[1];
-		}
 	}
     
 	
