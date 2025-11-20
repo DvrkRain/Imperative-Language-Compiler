@@ -97,6 +97,12 @@ public class ForNode : Node {
             ErrorHandling.Add("ForNode", this.position, "ForNode should iterate on integer values");
             return;
         }
+
+		if(this.childs.Count() == 4 && this.reversed) {
+			Node temp = this.childs[1];
+			this.childs[1] = this.childs[2];
+			this.childs[2] = temp;
+		}
     }
 
     
@@ -110,6 +116,7 @@ public class ForNode : Node {
         this.childs[1].Generate(ctx);
         ctx.CurrentIL.Emit(OpCodes.Stloc, iterLocal);
     
+		// Labels for workflow control
         Label startLabel = ctx.CurrentIL.DefineLabel();
         Label endLabel = ctx.CurrentIL.DefineLabel();
         Label continueLabel = ctx.CurrentIL.DefineLabel();
