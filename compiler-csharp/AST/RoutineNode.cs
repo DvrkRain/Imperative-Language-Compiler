@@ -11,8 +11,6 @@ using SystemType = System.Type;
 
 namespace AST;
 public class RoutineNode : Node {
-	protected bool has_body = false;
-	protected bool redecl = false;
 	public RoutineNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
@@ -134,7 +132,7 @@ public class RoutineNode : Node {
         }
 
         List<Variable> parameters = new List<Variable>();
-		this.has_body = this.childs.Count() == 2+param_number;
+		bool has_body = this.childs.Count() == 2+param_number;
 		string identifier = (string)((PrimaryNode)this.childs[0]).value;
 
         if (!VerifyParameters(param_number)) return;
@@ -145,7 +143,7 @@ public class RoutineNode : Node {
 		Returning.Push(new ReturningStatus(false, this._type));
         base.Verify();
 		ReturningStatus stat = Returning.Pop();
-		if(this._type != "void" && this.has_body && this.childs.Last() is not ExpressionNode && !stat.returned) {
+		if(this._type != "void" && has_body && this.childs.Last() is not ExpressionNode && !stat.returned) {
 			ErrorHandling.Add("RoutineNode", this.position, "Routine has returning type, but return is not guaranteed");
 			SymbolTable.ExitScope();
 			return;
@@ -162,7 +160,7 @@ public class RoutineNode : Node {
 				return;
 
 			case Routine routine:
-				if(!this.has_body) {
+				if(!has_body) {
 					ErrorHandling.Add("RoutineNode", this.position, "Forward routine redeclaration");
 					return;
 				} else if(routine.ReturnType != this._type) {
@@ -170,7 +168,6 @@ public class RoutineNode : Node {
 							$"Redeclaring routine with unmatched type: expected {this._type}, got {routine.ReturnType}.");
 					return;
 				}
-				this.redecl = true;
                 routine.HasBody = true;
                 parameters = routine.Parameters;
 				break;
@@ -182,7 +179,7 @@ public class RoutineNode : Node {
                 }
 
                 Routine newRoutine = new Routine(identifier, parameters, this._type);
-                newRoutine.HasBody = this.has_body;
+                newRoutine.HasBody = has_body;
 
                 SymbolTable.DeclareEntry(newRoutine);
 				break;
@@ -239,91 +236,73 @@ public class RoutineNode : Node {
     
     public override void Generate(CodeGenContext ctx)
     {
-		SystemType returnType = typeof(void);
-		string routineName = (string)((PrimaryNode)this.childs[0]).value;
-		var paramTypes = new List<SystemType>();
-		var paramNames = new List<string>();
-		if(!this.redecl) {
-			// Collect parameters
-			int idx = 1;
-			while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
-			{
-				var param = (ParameterNode)this.childs[idx];
-				string pName = (string)((PrimaryNode)param.GetChilds()[0]).value;
-				string pType = (string)((PrimaryNode)param.GetChilds()[1]).value;
-				paramNames.Add(pName);
-				paramTypes.Add(ctx.ResolveType(pType));
-				idx++;
-			}
-		
-			returnType = ctx.ResolveType(this._type);
-		
-			// Create method
-			var method = ctx.ProgramTypeBuilder.DefineMethod(
-				routineName,
-				MethodAttributes.Public | MethodAttributes.Static,
-				returnType,
-				paramTypes.ToArray());
-		
-			ctx.Methods[routineName] = method;
-		}
+        string routineName = (string)((PrimaryNode)this.childs[0]).value;
     
-		if(this.redecl || this.has_body) {
-			int idx = 1;
-			while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
-			{
-				var param = (ParameterNode)this.childs[idx];
-				string pName = (string)((PrimaryNode)param.GetChilds()[0]).value;
-				string pType = (string)((PrimaryNode)param.GetChilds()[1]).value;
-				paramNames.Add(pName);
-				paramTypes.Add(ctx.ResolveType(pType));
-				idx++;
-			}
-
-			// Save context
-			var prevMethod = ctx.CurrentMethod;
-			var prevIL = ctx.CurrentIL;
-			var prevLocals = new Dictionary<string, System.Reflection.Emit.LocalBuilder>(ctx.LocalVariables);
-			var prevParamIndices = new Dictionary<string, int>(ctx.ParameterIndices);
-			var prevParamTypes = new Dictionary<string, SystemType>(ctx.ParameterTypes);
-		
-			// New context for routine body
-			var method = ctx.Methods[routineName];
-			ctx.CurrentMethod = method;
-			ctx.CurrentIL = method.GetILGenerator();
-			ctx.LocalVariables.Clear();
-			ctx.ClearParameters();
-		
-			// Map parameters to arguments
-			for (int i = 0; i < paramNames.Count; i++)
-			{
-				ctx.ParameterIndices[paramNames[i]] = i;
-				ctx.ParameterTypes[paramNames[i]] = paramTypes[i];
-			}
-			// Generate body
-			Node body = this.childs.Last(); // Last child is body
-			body.Generate(ctx);
-
-			if(this.childs.Last() is ExpressionNode)
-				ctx.CurrentIL.Emit(OpCodes.Ret);
-		
-			// Ensure return
-			if (returnType == typeof(void))
-				ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
-		
-			// Restore context
-			ctx.CurrentMethod = prevMethod;
-			ctx.CurrentIL = prevIL;
-			ctx.LocalVariables.Clear();
-			foreach (var kvp in prevLocals)
-				ctx.LocalVariables[kvp.Key] = kvp.Value;
-			
-			ctx.ClearParameters();
-			foreach (var kvp in prevParamIndices)
-				ctx.ParameterIndices[kvp.Key] = kvp.Value;
-			foreach (var kvp in prevParamTypes)
-				ctx.ParameterTypes[kvp.Key] = kvp.Value;
-		}
+        // Collect parameters
+        var paramTypes = new List<SystemType>();
+        var paramNames = new List<string>();
+        int idx = 1;
+        while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
+        {
+            var param = (ParameterNode)this.childs[idx];
+            string pName = (string)((PrimaryNode)param.GetChilds()[0]).value;
+            string pType = (string)((PrimaryNode)param.GetChilds()[1]).value;
+            paramNames.Add(pName);
+            paramTypes.Add(ctx.ResolveType(pType));
+            idx++;
+        }
+    
+        SystemType returnType = ctx.ResolveType(this._type);
+    
+        // Create method
+        var method = ctx.ProgramTypeBuilder.DefineMethod(
+            routineName,
+            MethodAttributes.Public | MethodAttributes.Static,
+            returnType,
+            paramTypes.ToArray());
+    
+        ctx.Methods[routineName] = method;
+    
+        // Save context
+        var prevMethod = ctx.CurrentMethod;
+        var prevIL = ctx.CurrentIL;
+        var prevLocals = new Dictionary<string, System.Reflection.Emit.LocalBuilder>(ctx.LocalVariables);
+        var prevParamIndices = new Dictionary<string, int>(ctx.ParameterIndices);
+        var prevParamTypes = new Dictionary<string, SystemType>(ctx.ParameterTypes);
+    
+        // New context for routine body
+        ctx.CurrentMethod = method;
+        ctx.CurrentIL = method.GetILGenerator();
+        ctx.LocalVariables.Clear();
+        ctx.ClearParameters();
+    
+        // Map parameters to arguments
+        for (int i = 0; i < paramNames.Count; i++)
+        {
+            ctx.ParameterIndices[paramNames[i]] = i;
+            ctx.ParameterTypes[paramNames[i]] = paramTypes[i];
+        }
+    
+        // Generate body
+        Node body = this.childs[idx]; // Last child is body
+        body.Generate(ctx);
+    
+        // Ensure return
+        if (returnType == typeof(void))
+            ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
+    
+        // Restore context
+        ctx.CurrentMethod = prevMethod;
+        ctx.CurrentIL = prevIL;
+        ctx.LocalVariables.Clear();
+        foreach (var kvp in prevLocals)
+            ctx.LocalVariables[kvp.Key] = kvp.Value;
+        
+        ctx.ClearParameters();
+        foreach (var kvp in prevParamIndices)
+            ctx.ParameterIndices[kvp.Key] = kvp.Value;
+        foreach (var kvp in prevParamTypes)
+            ctx.ParameterTypes[kvp.Key] = kvp.Value;
     }
 
 }
