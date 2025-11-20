@@ -3,26 +3,31 @@
 echo "=== Running Compiler Tests ==="
 
 dotnet build
+complete="Completed in:"
+failed="Failed in:"
 for test in tests/*.skb; do
     echo ""
     echo "Testing: $test"
     
     # Compile
     stage=$1
-    bin/Debug/net9.0/compiler-csharp.exe "$test" $stage "output.dll"
+    bin/Debug/net9.0/compiler-csharp.exe "$test" $stage "output.dll" > "output.txt"
     
     if [ $? -eq 0 ]; then
         echo "✓ Compilation successful"
-        
-        # Run generated DLL
-        if [ $stage -eq 3 ]; then
-          echo "Output:"
-#          dotnet output.dll
-        fi
+        complete="$complete
+        $test"
     else
         echo "✗ Compilation failed in $test"
-        break
+        failed="$failed
+        $test"
     fi
     
     echo "---"
 done
+
+rm "output.txt"
+rm "output.dll"
+
+echo "$complete"
+echo "$failed"
