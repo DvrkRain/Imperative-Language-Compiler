@@ -130,7 +130,6 @@ public class VarNode : Node {
 				break;
 
 			case ExpressionNode expr:
-				val = expr;
 				break;
 
 			default: break;

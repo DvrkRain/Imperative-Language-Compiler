@@ -526,11 +526,15 @@ public class OperationNode : Node {
 		switch(this._operation) {
 			// Term operations
 			case "+":
-				ctx.CurrentIL.Emit(OpCodes.Add);
+				if(this.arg_number == 2)
+					ctx.CurrentIL.Emit(OpCodes.Add);
 				break;
 
 			case "-":
-				ctx.CurrentIL.Emit(OpCodes.Sub);
+				if(this.arg_number == 2)
+					ctx.CurrentIL.Emit(OpCodes.Sub);
+				else
+					ctx.CurrentIL.Emit(OpCodes.Neg);
 				break;
 
 			// Factor operations
@@ -589,6 +593,11 @@ public class OperationNode : Node {
 
 			case "xor":
 				ctx.CurrentIL.Emit(OpCodes.Xor);
+				break;
+
+			case string id:
+				if(this.op_code == TokenCode.identifier) 
+					ctx.CurrentIL.Emit(OpCodes.Call, id);
 				break;
 
 			default:
