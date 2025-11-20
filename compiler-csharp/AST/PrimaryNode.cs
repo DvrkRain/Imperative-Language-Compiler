@@ -58,6 +58,7 @@ public class PrimaryNode : Node {
 				this._type = var.Type;
 				if(var.Value is not null)
 					this.value = var.Value;
+				else this.value = "unknown";
 				break;
 
 			case int val:

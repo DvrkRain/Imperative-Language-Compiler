@@ -79,7 +79,7 @@ namespace Data.Objects {
 		private static Dictionary<TokenCode, int> _precedence =
 			new Dictionary<TokenCode, int>() {
 				{TokenCode.dot				, 0},
-				{TokenCode.left_bracket		, 6},
+				{TokenCode.left_bracket		, 0},
 				{TokenCode.factor_op		, 1},
 				{TokenCode.term_op			, 2},
 				{TokenCode.relation_op		, 3},

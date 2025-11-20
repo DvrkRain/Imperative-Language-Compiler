@@ -184,8 +184,9 @@ public class OperationNode : Node {
 		// Checking if current operation calculatable at compile time
 		foreach(var child in childs) {
 			if(child is PrimaryNode prim) {
-				if(prim.value is string
-					&& !flag2
+				if((prim.value is string
+					&& !flag2)
+					|| prim.value is null
 					|| prim.value is ExpressionNode)
 					flag = true;
 			} else flag = true;
