@@ -12,7 +12,6 @@ using SystemType = System.Type;
 namespace AST;
 public class RoutineNode : Node {
 	bool has_body = false;
-	bool implemented = false;
 	bool implementation = false;
 	public RoutineNode(Position pos) : base(pos) { }
 
@@ -268,7 +267,7 @@ public class RoutineNode : Node {
 		
 			ctx.Methods[routineName] = method;
 		} else {
-			if(!implemented) {
+			if(!implementation) {
 				// Collect parameters
 				while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
 				{
