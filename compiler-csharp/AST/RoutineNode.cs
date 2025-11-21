@@ -243,22 +243,20 @@ public class RoutineNode : Node {
 		var paramTypes = new List<SystemType>();
 		var paramNames = new List<string>();
 		int idx = 1;
-		SystemType returnType;
+		SystemType returnType = ctx.ResolveType(this._type);
+
+		// Collect parameters
+		while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
+		{
+			var param = (ParameterNode)this.childs[idx];
+			string pName = ((PrimaryNode)param.GetChilds()[0]).Name();
+			string pType = (string)((PrimaryNode)param.GetChilds()[1]).value;
+			paramNames.Add(pName);
+			paramTypes.Add(ctx.ResolveType(pType));
+			idx++;
+		}
 		
 		if(!this.has_body) {
-			// Collect parameters
-			while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
-			{
-				var param = (ParameterNode)this.childs[idx];
-				string pName = ((PrimaryNode)param.GetChilds()[0]).Name();
-				string pType = (string)((PrimaryNode)param.GetChilds()[1]).value;
-				paramNames.Add(pName);
-				paramTypes.Add(ctx.ResolveType(pType));
-				idx++;
-			}
-		
-			returnType = ctx.ResolveType(this._type);
-		
 			// Create method
 			var method = ctx.ProgramTypeBuilder.DefineMethod(
 				routineName,
@@ -269,19 +267,6 @@ public class RoutineNode : Node {
 			ctx.Methods[routineName] = method;
 		} else {
 			if(!this.implementation) {
-				// Collect parameters
-				while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
-				{
-					var param = (ParameterNode)this.childs[idx];
-					string pName = ((PrimaryNode)param.GetChilds()[0]).Name();
-					string pType = (string)((PrimaryNode)param.GetChilds()[1]).value;
-					paramNames.Add(pName);
-					paramTypes.Add(ctx.ResolveType(pType));
-					idx++;
-				}
-			
-				returnType = ctx.ResolveType(this._type);
-			
 				// Create method
 				ctx.Methods[routineName] = ctx.ProgramTypeBuilder.DefineMethod(
 					routineName,
