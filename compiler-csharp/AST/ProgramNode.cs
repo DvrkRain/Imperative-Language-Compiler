@@ -136,6 +136,7 @@ public class ProgramNode : Node {
 
 				case TokenCode.end_of_file:
 					tokenQueue.Dequeue();
+					if(!this.main) ErrorHandling.UnexpectedEOF("ProgramNode", this.position);
 					parsing = false;
 					break;
 
