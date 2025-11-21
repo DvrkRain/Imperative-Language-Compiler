@@ -68,7 +68,6 @@ public class FieldAccessNode : Node {
 				this._type = var.Type;
 				if(var.Value != null)
 					this.variable = var.Value;
-				SymbolTable.UseEntry(primary.Name());
 				break;
 
 			case null:
