@@ -138,22 +138,12 @@ public class RoutineNode : Node {
 		string identifier = (string)((PrimaryNode)this.childs[0]).value;
 
         if (!VerifyParameters(param_number)) return;
-        
-        SymbolTable.EnterScope(ScopeType.Routine);
-        Routine thisRoutine = (Routine)SymbolTable.FindEntry(identifier);
 
-		Returning.Push(new ReturningStatus(false, this._type));
-        base.Verify();
-		ReturningStatus stat = Returning.Pop();
-		if(this._type != "void" && this.has_body && this.childs.Last() is not ExpressionNode && !stat.returned) {
-			ErrorHandling.Add("RoutineNode", this.position, "Routine has returning type, but return is not guaranteed");
-			SymbolTable.ExitScope();
-			return;
+		foreach(var child in this.childs) {
+			if(child is not ExpressionNode
+				&& child is not ProgramNode)
+				child.Verify();
 		}
-
-        Scope curScope = SymbolTable.GetCurrentScope();
-        SymbolTable.ExitScope();
-        curScope.Parent = null;
 
 		// Check redeclaration
 		switch(SymbolTable.FindEntry(identifier)) {
@@ -190,6 +180,23 @@ public class RoutineNode : Node {
 			default:
 				ErrorHandling.Add("RoutineNode", this.position, $"Identifier '{identifier}' already exists and is not a routine");
 				return;
+		}
+
+		if(this.has_body) {
+			SymbolTable.EnterScope(ScopeType.Routine);
+
+			Returning.Push(new ReturningStatus(false, this._type));
+			this.childs.Last().Verify();
+			ReturningStatus stat = Returning.Pop();
+			if(this._type != "void" && this.has_body && this.childs.Last() is not ExpressionNode && !stat.returned) {
+				ErrorHandling.Add("RoutineNode", this.position, "Routine has returning type, but return is not guaranteed");
+				SymbolTable.ExitScope();
+				return;
+			}
+
+			Scope curScope = SymbolTable.GetCurrentScope();
+			SymbolTable.ExitScope();
+			curScope.Parent = null;
 		}
     }
 
