@@ -12,6 +12,7 @@ using SystemType = System.Type;
 namespace AST;
 public class RoutineNode : Node {
 	bool has_body = false;
+	bool implemented = false;
 	bool implementation = false;
 	public RoutineNode(Position pos) : base(pos) { }
 
@@ -267,70 +268,75 @@ public class RoutineNode : Node {
 		
 			ctx.Methods[routineName] = method;
 		} else {
-			// Collect parameters
-			while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
-			{
-				var param = (ParameterNode)this.childs[idx];
-				string pName = ((PrimaryNode)param.GetChilds()[0]).Name();
-				string pType = (string)((PrimaryNode)param.GetChilds()[1]).value;
-				paramNames.Add(pName);
-				paramTypes.Add(ctx.ResolveType(pType));
-				idx++;
-			}
-		
-			SystemType returnType = ctx.ResolveType(this._type);
-		
-			// Create method
-			var method = ctx.ProgramTypeBuilder.DefineMethod(
-				routineName,
-				MethodAttributes.Public | MethodAttributes.Static,
-				returnType,
-				paramTypes.ToArray());
-		
-			// Save context
-			var prevMethod = ctx.CurrentMethod;
-			var prevIL = ctx.CurrentIL;
-			var prevLocals = new Dictionary<string, System.Reflection.Emit.LocalBuilder>(ctx.LocalVariables);
-			var prevParamIndices = new Dictionary<string, int>(ctx.ParameterIndices);
-			var prevParamTypes = new Dictionary<string, SystemType>(ctx.ParameterTypes);
-		
-			// New context for routine body
-			ctx.CurrentMethod = method;
-			ctx.CurrentIL = method.GetILGenerator();
-			ctx.LocalVariables.Clear();
-			ctx.ClearParameters();
-		
-			// Map parameters to arguments
-			for (int i = 0; i < paramNames.Count; i++)
-			{
-				ctx.ParameterIndices[paramNames[i]] = i;
-				ctx.ParameterTypes[paramNames[i]] = paramTypes[i];
-			}
-		
-			// Generate body
-			Node body = this.childs[idx]; // Last child is body
-			body.Generate(ctx);
-		
-			// Ensure return
-			if(this.childs.Last() is ExpressionNode)
-				ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
-			else if (returnType == typeof(void))
-				ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
-		
-			// Restore context
-			ctx.CurrentMethod = prevMethod;
-			ctx.CurrentIL = prevIL;
-			ctx.LocalVariables.Clear();
-			foreach (var kvp in prevLocals)
-				ctx.LocalVariables[kvp.Key] = kvp.Value;
+			if(!implemented) {
+				// Collect parameters
+				while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
+				{
+					var param = (ParameterNode)this.childs[idx];
+					string pName = ((PrimaryNode)param.GetChilds()[0]).Name();
+					string pType = (string)((PrimaryNode)param.GetChilds()[1]).value;
+					paramNames.Add(pName);
+					paramTypes.Add(ctx.ResolveType(pType));
+					idx++;
+				}
 			
-			ctx.ClearParameters();
-			foreach (var kvp in prevParamIndices)
-				ctx.ParameterIndices[kvp.Key] = kvp.Value;
-			foreach (var kvp in prevParamTypes)
-				ctx.ParameterTypes[kvp.Key] = kvp.Value;
+				SystemType returnType = ctx.ResolveType(this._type);
+			
+				// Create method
+				var method = ctx.ProgramTypeBuilder.DefineMethod(
+					routineName,
+					MethodAttributes.Public | MethodAttributes.Static,
+					returnType,
+					paramTypes.ToArray());
 
-			ctx.Methods[routineName] = method;
+				ctx.Methods[routineName] = method;
+			} else {
+				var method = ctx.Methods[routineName];
+				// Save context
+				var prevMethod = ctx.CurrentMethod;
+				var prevIL = ctx.CurrentIL;
+				var prevLocals = new Dictionary<string, System.Reflection.Emit.LocalBuilder>(ctx.LocalVariables);
+				var prevParamIndices = new Dictionary<string, int>(ctx.ParameterIndices);
+				var prevParamTypes = new Dictionary<string, SystemType>(ctx.ParameterTypes);
+			
+				SystemType returnType = ctx.ResolveType(this._type);
+			
+				// New context for routine body
+				ctx.CurrentMethod = method;
+				ctx.CurrentIL = method.GetILGenerator();
+				ctx.LocalVariables.Clear();
+				ctx.ClearParameters();
+			
+				// Map parameters to arguments
+				for (int i = 0; i < paramNames.Count; i++)
+				{
+					ctx.ParameterIndices[paramNames[i]] = i;
+					ctx.ParameterTypes[paramNames[i]] = paramTypes[i];
+				}
+			
+				// Generate body
+				Node body = this.childs[idx]; // Last child is body
+				body.Generate(ctx);
+			
+				// Ensure return
+				if(this.childs.Last() is ExpressionNode)
+					ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
+				else if (returnType == typeof(void))
+					ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
+			
+				// Restore context
+				ctx.CurrentMethod = prevMethod;
+				ctx.CurrentIL = prevIL;
+				ctx.LocalVariables.Clear();
+				foreach (var kvp in prevLocals)
+					ctx.LocalVariables[kvp.Key] = kvp.Value;
+				
+				ctx.ClearParameters();
+				foreach (var kvp in prevParamIndices)
+					ctx.ParameterIndices[kvp.Key] = kvp.Value;
+				foreach (var kvp in prevParamTypes)
+					ctx.ParameterTypes[kvp.Key] = kvp.Value;
+			}
 		}
     }
 
