@@ -287,7 +287,6 @@ public class RoutineNode : Node {
 				returnType,
 				paramTypes.ToArray());
 		
-			ctx.Methods[routineName] = method;
 			// Save context
 			var prevMethod = ctx.CurrentMethod;
 			var prevIL = ctx.CurrentIL;
@@ -330,6 +329,8 @@ public class RoutineNode : Node {
 				ctx.ParameterIndices[kvp.Key] = kvp.Value;
 			foreach (var kvp in prevParamTypes)
 				ctx.ParameterTypes[kvp.Key] = kvp.Value;
+
+			ctx.Methods[routineName] = method;
 		}
     }
 
