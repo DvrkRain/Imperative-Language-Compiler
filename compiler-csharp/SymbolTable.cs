@@ -35,7 +35,6 @@ public class Routine : Entry
 {
     public List<Variable> Parameters { get; } // Routine parameters contained in list to keep order
     public string ReturnType { get; } // Each routine might have a return type
-    public Scope? BodyScope; // Each routine might have a body scope
 
     public bool HasBody = false;
     
@@ -43,7 +42,6 @@ public class Routine : Entry
     {
         Parameters = parameters ?? new List<Variable>();
         ReturnType = returnType;
-        BodyScope = null;
     }
 }
 
@@ -83,6 +81,15 @@ public class Scope
         }
         _entries[entry.Name] = entry;
         return true;
+    }
+
+    public bool RemoveEntry(string name) {
+        if (_entries.ContainsKey(name)) {
+            _entries.Remove(name);
+            return true;
+        }
+
+        return false;
     }
 
     public Entry? LookupLocalEntry(string name) {
@@ -170,7 +177,11 @@ public static class SymbolTable
     {
         return _currentScope.AddEntry(entry);
     }
-    
+
+    public static bool RemoveEntry(string identifier) {
+        return _currentScope.RemoveEntry(identifier);
+    }
+
     public static Entry? FindEntry(string name, bool local = false) {
         if (local) return _currentScope.LookupLocalEntry(name);
         return _currentScope.LookupEntry(name);

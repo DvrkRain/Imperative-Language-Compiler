@@ -138,7 +138,7 @@ public class RoutineNode : Node {
 		string identifier = (string)((PrimaryNode)this.childs[0]).value;
 
         if (!VerifyParameters(param_number)) return;
-
+        
         SymbolTable.EnterScope(ScopeType.Routine);
         Routine thisRoutine = (Routine)SymbolTable.FindEntry(identifier);
 
@@ -191,8 +191,6 @@ public class RoutineNode : Node {
 				ErrorHandling.Add("RoutineNode", this.position, $"Identifier '{identifier}' already exists and is not a routine");
 				return;
 		}
-        
-        if(thisRoutine != null) thisRoutine.BodyScope = curScope;
     }
 
     private bool VerifyParameters(int param_num) {
