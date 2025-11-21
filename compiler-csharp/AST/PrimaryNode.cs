@@ -98,6 +98,7 @@ public class PrimaryNode : Node {
                 if (ctx.ParameterIndices.ContainsKey(varName))
                 {
                     // Load parameter (argument)
+                    // TODO: Fix argument load
                     int argIndex = ctx.ParameterIndices[varName];
                     switch (argIndex)
                     {

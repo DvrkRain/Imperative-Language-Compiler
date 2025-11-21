@@ -1,0 +1,6 @@
+routine ex1(x : integer) : integer;
+routine ex2(x : integer) : integer => x*ex1(x - 1)
+
+routine ex1(x : integer) : integer => 2*ex2(x - 1)
+
+print ex1(4);
