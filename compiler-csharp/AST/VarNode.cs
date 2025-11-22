@@ -167,6 +167,11 @@ public class VarNode : Node {
 			this.childs[1].Generate(ctx);
 			ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Stloc, local);
 		}
+		else if (ctx.UserTypes.ContainsKey(varType.Name)) {
+			varType = ctx.UserTypes[varType.Name];
+			ctx.CurrentIL.Emit(OpCodes.Newobj, varType.GetConstructor(System.Type.EmptyTypes));
+			ctx.CurrentIL.Emit(OpCodes.Stloc, local);
+		}
     }
 
 }
