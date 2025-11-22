@@ -272,6 +272,7 @@ public class TypeNode : Node {
             SystemType.EmptyTypes);
         
         var ctorIL = ctor.GetILGenerator();
+		ctorIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_0);
         ctorIL.Emit(System.Reflection.Emit.OpCodes.Call, 
             typeof(object).GetConstructor(SystemType.EmptyTypes));
         ctorIL.Emit(System.Reflection.Emit.OpCodes.Ret);
