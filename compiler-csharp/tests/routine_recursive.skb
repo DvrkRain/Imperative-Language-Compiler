@@ -8,5 +8,6 @@ routine factorial(x : integer) : integer is
     end
     
     return x * factorial(x - 1);
+end;
 
 print factorial(10);
