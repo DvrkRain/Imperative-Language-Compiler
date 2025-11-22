@@ -12,10 +12,12 @@ using SystemType = System.Type;
 
 namespace AST;
 public class FieldAccessNode : Node {
-	protected object variable;
+	protected object value;
+	public LocalBuilder variable;
+	public FieldInfo fieldInfo;
 
 	public FieldAccessNode(Position pos) : base(pos) =>
-	   this.variable = "";
+	   this.value = "";
 
 	public FieldAccessNode(Position pos, Node init) : this(pos) =>
 		this.childs.Add(init);
@@ -67,7 +69,7 @@ public class FieldAccessNode : Node {
 			case Variable var:
 				this._type = var.Type;
 				if(var.Value != null)
-					this.variable = var.Value;
+					this.value = var.Value;
 				break;
 
 			case null:
@@ -82,7 +84,7 @@ public class FieldAccessNode : Node {
 
 		switch(SymbolTable.FindEntry(this._type)) {
 			case Type type:
-				if(type.TypeScope != null) this.variable = type.TypeScope;
+				if(type.TypeScope != null) this.value = type.TypeScope;
 				break;
 
 			case null:
@@ -96,11 +98,11 @@ public class FieldAccessNode : Node {
 
 		for(int i=1; i<this.childs.Count(); i++) {
 		if(this.childs[i] is PrimaryNode prime) {
-		if(this.variable is Scope scope) {
+		if(this.value is Scope scope) {
 			switch(scope.LookupEntry(prime.Name())) {
 				case Variable vr:
 					this._type = vr.Type;
-					this.variable = vr.Value;
+					this.value = vr.Value;
 					break;
 
 				case null:
@@ -122,13 +124,13 @@ public class FieldAccessNode : Node {
 			ErrorHandling.Add("FieldAccessNode", this.position, "Array index should be of type integer");
 			return;
 		}
-		if(this.variable is Scope scope) {
+		if(this.value is Scope scope) {
 			this._type = (string)((Variable)scope.LookupEntry("type")).Value;
 			this._type = this._type == null ? "void" : this._type;
 			switch(SymbolTable.FindEntry(this._type)) {
 				case Type type:
 					if(type.TypeScope != null)
-						this.variable = type.TypeScope;
+						this.value = type.TypeScope;
 					break;
 
 				case null:
@@ -151,10 +153,21 @@ public class FieldAccessNode : Node {
     public override void Generate(CodeGen.CodeGenContext ctx) {
         // Load base object/variable
         string baseName = ((PrimaryNode)this.childs[0]).Name();
-        SystemType currentType = null;
-
 		var variable = ctx.LocalVariables[baseName];
-		currentType = variable.LocalType;
+		var currentType = variable.LocalType;
+		FieldInfo fieldInfo = null;
+		if(this.childs.Count() > 1)
+			ctx.CurrentIL.Emit(OpCodes.Ldloca, variable);
+
+		for(int i=1; i<this.childs.Count(); i++) {
+			var accessNode = this.childs[i];
+			if(accessNode is ExpressionNode index) {
+			} else if(accessNode is PrimaryNode field) {
+                string fieldName = field.Name();
+                fieldInfo = currentType.GetField(fieldName);
+				ctx.CurrentIL.Emit(OpCodes.Ldflda, fieldInfo);
+			}
+		}
         
         // Load base variable
         // if (ctx.ParameterIndices.ContainsKey(baseName)) {
@@ -164,45 +177,16 @@ public class FieldAccessNode : Node {
         // } else if (ctx.LocalVariables.ContainsKey(baseName)) {
 		// }
         
-        // Process chain of accesses
-        for (int i = 1; i < this.childs.Count; i++) {
-            var accessNode = this.childs[i];
-            
-            if (accessNode is ExpressionNode indexExpr) {
-                // Array indexing: arr[index]
-                if (currentType.IsArray) {
-                    // Generate index expression
-                    indexExpr.Generate(ctx);
-                    
-                    // Load element: ldelem
-                    SystemType elementType = currentType.GetElementType();
-                    EmitLoadElement(ctx.CurrentIL, elementType);
-                    currentType = elementType;
-                }
-            } else if (accessNode is PrimaryNode fieldNode) {
-                // Record field access: record.field
-                string fieldName = fieldNode.Name();
-                var fieldInfo = currentType.GetField(fieldName);
-                
-                if (fieldInfo != null)
-                    currentType = fieldInfo.FieldType;
-            }
-        }
-
-		// Store to local
-		ctx.CurrentIL.Emit(OpCodes.Stloc, currentType);
-    }
-
-    private void EmitLoadElement(System.Reflection.Emit.ILGenerator il, SystemType elementType) {
-        if (elementType == typeof(int))
-            il.Emit(System.Reflection.Emit.OpCodes.Ldelem_I4);
-        else if (elementType == typeof(double))
-            il.Emit(System.Reflection.Emit.OpCodes.Ldelem_R8);
-        else if (elementType == typeof(bool))
-            il.Emit(System.Reflection.Emit.OpCodes.Ldelem_I1);
-        else if (!elementType.IsValueType)
-            il.Emit(System.Reflection.Emit.OpCodes.Ldelem_Ref);
-        else
-            il.Emit(System.Reflection.Emit.OpCodes.Ldelem, elementType);
+            // if (accessNode is ExpressionNode indexExpr) {
+            //     // Array indexing: arr[index]
+            //     if (currentType.IsArray) {
+            //         // Generate index expression
+            //         indexExpr.Generate(ctx);
+            //
+            //         // Load element: ldelem
+            //         SystemType elementType = currentType.GetElementType();
+            //         EmitLoadElement(ctx.CurrentIL, elementType);
+            //         currentType = elementType;
+            //     }
     }
 }
