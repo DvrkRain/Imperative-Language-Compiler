@@ -593,8 +593,10 @@ public class OperationNode : Node {
 				ctx.CurrentIL.Emit(OpCodes.Xor);
 				break;
 
+			case ".":
+				break;
+
 			case string id:
-				// TODO: make function call
 				MethodInfo method = ctx.Methods[id];
 				ctx.CurrentIL.Emit(OpCodes.Call, method);
 				break;

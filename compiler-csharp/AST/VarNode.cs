@@ -141,46 +141,32 @@ public class VarNode : Node {
     
     public override void Generate(CodeGenContext ctx)
     {
-        string varName = (string)((PrimaryNode)this.childs[0]).value;
+        string varName = ((PrimaryNode)this.childs[0]).Name();
         SystemType varType = ctx.ResolveType(this._type);
         
         // Check if this is an array type
         bool isArray = varType.IsArray || ctx.GetArraySize(this._type) > 0;
         int arraySize = ctx.GetArraySize(this._type);
     
-        if (ctx.CurrentMethod == null)
-        {
-            // Global variable: static field
-            var field = ctx.ProgramTypeBuilder.DefineField(
-                varName,
-                varType,
-                System.Reflection.FieldAttributes.Public | System.Reflection.FieldAttributes.Static);
-            ctx.GlobalFields[varName] = field;
-        
-            // Note: static field initialization needs .cctor or Main
-        }
-        else
-        {
-            // Local variable
-            var local = ctx.CurrentIL.DeclareLocal(varType);
-            ctx.LocalVariables[varName] = local;
-        
-            // Initialize array if needed
-            if (isArray && arraySize > 0)
-            {
-                // Create array: newarr elementType
-                SystemType elementType = varType.GetElementType();
-                CodeGen.ILHelper.EmitLoadInt(ctx.CurrentIL, arraySize);
-                ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Newarr, elementType);
-                ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Stloc, local);
-            }
-            else if (this.childs.Count > 1)
-            {
-                // Initialize with expression
-                this.childs[1].Generate(ctx);
-                ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Stloc, local);
-            }
-        }
+		// Local variable
+		var local = ctx.CurrentIL.DeclareLocal(varType);
+		ctx.LocalVariables[varName] = local;
+	
+		// Initialize array if needed
+		if (isArray && arraySize > 0)
+		{
+			// Create array: newarr elementType
+			SystemType elementType = varType.GetElementType();
+			CodeGen.ILHelper.EmitLoadInt(ctx.CurrentIL, arraySize);
+			ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Newarr, elementType);
+			ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Stloc, local);
+		}
+		else if (this.childs.Count > 1)
+		{
+			// Initialize with expression
+			this.childs[1].Generate(ctx);
+			ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Stloc, local);
+		}
     }
 
 }

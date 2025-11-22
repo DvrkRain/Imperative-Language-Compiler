@@ -47,7 +47,8 @@ public class PrimaryNode : Node {
 					case Variable vr:
 						this._type = vr.Type;
 						if(SymbolTable.IsInsideType(ScopeType.Loop)) return;
-						if(vr.Value is not null)
+						if(vr.Value is not null
+							&& vr.Value is not Scope)
 							this.value = vr.Value;
 						break;
 
