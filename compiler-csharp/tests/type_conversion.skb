@@ -1,12 +1,26 @@
-﻿var i : integer;
-var r : real;
-var b : boolean;
+﻿var ii : integer is 0;
+var ir : integer is 0;
+var ib : integer is 0;
 
-r := 3;
-i := 3;
-i := true;
-b := 1;
+var ri : real is 0.0;
+var rr : real is 0.0;
+var rb : real is 0.0;
 
-print i;
-print r;
-print b;
+var bi : boolean is false;
+var br : boolean is false;
+var bb : boolean is false;
+
+ii := 1;
+ir := 1.5;
+ib := true;
+
+ri := 1;
+rr := 1.5;
+rb := true;
+
+bi := 1;
+bb := true;
+
+print ii, ir, ib, ri, rr, rb, bi, bb;
+
+
