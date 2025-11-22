@@ -204,7 +204,7 @@ public class TypeNode : Node {
         if (typeDefinition is PrimaryNode aliasNode)
         {
             // Type alias: type MyInt is integer
-            string baseTypeName = (string)aliasNode.value;
+            string baseTypeName = aliasNode.Name();
             SystemType baseType = ctx.ResolveType(baseTypeName);
             
             // Register alias in context (add to type mapping)
@@ -246,7 +246,7 @@ public class TypeNode : Node {
         ctx.RegisterArrayType(typeName, arrayType, arraySize);
     }
 
-    private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName, RecordNode recordNode)
+    private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName)
     {
         // Create a new class type for the record
         var recordType = ctx.ModuleBuilder.DefineType(
@@ -256,19 +256,13 @@ public class TypeNode : Node {
             System.Reflection.TypeAttributes.Sealed);
         
         // Add fields from record definition
-        foreach (var child in recordNode.GetChilds())
+        foreach (var child in this.childs[1].GetChilds())
         {
-            if (child is VarNode fieldNode)
-            {
-                string fieldName = (string)((PrimaryNode)fieldNode.GetChilds()[0]).value;
-                string fieldTypeName = fieldNode.Type();
-                SystemType fieldType = ctx.ResolveType(fieldTypeName);
-                
-                recordType.DefineField(
-                    fieldName,
-                    fieldType,
-                    System.Reflection.FieldAttributes.Public);
-            }
+			VarNode fieldNode = (VarNode)child;
+			recordType.DefineField(
+				((PrimaryNode)fieldNode.GetChilds()[0]).Name(),
+				ctx.ResolveType(fieldNode.Type()),
+				System.Reflection.FieldAttributes.Public);
         }
         
         // Create default constructor
@@ -278,12 +272,12 @@ public class TypeNode : Node {
             SystemType.EmptyTypes);
         
         var ctorIL = ctor.GetILGenerator();
-        ctorIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_0);
         ctorIL.Emit(System.Reflection.Emit.OpCodes.Call, 
             typeof(object).GetConstructor(SystemType.EmptyTypes));
         ctorIL.Emit(System.Reflection.Emit.OpCodes.Ret);
         
         // Register the type
         ctx.RegisterUserType(typeName, recordType);
+		recordType.CreateType();
     }
 }
