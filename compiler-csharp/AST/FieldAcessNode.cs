@@ -162,8 +162,7 @@ public class FieldAccessNode : Node {
 			var accessNode = this.childs[i];
 			if(accessNode is ExpressionNode index) {
 			} else if(accessNode is PrimaryNode field) {
-                string fieldName = field.Name();
-                this.fieldInfo = currentType.GetField(fieldName);
+                this.fieldInfo = currentType.GetField(field.Name());
 				currentType = fieldInfo.FieldType;
 				if(i != this.childs.Count() - 1)
 					ctx.CurrentIL.Emit(OpCodes.Ldfld, this.fieldInfo);

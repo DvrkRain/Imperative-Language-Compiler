@@ -519,7 +519,10 @@ public class OperationNode : Node {
 
 
 	public override void Generate(CodeGenContext ctx) {
-		base.Generate(ctx);
+		if(this._operation == ".")
+			this.childs[0].Generate(ctx);
+		else
+			base.Generate(ctx);
 
 		switch(this._operation) {
 			// Term operations
@@ -594,6 +597,9 @@ public class OperationNode : Node {
 				break;
 
 			case ".":
+				var currentType = ctx.ResolveType(this.childs[0].Type());
+				var fieldInfo = currentType.GetField(((PrimaryNode)this.childs[1]).Name());
+				ctx.CurrentIL.Emit(OpCodes.Ldfld, fieldInfo);
 				break;
 
 			case string id:
