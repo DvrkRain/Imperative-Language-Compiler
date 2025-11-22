@@ -156,7 +156,7 @@ public class FieldAccessNode : Node {
 		this.variable = ctx.LocalVariables[baseName];
 		var currentType = this.variable.LocalType;
 		if(this.childs.Count() > 1)
-			ctx.CurrentIL.Emit(OpCodes.Ldloca, this.variable);
+			ctx.CurrentIL.Emit(OpCodes.Ldloc, this.variable);
 
 		for(int i=1; i<this.childs.Count(); i++) {
 			var accessNode = this.childs[i];
@@ -164,7 +164,9 @@ public class FieldAccessNode : Node {
 			} else if(accessNode is PrimaryNode field) {
                 string fieldName = field.Name();
                 this.fieldInfo = currentType.GetField(fieldName);
-				ctx.CurrentIL.Emit(OpCodes.Ldflda, this.fieldInfo);
+				currentType = fieldInfo.FieldType;
+				if(i != this.childs.Count() - 1)
+					ctx.CurrentIL.Emit(OpCodes.Ldfld, this.fieldInfo);
 			}
 		}
         

@@ -59,9 +59,9 @@ public class AssignmentNode : Node {
     
 	
     public override void Generate(CodeGen.CodeGenContext ctx) {
-		FieldAccessNode target = (FieldAccessNode)this.childs[0];
 		base.Generate(ctx);
 
+		FieldAccessNode target = (FieldAccessNode)this.childs[0];
 		if(target.GetChilds().Count() == 1)
 			ctx.CurrentIL.Emit(OpCodes.Stloc, target.variable.LocalIndex);
 		else if(target.GetChilds().Last() is PrimaryNode)
