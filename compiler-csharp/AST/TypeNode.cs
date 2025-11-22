@@ -218,7 +218,7 @@ public class TypeNode : Node {
         else if (typeDefinition is RecordNode recordNode)
         {
             // Record type: type Person is record ... end
-            GenerateRecordType(ctx, typeName, recordNode);
+            GenerateRecordType(ctx, typeName);
         }
     }
 

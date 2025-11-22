@@ -53,7 +53,7 @@ public class OperationNode : Node {
 				this.childs[i].Verify();
 		}
 
-		bool flag = false, flag2 = false;
+		bool flag = false;
 		PrimaryNode prime;
 
 		switch(this.op_code) {
@@ -105,13 +105,11 @@ public class OperationNode : Node {
 					&& rtype.BaseType == "record"
 					&& this.childs[1] is PrimaryNode fieldName
 					&& fieldName.value is string id) {
-				if(this.childs[0] is PrimaryNode rec && rec.value is Scope strct) {
+				flag = true;
+				if(rtype.TypeScope is Scope strct) {
 					if(strct.LookupEntry(id) is Variable var) {
 						this._type = var.Type;
-						prime = new PrimaryNode(this.position, var, true);
-						prime.Verify();
-						this.childs.Add(prime);
-						flag2 = true;
+						flag = true;
 					} else if(strct.LookupEntry(id) is null)
 						ErrorHandling.Add("OperationNode", this.position, $"Record does not have a field named {id}.");
 					else ErrorHandling.Add("OperationNode", this.position, "Record cannot contain non-variable fields");
@@ -187,8 +185,7 @@ public class OperationNode : Node {
 		// Checking if current operation calculatable at compile time
 		foreach(var child in childs) {
 			if(child is PrimaryNode prim) {
-				if((prim.value is string
-					&& !flag2)
+				if((prim.value is string)
 					|| prim.value is null
 					|| prim.value is ExpressionNode)
 					flag = true;
