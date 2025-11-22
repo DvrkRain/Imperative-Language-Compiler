@@ -195,7 +195,7 @@ public class ExpressionNode : Node {
 		}
 		this.childs.Add(evaluationStack.Pop());
 		if(evaluationStack.Count() > 0)
-			ErrorHandling.Add(this.GetType().Name, operatorStack.Peek().Position(), "Expression is not finilized.");
+			ErrorHandling.Add(this.GetType().Name, evaluationStack.Peek().Position(), "Expression is not finilized.");
 	}
 
 
