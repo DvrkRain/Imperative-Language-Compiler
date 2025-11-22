@@ -60,8 +60,7 @@ public class AssignmentNode : Node {
 	
     public override void Generate(CodeGen.CodeGenContext ctx) {
 		FieldAccessNode target = (FieldAccessNode)this.childs[0];
-		this.childs[1].Generate(ctx);
-		target.Generate(ctx);
+		base.Generate(ctx);
 
 		if(target.GetChilds().Count() == 1)
 			ctx.CurrentIL.Emit(OpCodes.Stloc, target.variable.LocalIndex);
@@ -69,4 +68,19 @@ public class AssignmentNode : Node {
 			ctx.CurrentIL.Emit(OpCodes.Stfld, target.fieldInfo);
 
     }
+
+    private void EmitStoreElement(System.Reflection.Emit.ILGenerator il, SystemType elementType)
+    {
+        if (elementType == typeof(int))
+            il.Emit(System.Reflection.Emit.OpCodes.Stelem_I4);
+        else if (elementType == typeof(double))
+            il.Emit(System.Reflection.Emit.OpCodes.Stelem_R8);
+        else if (elementType == typeof(bool))
+            il.Emit(System.Reflection.Emit.OpCodes.Stelem_I1);
+        else if (!elementType.IsValueType)
+            il.Emit(System.Reflection.Emit.OpCodes.Stelem_Ref);
+        else
+            il.Emit(System.Reflection.Emit.OpCodes.Stelem, elementType);
+    }
+
 }

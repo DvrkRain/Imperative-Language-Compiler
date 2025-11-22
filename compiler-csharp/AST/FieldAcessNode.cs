@@ -153,19 +153,18 @@ public class FieldAccessNode : Node {
     public override void Generate(CodeGen.CodeGenContext ctx) {
         // Load base object/variable
         string baseName = ((PrimaryNode)this.childs[0]).Name();
-		var variable = ctx.LocalVariables[baseName];
-		var currentType = variable.LocalType;
-		FieldInfo fieldInfo = null;
+		this.variable = ctx.LocalVariables[baseName];
+		var currentType = this.variable.LocalType;
 		if(this.childs.Count() > 1)
-			ctx.CurrentIL.Emit(OpCodes.Ldloca, variable);
+			ctx.CurrentIL.Emit(OpCodes.Ldloca, this.variable);
 
 		for(int i=1; i<this.childs.Count(); i++) {
 			var accessNode = this.childs[i];
 			if(accessNode is ExpressionNode index) {
 			} else if(accessNode is PrimaryNode field) {
                 string fieldName = field.Name();
-                fieldInfo = currentType.GetField(fieldName);
-				ctx.CurrentIL.Emit(OpCodes.Ldflda, fieldInfo);
+                this.fieldInfo = currentType.GetField(fieldName);
+				ctx.CurrentIL.Emit(OpCodes.Ldflda, this.fieldInfo);
 			}
 		}
         
