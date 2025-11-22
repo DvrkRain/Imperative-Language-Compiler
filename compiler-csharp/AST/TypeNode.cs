@@ -1,8 +1,9 @@
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
-
+using System.Reflection.Emit;
 using SystemType = System.Type; 
+
 
 namespace AST;
 public class TypeNode : Node {
@@ -255,16 +256,6 @@ public class TypeNode : Node {
             System.Reflection.TypeAttributes.Class |
             System.Reflection.TypeAttributes.Sealed);
         
-        // Add fields from record definition
-        foreach (var child in this.childs[1].GetChilds())
-        {
-			VarNode fieldNode = (VarNode)child;
-			recordType.DefineField(
-				((PrimaryNode)fieldNode.GetChilds()[0]).Name(),
-				ctx.ResolveType(fieldNode.Type()),
-				System.Reflection.FieldAttributes.Public);
-        }
-        
         // Create default constructor
         var ctor = recordType.DefineConstructor(
             System.Reflection.MethodAttributes.Public,
@@ -272,10 +263,27 @@ public class TypeNode : Node {
             SystemType.EmptyTypes);
         
         var ctorIL = ctor.GetILGenerator();
-		ctorIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_0);
-        ctorIL.Emit(System.Reflection.Emit.OpCodes.Call, 
+		ctorIL.Emit(OpCodes.Ldarg_0);
+        ctorIL.Emit(OpCodes.Call, 
             typeof(object).GetConstructor(SystemType.EmptyTypes));
-        ctorIL.Emit(System.Reflection.Emit.OpCodes.Ret);
+        // Add fields from record definition
+        foreach (var child in this.childs[1].GetChilds())
+        {
+            VarNode fieldNode = (VarNode)child;
+            var fieldInfo = recordType.DefineField(
+                ((PrimaryNode)fieldNode.GetChilds()[0]).Name(),
+                ctx.ResolveType(fieldNode.Type()),
+                System.Reflection.FieldAttributes.Public);
+
+            if (ctx.UserTypes.ContainsKey(fieldNode.Type())) {
+                var fieldType = ctx.UserTypes[fieldNode.Type()];
+                ctorIL.Emit(OpCodes.Ldarg_0);
+                ctorIL.Emit(OpCodes.Newobj, fieldType.GetConstructor(System.Type.EmptyTypes));
+                ctorIL.Emit(OpCodes.Stfld, fieldInfo);
+            }
+        }
+
+        ctorIL.Emit(OpCodes.Ret);
         
         // Register the type
         ctx.RegisterUserType(typeName, recordType);
