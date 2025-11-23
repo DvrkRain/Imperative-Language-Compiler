@@ -84,7 +84,8 @@ public class AssignmentNode : Node {
 			ctx.CurrentIL.Emit(OpCodes.Stloc, target.variable.LocalIndex);
 		else if(target.GetChilds().Last() is PrimaryNode)
 			ctx.CurrentIL.Emit(OpCodes.Stfld, target.fieldInfo);
-
+		else if(target.GetChilds().Last() is ExpressionNode)
+			ctx.CurrentIL.Emit(OpCodes.Stelem_Ref);
     }
 
 

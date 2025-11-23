@@ -15,6 +15,7 @@ public class FieldAccessNode : Node {
 	protected object value;
 	public LocalBuilder variable;
 	public FieldInfo fieldInfo;
+	public SystemType elemInfo;
 
 	public FieldAccessNode(Position pos) : base(pos) =>
 	   this.value = "";
@@ -168,8 +169,8 @@ public class FieldAccessNode : Node {
 				ctx.CurrentIL.Emit(OpCodes.Ldc_I4_1); // Load 1
 				ctx.CurrentIL.Emit(OpCodes.Sub);		 // Convert 1-index to 0-index
 				
-				var elemType = ctx.ResolveType(index.Type());
-				ctx.CurrentIL.Emit(OpCodes.Ldelem, elemType);
+				if(i != this.childs.Count() - 1)
+					ctx.CurrentIL.Emit(OpCodes.Ldelem_Ref);
 				
 			} else if(accessNode is PrimaryNode field) {
                 this.fieldInfo = currentType.GetField(field.Name());
