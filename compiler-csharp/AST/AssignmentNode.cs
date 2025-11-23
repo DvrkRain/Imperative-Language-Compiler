@@ -63,8 +63,8 @@ public class AssignmentNode : Node {
 			&& SymbolTable.FindEntry(target.Name()) is Variable var
 		  ) {
 			if(expr.Value() is PrimaryNode prime)
-				var.Value = prime.value;
-			else var.Value = null
+				var.Value = this.cast(var.Type, prime.value);
+			else var.Value = null;
 		}
 	}
     
@@ -94,4 +94,62 @@ public class AssignmentNode : Node {
             il.Emit(System.Reflection.Emit.OpCodes.Stelem, elementType);
     }
 
+
+	protected object cast(string type, object value) {
+		switch(type) {
+			case "integer":
+				switch(value) {
+					case int val:
+						return val;
+
+					case float val:
+						return (int)Math.Round(val, MidpointRounding.AwayFromZero);
+
+					case bool val:
+						return val?1:0;
+
+					default: break;
+				}
+				break;
+
+			case "real":
+				switch(value) {
+					case int val:
+						return (float)val;
+
+					case float val:
+						return val;
+
+					case bool val:
+						return val?1f:0f;
+
+					default: break;
+				}
+				break;
+
+			case "boolean":
+				switch(value) {
+					case int val:
+						if(val == 1) return true;
+						else if(val == 0) return false;
+						else {
+							ErrorHandling.Add("Assignment", this.position, "Conversion from int to bool possible only if int is 1 or 0");
+							return false;
+						}
+
+					case float val:
+						ErrorHandling.Add("Assignment", this.position, "Conversion from real to bool is prohibited");
+						return (int)Math.Round(val, MidpointRounding.AwayFromZero);
+
+					case bool val:
+						return val;
+
+					default: break;
+				}
+				break;
+
+			default: break;
+		}
+		return 0;
+	}
 }
