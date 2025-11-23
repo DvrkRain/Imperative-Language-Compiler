@@ -136,6 +136,9 @@ namespace Data.Objects {
 			return _dedicatedWords[key];
 			}
 
+		public static bool BuiltInStrict(string type) =>
+			DedicatedWords.Code(type) == TokenCode.builtin_type;
+
 		public static bool BuiltIn(string type) =>
 			_baseTypes.Contains(type);
 	}

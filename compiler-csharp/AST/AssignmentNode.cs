@@ -40,6 +40,7 @@ public class AssignmentNode : Node {
 
 	public override void Verify() {
 		base.Verify();
+		this._type = this.childs[0].Type();
 
 		bool flag = false;
 		foreach(var child in childs) {
@@ -51,12 +52,13 @@ public class AssignmentNode : Node {
 				flag = true;
 		}
 
-		if(flag && this.childs[0].Type() != this.childs[1].Type()) {
+		if(flag && this._type != this.childs[1].Type()) {
 			ErrorHandling.Add("AssignmentNode", this.position, "Non-built-in types on assignment cannot be casted to each other.");
 			return;
 		}
 
-		if(this.childs[1] is ExpressionNode expr
+		if(DedicatedWords.BuiltInStrict(this._type)
+			&& this.childs[1] is ExpressionNode expr
 			&& this.childs[0].GetChilds() is List<Node> targetChilds
 			&& targetChilds.Count() == 1
 			&& targetChilds[0] is PrimaryNode target
@@ -68,7 +70,7 @@ public class AssignmentNode : Node {
 		}
 		if(this.childs[1] is ExpressionNode exp
 			&& exp.Value() is PrimaryNode val)
-			val.value = this.cast(this.childs[0].Type(), val.value);
+			val.value = this.cast(this._type, val.value);
 
 	}
     
