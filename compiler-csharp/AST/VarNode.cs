@@ -148,8 +148,8 @@ public class VarNode : Node {
 			// Create array: newarr elementType
 			SystemType elementType = varType.GetElementType();
 			CodeGen.ILHelper.EmitLoadInt(ctx.CurrentIL, arraySize);
-			ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Newarr, elementType);
-			ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Stloc, local);
+			ctx.CurrentIL.Emit(OpCodes.Newarr, elementType);
+			ctx.CurrentIL.Emit(OpCodes.Stloc, local);
 		}
 		else if (this.childs.Count > 1)
 		{

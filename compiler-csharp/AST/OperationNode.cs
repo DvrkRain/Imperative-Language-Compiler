@@ -607,6 +607,11 @@ public class OperationNode : Node {
 				ctx.CurrentIL.Emit(OpCodes.Ldfld, fieldInfo);
 				break;
 
+			case "[":
+				currentType = ctx.ResolveType(this.childs[0].Type());
+				ctx.CurrentIL.Emit(OpCodes.Ldelem, currentType);
+				break;
+
 			case string id:
 				MethodInfo method = ctx.Methods[id];
 				ctx.CurrentIL.Emit(OpCodes.Call, method);
