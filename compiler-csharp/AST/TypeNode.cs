@@ -202,42 +202,35 @@ public class TypeNode : Node {
         string typeName = (string)((PrimaryNode)this.childs[0]).value;
         Node typeDefinition = this.childs[1];
         
-        if (typeDefinition is PrimaryNode aliasNode)
-        {
+        if (typeDefinition is PrimaryNode aliasNode) {
             // Type alias: type MyInt is integer
             string baseTypeName = aliasNode.Name();
             SystemType baseType = ctx.ResolveType(baseTypeName);
             
             // Register alias in context (add to type mapping)
             ctx.RegisterTypeAlias(typeName, baseType);
-        }
-        else if (typeDefinition is ArrayNode arrayNode)
-        {
+
+        } else if (typeDefinition is ArrayNode arrayNode)
             // Array type: type intarr is array [5] integer
-            GenerateArrayType(ctx, typeName, arrayNode);
-        }
+            GenerateArrayType(ctx, typeName);
+
         else if (typeDefinition is RecordNode recordNode)
-        {
             // Record type: type Person is record ... end
             GenerateRecordType(ctx, typeName);
-        }
     }
 
-    private void GenerateArrayType(CodeGen.CodeGenContext ctx, string typeName, ArrayNode arrayNode)
-    {
+    private void GenerateArrayType(CodeGen.CodeGenContext ctx, string typeName) {
         // Get array size (childs[0] is size expression)
+		ArrayNode arr = (ArrayNode)this.childs[1];
+
         int arraySize = -1;
-        if (arrayNode.GetChilds().Count > 0)
-        {
-            var sizeNode = arrayNode.GetChilds()[0];
-            if (sizeNode is PrimaryNode sizeValue && sizeValue.value is int size)
-            {
-                arraySize = size;
-            }
-        }
+
+		if(arr.GetChilds()[0] is ExpressionNode expr
+			&& expr.Value() is PrimaryNode size) 
+			arraySize = (int)size.value;
         
         // Get element type (childs[1] is type)
-        string elementTypeName = (string)((PrimaryNode)arrayNode.GetChilds()[1]).value;
+        string elementTypeName = (string)((PrimaryNode)arr.GetChilds()[1]).value;
         SystemType elementType = ctx.ResolveType(elementTypeName);
         
         // In .NET, arrays are built-in types: int[] for integer array
@@ -247,8 +240,7 @@ public class TypeNode : Node {
         ctx.RegisterArrayType(typeName, arrayType, arraySize);
     }
 
-    private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName)
-    {
+    private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName) {
         // Create a new class type for the record
         var recordType = ctx.ModuleBuilder.DefineType(
             typeName,
@@ -267,8 +259,7 @@ public class TypeNode : Node {
         ctorIL.Emit(OpCodes.Call, 
             typeof(object).GetConstructor(SystemType.EmptyTypes));
         // Add fields from record definition
-        foreach (var child in this.childs[1].GetChilds())
-        {
+        foreach (var child in this.childs[1].GetChilds()) {
             VarNode fieldNode = (VarNode)child;
             var fieldInfo = recordType.DefineField(
                 ((PrimaryNode)fieldNode.GetChilds()[0]).Name(),

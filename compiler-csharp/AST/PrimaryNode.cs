@@ -78,10 +78,9 @@ public class PrimaryNode : Node {
 	}
 
     
-    public override void Generate(CodeGen.CodeGenContext ctx)
-    {
-        switch (this.value)
-        {
+    public override void Generate(CodeGen.CodeGenContext ctx) {
+		if(!this._inExpression) return;
+        switch (this.value) {
             case int intVal:
                 CodeGen.ILHelper.EmitLoadInt(ctx.CurrentIL, intVal);
                 break;
@@ -96,13 +95,11 @@ public class PrimaryNode : Node {
                 
             case string varName:
                 // Check in order: parameters -> locals -> globals
-                if (ctx.ParameterIndices.ContainsKey(varName))
-                {
+                if (ctx.ParameterIndices.ContainsKey(varName)) {
                     // Load parameter (argument)
                     // TODO: Fix argument load
                     int argIndex = ctx.ParameterIndices[varName];
-                    switch (argIndex)
-                    {
+                    switch (argIndex) {
                         case 0: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_0); break;
                         case 1: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_1); break;
                         case 2: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_2); break;
@@ -114,19 +111,13 @@ public class PrimaryNode : Node {
                                 ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg, argIndex);
                             break;
                     }
-                }
-                else if (ctx.LocalVariables.ContainsKey(varName))
-                {
+                } else if (ctx.LocalVariables.ContainsKey(varName)) {
                     // Load local variable
                     ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldloc, ctx.LocalVariables[varName]);
-                }
-                else if (ctx.GlobalFields.ContainsKey(varName))
-                {
+                } else if (ctx.GlobalFields.ContainsKey(varName)) {
                     // Load global field
                     ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldsfld, ctx.GlobalFields[varName]);
-                }
-                else
-                {
+                } else {
                     throw new Exception($"Variable '{varName}' not found in current scope");
                 }
                 break;

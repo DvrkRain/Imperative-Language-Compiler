@@ -129,8 +129,7 @@ public class VarNode : Node {
 		SymbolTable.DeclareEntry(new Variable(identifier.Name(), this._type, val));
     }
     
-    public override void Generate(CodeGenContext ctx)
-    {
+    public override void Generate(CodeGenContext ctx) {
         string varName = ((PrimaryNode)this.childs[0]).Name();
         SystemType varType = ctx.ResolveType(this._type);
         
