@@ -68,7 +68,8 @@ public class AssignmentNode : Node {
 				prime.value = this.cast(var.Type, prime.value);
 			} else var.Value = null;
 		}
-		if(this.childs[1] is ExpressionNode exp
+		if(DedicatedWords.BuiltInStrict(this._type)
+			&& this.childs[1] is ExpressionNode exp
 			&& exp.Value() is PrimaryNode val)
 			val.value = this.cast(this._type, val.value);
 
