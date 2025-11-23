@@ -62,9 +62,10 @@ public class AssignmentNode : Node {
 			&& targetChilds[0] is PrimaryNode target
 			&& SymbolTable.FindEntry(target.Name()) is Variable var
 		  ) {
-			if(expr.Value() is PrimaryNode prime)
+			if(expr.Value() is PrimaryNode prime) {
 				var.Value = this.cast(var.Type, prime.value);
-			else var.Value = null;
+				prime.value = this.cast(var.Type, prime.value);
+			} else var.Value = null;
 		}
 	}
     
@@ -78,20 +79,6 @@ public class AssignmentNode : Node {
 		else if(target.GetChilds().Last() is PrimaryNode)
 			ctx.CurrentIL.Emit(OpCodes.Stfld, target.fieldInfo);
 
-    }
-
-    private void EmitStoreElement(System.Reflection.Emit.ILGenerator il, SystemType elementType)
-    {
-        if (elementType == typeof(int))
-            il.Emit(System.Reflection.Emit.OpCodes.Stelem_I4);
-        else if (elementType == typeof(double))
-            il.Emit(System.Reflection.Emit.OpCodes.Stelem_R8);
-        else if (elementType == typeof(bool))
-            il.Emit(System.Reflection.Emit.OpCodes.Stelem_I1);
-        else if (!elementType.IsValueType)
-            il.Emit(System.Reflection.Emit.OpCodes.Stelem_Ref);
-        else
-            il.Emit(System.Reflection.Emit.OpCodes.Stelem, elementType);
     }
 
 
