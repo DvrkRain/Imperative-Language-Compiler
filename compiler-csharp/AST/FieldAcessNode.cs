@@ -163,6 +163,14 @@ public class FieldAccessNode : Node {
 		for(int i=1; i<this.childs.Count(); i++) {
 			var accessNode = this.childs[i];
 			if(accessNode is ExpressionNode index) {
+				// Array is already loaded
+				index.Generate(ctx); // Load array index
+				ctx.CurrentIL.Emit(OpCodes.Ldc_I4_1); // Load 1
+				ctx.CurrentIL.Emit(OpCodes.Sub);		 // Convert 1-index to 0-index
+				
+				var elemType = ctx.ResolveType(index.Type());
+				ctx.CurrentIL.Emit(OpCodes.Ldelem, elemType);
+				
 			} else if(accessNode is PrimaryNode field) {
                 this.fieldInfo = currentType.GetField(field.Name());
 				currentType = fieldInfo.FieldType;
