@@ -22,7 +22,7 @@ public abstract class Entry
 public class Variable : Entry
 {
     public string Type { get; } // Each variable has type
-    public object? Value { get; } // Each variable might have value
+    public object? Value { get; set; } // Each variable might have value
     
     public Variable(string name, string type, object? value = null) : base(name)
     {

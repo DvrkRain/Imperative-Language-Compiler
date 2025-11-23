@@ -55,6 +55,17 @@ public class AssignmentNode : Node {
 			ErrorHandling.Add("AssignmentNode", this.position, "Non-built-in types on assignment cannot be casted to each other.");
 			return;
 		}
+
+		if(this.childs[1] is ExpressionNode expr
+			&& this.childs[0].GetChilds() is List<Node> targetChilds
+			&& targetChilds.Count() == 1
+			&& targetChilds[0] is PrimaryNode target
+			&& SymbolTable.FindEntry(target.Name()) is Variable var
+		  ) {
+			if(expr.Value() is PrimaryNode prime)
+				var.Value = prime.value;
+			else var.Value = null
+		}
 	}
     
 	
