@@ -15,13 +15,13 @@ namespace CodeGen
 			il.Emit(OpCodes.Ldc_I4, value?1:0);
         
         public static void EmitLoadReal(ILGenerator il, int value) =>
-            il.Emit(OpCodes.Ldc_R8, (float)value);
+            il.Emit(OpCodes.Ldc_R4, (float)value);
         
         public static void EmitLoadReal(ILGenerator il, float value) =>
-            il.Emit(OpCodes.Ldc_R8, value);
+            il.Emit(OpCodes.Ldc_R4, value);
         
         public static void EmitLoadReal(ILGenerator il, bool value) =>
-            il.Emit(OpCodes.Ldc_R8, value?1f:0f);
+            il.Emit(OpCodes.Ldc_R4, value?1f:0f);
         
         public static void EmitLoadBool(ILGenerator il, int value) {
 			if(value == 0)
