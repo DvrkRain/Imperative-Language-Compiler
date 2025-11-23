@@ -60,13 +60,16 @@ public class AssignmentNode : Node {
 			&& this.childs[0].GetChilds() is List<Node> targetChilds
 			&& targetChilds.Count() == 1
 			&& targetChilds[0] is PrimaryNode target
-			&& SymbolTable.FindEntry(target.Name()) is Variable var
-		  ) {
+			&& SymbolTable.FindEntry(target.Name()) is Variable var) {
 			if(expr.Value() is PrimaryNode prime) {
 				var.Value = this.cast(var.Type, prime.value);
 				prime.value = this.cast(var.Type, prime.value);
 			} else var.Value = null;
 		}
+		if(this.childs[1] is ExpressionNode exp
+			&& exp.Value() is PrimaryNode val)
+			val.value = this.cast(this.childs[0].Type(), val.value);
+
 	}
     
 	
