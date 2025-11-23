@@ -112,7 +112,6 @@ public class VarNode : Node {
 			case SemanticAnalyzer.SymbolTable.Type type:
 				if(DedicatedWords.Code(type.BaseType) == TokenCode.builtin_type)
 					this._type = type.BaseType;
-				val = type.TypeScope;
 				break;
 
 			default:
@@ -122,20 +121,11 @@ public class VarNode : Node {
 
 		// Expression (if present)
 		if(this.childs.Count() > 1) {
-		this.childs[1] = ((ExpressionNode)this.childs[1]).Value();
-		if(!this.explicit_type) this._type = this.childs[1].Type();
-		switch(this.childs[1]) {
-			case PrimaryNode prime:
+			this.childs[1] = ((ExpressionNode)this.childs[1]).Value();
+			if(!this.explicit_type) this._type = this.childs[1].Type();
+			if(this.childs[1] is PrimaryNode prime)
 				val = prime.value;
-				break;
-
-			case ExpressionNode expr:
-				break;
-
-			default: break;
 		}
-		}
-
 		SymbolTable.DeclareEntry(new Variable(identifier.Name(), this._type, val));
     }
     
