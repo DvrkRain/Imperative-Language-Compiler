@@ -102,7 +102,9 @@ public class FieldAccessNode : Node {
 			switch(scope.LookupEntry(prime.Name())) {
 				case Variable vr:
 					this._type = vr.Type;
-					this.value = vr.Value;
+					if(SymbolTable.FindEntry(this._type) is SemanticAnalyzer.SymbolTable.Type type) {
+						this.value = type.TypeScope;
+					} else ErrorHandling.Add("Assignment", this.position, "Undeclared type or identifier is not a type alias");
 					break;
 
 				case null:
