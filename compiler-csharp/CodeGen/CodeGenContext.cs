@@ -142,8 +142,14 @@ public class CodeGenContext {
 
 		var genericParams = typeBuilder.DefineGenericParameters(new string[] {"T"});
 		var T = genericParams[0];
-
-
+		
+		var defaultMemberCtor = typeof(System.Reflection.DefaultMemberAttribute)
+			.GetConstructor(new Type[] { typeof(string) });
+		var defaultMemberAttr = new CustomAttributeBuilder(
+			defaultMemberCtor,
+			new object[] { "Item" });
+		typeBuilder.SetCustomAttribute(defaultMemberAttr);
+		
 		// Size field
 		var sizeField = typeBuilder.DefineField(
 			"Size",
@@ -177,7 +183,7 @@ public class CodeGenContext {
 
 		// Indexer get item
 		var getItem = typeBuilder.DefineMethod(
-			"get_item",
+			"get_Item",
 			MethodAttributes.Public | MethodAttributes.HideBySig |
 			MethodAttributes.SpecialName,
 			T,
@@ -194,6 +200,7 @@ public class CodeGenContext {
 		// index > len
 		getIL.Emit(OpCodes.Ldarg_1);
 		getIL.Emit(OpCodes.Ldarg_0);
+		getIL.Emit(OpCodes.Ldfld, dataField);
 		getIL.Emit(OpCodes.Ldlen);
 		getIL.Emit(OpCodes.Bgt, throw_label);
 
@@ -214,7 +221,7 @@ public class CodeGenContext {
 
 		// Indexer set item
 		var setItem = typeBuilder.DefineMethod(
-			"set_item",
+			"set_Item",
 			MethodAttributes.Public | MethodAttributes.HideBySig |
 			MethodAttributes.SpecialName,
 			typeof(void),
@@ -231,6 +238,7 @@ public class CodeGenContext {
 		// index > len
 		setIL.Emit(OpCodes.Ldarg_1);
 		setIL.Emit(OpCodes.Ldarg_0);
+		setIL.Emit(OpCodes.Ldfld, dataField);
 		setIL.Emit(OpCodes.Ldlen);
 		setIL.Emit(OpCodes.Bgt, throw_label);
 
