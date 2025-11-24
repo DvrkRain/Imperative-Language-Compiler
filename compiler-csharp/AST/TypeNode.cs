@@ -1,3 +1,4 @@
+using System.Drawing;
 using System.Reflection;
 using Data.ErrorHandling;
 using Data.Objects;
@@ -235,82 +236,156 @@ public class TypeNode : Node {
         string elementTypeName = (string)((PrimaryNode)arr.GetChilds()[1]).value;
         SystemType elementType = ctx.ResolveType(elementTypeName);
 
-        // Create ArrayClass<elementType> specialization
-        SystemType arrayClassElementType = ctx.ArrayBuilder.MakeGenericType(elementType);
+        var typeBuilder = ctx.ModuleBuilder.DefineType(
+			typeName,
+			System.Reflection.TypeAttributes.Public |
+			System.Reflection.TypeAttributes.Class);
+		
+        // Specify custom index property
+		var defaultMemberCtor = typeof(System.Reflection.DefaultMemberAttribute)
+			.GetConstructor(new System.Type[] { typeof(string) });
+		var defaultMemberAttr = new CustomAttributeBuilder(
+			defaultMemberCtor,
+			new object[] { "Item" });
+		typeBuilder.SetCustomAttribute(defaultMemberAttr);
+		
+		// Size field
+		var sizeField = typeBuilder.DefineField(
+			"Size",
+			typeof(int),
+			FieldAttributes.Private | FieldAttributes.Static);
+		
+		// `Size` property (GETTER only)
+		var getSizeMethod = typeBuilder.DefineMethod(
+			"get_size",
+			MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName,
+			typeof(int),
+			System.Type.EmptyTypes);
+        
+		var getSizeIL = getSizeMethod.GetILGenerator();
+		getSizeIL.Emit(OpCodes.Ldsfld, sizeField);
+		getSizeIL.Emit(OpCodes.Ret);
+        
+		var sizeProperty = typeBuilder.DefineProperty(
+			"size",
+			PropertyAttributes.None,
+			typeof(int),
+			null);
+		sizeProperty.SetGetMethod(getSizeMethod);
 
-        // Create new array class typeName : ArrayClass<elementType>
-        var newArrBuilder = ctx.ModuleBuilder.DefineType(
-	        typeName,
-	        TypeAttributes.Public | TypeAttributes.Class,
-	        arrayClassElementType);
-        
-        // Define static field `Size`
-        var sizeField = newArrBuilder.DefineField(
-	        "Size", 
-	        typeof(int), 
-	        FieldAttributes.Private | FieldAttributes.Static);
-        
-        // `Size` property (GETTER only)
-        var getSizeMethod = newArrBuilder.DefineMethod(
-	        "get_size",
-	        MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName,
-	        typeof(int),
-	        System.Type.EmptyTypes);
-        
-        var getSizeIL = getSizeMethod.GetILGenerator();
-        getSizeIL.Emit(OpCodes.Ldsfld, sizeField);
-        getSizeIL.Emit(OpCodes.Ret);
-        
-        var sizeProperty = newArrBuilder.DefineProperty(
-	        "size",
-	        PropertyAttributes.None,
-	        typeof(int),
-	        null);
-        sizeProperty.SetGetMethod(getSizeMethod);
-        
-        // Constructor
-        var constructor = newArrBuilder.DefineConstructor(
-	        MethodAttributes.Public |  MethodAttributes.HideBySig | 
-	        MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
-	        CallingConventions.Standard,
-	        System.Type.EmptyTypes);
-        
-        var ctorIL = constructor.GetILGenerator();
-        
-        // base(Size)
-        ctorIL.Emit(OpCodes.Ldarg_0);            // this
-        ctorIL.Emit(OpCodes.Ldsfld, sizeField);  // load Size
-        
-        // Receive base class ArrayClass<elementType>(elementType) constructor
-        // Need to use TypeBuilder.GetConstructor to get specified constructor
-        SystemType[] ctorParams = new SystemType[] {elementType};
-        var baseConstructorInfo = ctx.ArrayBuilder.GetConstructor(
-	        BindingFlags.Public | BindingFlags.Instance,
-	        null,
-	        ctorParams,
-	        null);
+		// Data field
+		var dataField = typeBuilder.DefineField(
+			"data",
+			elementType.MakeArrayType(),
+			FieldAttributes.Public);
 
-        var baseConstructor = TypeBuilder.GetConstructor(
-	        arrayClassElementType,
-	        baseConstructorInfo);
-        
-        ctorIL.Emit(OpCodes.Call, baseConstructor);
-        ctorIL.Emit(OpCodes.Ret);
-        
-        // Static constructor
-        var staticCtor = newArrBuilder.DefineTypeInitializer();
-        var cctorIL = staticCtor.GetILGenerator();
-        
-        ILHelper.EmitLoadInt(cctorIL, arraySize);
-        cctorIL.Emit(OpCodes.Stsfld,  sizeField);
-        cctorIL.Emit(OpCodes.Ret);
-        
-        // Finalize
-        ctx.ArrayBuilder.CreateType();
-        newArrBuilder.CreateType();
+		// Constructor
+		var constructor = typeBuilder.DefineConstructor(
+			MethodAttributes.Public | MethodAttributes.HideBySig |
+			MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
+			CallingConventions.Standard,
+			new System.Type[]{typeof(int)});
+
+		var ctorIL = constructor.GetILGenerator();
+
+		ctorIL.Emit(OpCodes.Ldarg_0);
+		ctorIL.Emit(OpCodes.Call, typeof(object).GetConstructor(System.Type.EmptyTypes));
+
+		ctorIL.Emit(OpCodes.Ldarg_0);
+		ctorIL.Emit(OpCodes.Ldarg_1);
+		ctorIL.Emit(OpCodes.Newarr, elementType);
+		ctorIL.Emit(OpCodes.Stfld, dataField);
+		ctorIL.Emit(OpCodes.Ret);
+
+		// Indexer get item
+		var getItem = typeBuilder.DefineMethod(
+			"get_Item",
+			MethodAttributes.Public | MethodAttributes.HideBySig |
+			MethodAttributes.SpecialName,
+			elementType,
+			new System.Type[]{typeof(int)});
+
+		var getIL = getItem.GetILGenerator();
+		var throw_label = getIL.DefineLabel();
+
+		// index < 1
+		getIL.Emit(OpCodes.Ldarg_1);
+		getIL.Emit(OpCodes.Ldc_I4_1);
+		getIL.Emit(OpCodes.Blt, throw_label);
+
+		// index > len
+		getIL.Emit(OpCodes.Ldarg_1);
+		getIL.Emit(OpCodes.Ldarg_0);
+		getIL.Emit(OpCodes.Ldfld, dataField);
+		getIL.Emit(OpCodes.Ldlen);
+		getIL.Emit(OpCodes.Bgt, throw_label);
+
+		// return data[index-1]
+		getIL.Emit(OpCodes.Ldarg_0);
+		getIL.Emit(OpCodes.Ldfld, dataField);
+		getIL.Emit(OpCodes.Ldarg_1);
+		getIL.Emit(OpCodes.Ldc_I4_1);
+		getIL.Emit(OpCodes.Sub);
+		getIL.Emit(OpCodes.Ldelem, elementType);
+		getIL.Emit(OpCodes.Ret);
+
+		// Index out of range
+		getIL.MarkLabel(throw_label);
+		var exceptionCtor = typeof(IndexOutOfRangeException).GetConstructor(System.Type.EmptyTypes);
+		getIL.Emit(OpCodes.Newobj, exceptionCtor);
+		getIL.Emit(OpCodes.Throw);
+
+		// Indexer set item
+		var setItem = typeBuilder.DefineMethod(
+			"set_Item",
+			MethodAttributes.Public | MethodAttributes.HideBySig |
+			MethodAttributes.SpecialName,
+			typeof(void),
+			new System.Type[]{typeof(int), elementType});
+
+		var setIL = setItem.GetILGenerator();
+		throw_label = setIL.DefineLabel();
+
+		// index < 1
+		setIL.Emit(OpCodes.Ldarg_1);
+		setIL.Emit(OpCodes.Ldc_I4_1);
+		setIL.Emit(OpCodes.Blt, throw_label);
+
+		// index > len
+		setIL.Emit(OpCodes.Ldarg_1);
+		setIL.Emit(OpCodes.Ldarg_0);
+		setIL.Emit(OpCodes.Ldfld, dataField);
+		setIL.Emit(OpCodes.Ldlen);
+		setIL.Emit(OpCodes.Bgt, throw_label);
+
+		// data[index-1] = value
+		setIL.Emit(OpCodes.Ldarg_0);
+		setIL.Emit(OpCodes.Ldfld, dataField);
+		setIL.Emit(OpCodes.Ldarg_1);
+		setIL.Emit(OpCodes.Ldc_I4_1);
+		setIL.Emit(OpCodes.Sub);
+		setIL.Emit(OpCodes.Ldarg_2);
+		setIL.Emit(OpCodes.Stelem, elementType);
+		setIL.Emit(OpCodes.Ret);
+
+		// Index out of range
+		setIL.MarkLabel(throw_label);
+		setIL.Emit(OpCodes.Newobj, exceptionCtor);
+		setIL.Emit(OpCodes.Throw);
+
+		// Indexer
+		var itemProperty = typeBuilder.DefineProperty(
+			"Item",
+			PropertyAttributes.None,
+			elementType,
+			new System.Type[]{typeof(int)});
+		itemProperty.SetGetMethod(getItem);
+		itemProperty.SetSetMethod(setItem);
+
+		typeBuilder.CreateType();
         
         // Register array type with metadata about size
-        ctx.RegisterArrayType(typeName, elementType.MakeArrayType(), arraySize);
+        ctx.RegisterArrayType(typeName, typeBuilder);
     }
 
     private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName) {

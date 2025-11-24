@@ -10,8 +10,6 @@ public class CodeGenContext {
 	public ModuleBuilder ModuleBuilder { get; private set; }
 	public TypeBuilder ProgramTypeBuilder { get; private set; }
 	
-	public TypeBuilder ArrayBuilder { get; private set; }
-	
 	// Current method context
 	public ILGenerator CurrentIL { get; set; }
 	public MethodBuilder CurrentMethod { get; set; }
@@ -34,8 +32,8 @@ public class CodeGenContext {
 	// Parameter types for validation
 	public Dictionary<string, Type> ParameterTypes { get; private set; }
 	
-	// Array metadata: type name -> (array type, fixed size)
-	private Dictionary<string, (Type arrayType, int size)> arrayTypes;
+	// Array metadata: type name -> array builder
+	private Dictionary<string, TypeBuilder> arrayTypes;
 	
 	public CodeGenContext(string assemblyName)
 	{
@@ -47,7 +45,7 @@ public class CodeGenContext {
 		LoopStack = new Stack<LoopContext>();
 		ParameterIndices = new Dictionary<string, int>();
 		ParameterTypes = new Dictionary<string, Type>();
-		arrayTypes = new Dictionary<string, (Type, int)>();
+		arrayTypes = new Dictionary<string, TypeBuilder>();
 		
 		// Type mapping for built-in types
 		typeMap = new Dictionary<string, Type>
@@ -68,9 +66,6 @@ public class CodeGenContext {
 		ProgramTypeBuilder = ModuleBuilder.DefineType(
 			"Program",
 			TypeAttributes.Public | TypeAttributes.Class);
-		
-		// Create array ...
-		ArrayBuilder = GenerateArrayClass();
 	}
 	
 	public Type ResolveType(string typeName)
@@ -114,10 +109,10 @@ public class CodeGenContext {
 		typeMap[aliasName] = baseType;
 	}
 
-	public void RegisterArrayType(string typeName, Type arrayType, int size)
+	public void RegisterArrayType(string typeName, TypeBuilder arrayBuilder)
 	{
-		typeMap[typeName] = arrayType;
-		arrayTypes[typeName] = (arrayType, size);
+		typeMap[typeName] = arrayBuilder;
+		arrayTypes[typeName] = arrayBuilder;
 	}
 
 	public void RegisterUserType(string typeName, TypeBuilder typeBuilder)
@@ -126,148 +121,11 @@ public class CodeGenContext {
 		typeMap[typeName] = typeBuilder;
 	}
 
-	public int GetArraySize(string typeName)
-	{
+	public int GetArraySize(string typeName) {
 		if (arrayTypes.ContainsKey(typeName))
-			return arrayTypes[typeName].size;
+			return 1;
+			// return arrayTypes[typeName];
 		return -1;
-	}
-	
-	private TypeBuilder GenerateArrayClass () {
-		var typeBuilder = this.ModuleBuilder.DefineType(
-			"ArrayClass`1",
-			System.Reflection.TypeAttributes.Public |
-			System.Reflection.TypeAttributes.Abstract |
-			System.Reflection.TypeAttributes.Class);
-
-		var genericParams = typeBuilder.DefineGenericParameters(new string[] {"T"});
-		var T = genericParams[0];
-		
-		var defaultMemberCtor = typeof(System.Reflection.DefaultMemberAttribute)
-			.GetConstructor(new Type[] { typeof(string) });
-		var defaultMemberAttr = new CustomAttributeBuilder(
-			defaultMemberCtor,
-			new object[] { "Item" });
-		typeBuilder.SetCustomAttribute(defaultMemberAttr);
-		
-		// Size field
-		var sizeField = typeBuilder.DefineField(
-			"Size",
-			typeof(int),
-			FieldAttributes.Private | FieldAttributes.Static);
-
-		// Data field
-		var dataField = typeBuilder.DefineField(
-			"data",
-			T.MakeArrayType(),
-			FieldAttributes.Public);
-
-		// Constructor
-		var constructor = typeBuilder.DefineConstructor(
-			MethodAttributes.Public | MethodAttributes.HideBySig |
-			MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
-			CallingConventions.Standard,
-			new Type[]{typeof(int)});
-
-		var ctorIL = constructor.GetILGenerator();
-
-		ctorIL.Emit(OpCodes.Ldarg_0);
-		ctorIL.Emit(OpCodes.Call, typeof(object).GetConstructor(Type.EmptyTypes));
-
-		ctorIL.Emit(OpCodes.Ldarg_0);
-		ctorIL.Emit(OpCodes.Ldarg_1);
-		ctorIL.Emit(OpCodes.Newarr, T);
-		ctorIL.Emit(OpCodes.Stfld, dataField);
-		ctorIL.Emit(OpCodes.Ret);
-
-
-		// Indexer get item
-		var getItem = typeBuilder.DefineMethod(
-			"get_Item",
-			MethodAttributes.Public | MethodAttributes.HideBySig |
-			MethodAttributes.SpecialName,
-			T,
-			new Type[]{typeof(int)});
-
-		var getIL = getItem.GetILGenerator();
-		var throw_label = getIL.DefineLabel();
-
-		// index < 1
-		getIL.Emit(OpCodes.Ldarg_1);
-		getIL.Emit(OpCodes.Ldc_I4_1);
-		getIL.Emit(OpCodes.Blt, throw_label);
-
-		// index > len
-		getIL.Emit(OpCodes.Ldarg_1);
-		getIL.Emit(OpCodes.Ldarg_0);
-		getIL.Emit(OpCodes.Ldfld, dataField);
-		getIL.Emit(OpCodes.Ldlen);
-		getIL.Emit(OpCodes.Bgt, throw_label);
-
-		// return data[index-1]
-		getIL.Emit(OpCodes.Ldarg_0);
-		getIL.Emit(OpCodes.Ldfld, dataField);
-		getIL.Emit(OpCodes.Ldarg_1);
-		getIL.Emit(OpCodes.Ldc_I4_1);
-		getIL.Emit(OpCodes.Sub);
-		getIL.Emit(OpCodes.Ldelem, T);
-		getIL.Emit(OpCodes.Ret);
-
-		// Index out of range
-		getIL.MarkLabel(throw_label);
-		var exceptionCtor = typeof(IndexOutOfRangeException).GetConstructor(Type.EmptyTypes);
-		getIL.Emit(OpCodes.Newobj, exceptionCtor);
-		getIL.Emit(OpCodes.Throw);
-
-		// Indexer set item
-		var setItem = typeBuilder.DefineMethod(
-			"set_Item",
-			MethodAttributes.Public | MethodAttributes.HideBySig |
-			MethodAttributes.SpecialName,
-			typeof(void),
-			new Type[]{typeof(int), T});
-
-		var setIL = setItem.GetILGenerator();
-		throw_label = setIL.DefineLabel();
-
-		// index < 1
-		setIL.Emit(OpCodes.Ldarg_1);
-		setIL.Emit(OpCodes.Ldc_I4_1);
-		setIL.Emit(OpCodes.Blt, throw_label);
-
-		// index > len
-		setIL.Emit(OpCodes.Ldarg_1);
-		setIL.Emit(OpCodes.Ldarg_0);
-		setIL.Emit(OpCodes.Ldfld, dataField);
-		setIL.Emit(OpCodes.Ldlen);
-		setIL.Emit(OpCodes.Bgt, throw_label);
-
-		// data[index-1] = value
-		setIL.Emit(OpCodes.Ldarg_0);
-		setIL.Emit(OpCodes.Ldfld, dataField);
-		setIL.Emit(OpCodes.Ldarg_1);
-		setIL.Emit(OpCodes.Ldc_I4_1);
-		setIL.Emit(OpCodes.Sub);
-		setIL.Emit(OpCodes.Ldarg_2);
-		setIL.Emit(OpCodes.Stelem, T);
-		setIL.Emit(OpCodes.Ret);
-
-		// Index out of range
-		setIL.MarkLabel(throw_label);
-		setIL.Emit(OpCodes.Newobj, exceptionCtor);
-		setIL.Emit(OpCodes.Throw);
-
-		// Indexer
-		var itemProperty = typeBuilder.DefineProperty(
-			"Item",
-			PropertyAttributes.None,
-			T,
-			new Type[]{typeof(int)});
-		itemProperty.SetGetMethod(getItem);
-		itemProperty.SetSetMethod(setItem);
-
-		typeBuilder.CreateType();
-		return typeBuilder;
 	}
 }
 
