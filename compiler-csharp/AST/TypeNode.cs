@@ -268,6 +268,8 @@ public class TypeNode : Node {
 			System.Type.EmptyTypes);
 
 		var ctorIL = constructor.GetILGenerator();
+		var oldIL = ctx.CurrentIL;
+		ctx.CurrentIL = ctorIL;
 
 		// base()
 		ctorIL.Emit(OpCodes.Ldarg_0);
@@ -288,6 +290,8 @@ public class TypeNode : Node {
 		ctorIL.Emit(OpCodes.Newarr, elementType);
 		ctorIL.Emit(OpCodes.Stfld, dataField);
 		ctorIL.Emit(OpCodes.Ret);
+		
+		ctx.CurrentIL = oldIL;
 
 		// Indexer get item
 		var getItem = typeBuilder.DefineMethod(
