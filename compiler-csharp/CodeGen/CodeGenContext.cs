@@ -109,23 +109,10 @@ public class CodeGenContext {
 		typeMap[aliasName] = baseType;
 	}
 
-	public void RegisterArrayType(string typeName, TypeBuilder arrayBuilder)
-	{
-		typeMap[typeName] = arrayBuilder;
-		arrayTypes[typeName] = arrayBuilder;
-	}
-
 	public void RegisterUserType(string typeName, TypeBuilder typeBuilder)
 	{
 		UserTypes[typeName] = typeBuilder;
 		typeMap[typeName] = typeBuilder;
-	}
-
-	public int GetArraySize(string typeName) {
-		if (arrayTypes.ContainsKey(typeName))
-			return 1;
-			// return arrayTypes[typeName];
-		return -1;
 	}
 }
 

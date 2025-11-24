@@ -382,7 +382,7 @@ public class TypeNode : Node {
 		typeBuilder.CreateType();
         
         // Register array type with metadata about size
-        ctx.RegisterArrayType(typeName, typeBuilder);
+        ctx.RegisterUserType(typeName, typeBuilder);
     }
 
     private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName) {

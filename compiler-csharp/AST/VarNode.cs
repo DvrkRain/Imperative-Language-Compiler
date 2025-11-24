@@ -132,25 +132,12 @@ public class VarNode : Node {
     public override void Generate(CodeGenContext ctx) {
         string varName = ((PrimaryNode)this.childs[0]).Name();
         SystemType varType = ctx.ResolveType(this._type);
-        
-        // Check if this is an array type
-        bool isArray = varType.IsArray || ctx.GetArraySize(this._type) > 0;
-        int arraySize = ctx.GetArraySize(this._type);
     
 		// Local variable
 		var local = ctx.CurrentIL.DeclareLocal(varType);
 		ctx.LocalVariables[varName] = local;
 	
-		// Initialize array if needed
-		if (isArray && arraySize > 0)
-		{
-			// Create array: newarr elementType
-			SystemType elementType = varType.GetElementType();
-			CodeGen.ILHelper.EmitLoadInt(ctx.CurrentIL, arraySize);
-			ctx.CurrentIL.Emit(OpCodes.Newarr, elementType);
-			ctx.CurrentIL.Emit(OpCodes.Stloc, local);
-		}
-		else if (this.childs.Count > 1)
+		if (this.childs.Count > 1)
 		{
 			// Initialize with expression
 			this.childs[1].Generate(ctx);

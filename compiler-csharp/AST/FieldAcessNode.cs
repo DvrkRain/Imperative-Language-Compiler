@@ -166,11 +166,11 @@ public class FieldAccessNode : Node {
 			if(accessNode is ExpressionNode index) {
 				// Array is already loaded
 				index.Generate(ctx); // Load array index
-				ctx.CurrentIL.Emit(OpCodes.Ldc_I4_1); // Load 1
-				ctx.CurrentIL.Emit(OpCodes.Sub);		 // Convert 1-index to 0-index
+				this.elemInfo = currentType.GetField("data").FieldType.GetElementType();
+				currentType = this.elemInfo;
 				
 				if(i != this.childs.Count() - 1)
-					ctx.CurrentIL.Emit(OpCodes.Ldelem_Ref);
+					ctx.CurrentIL.Emit(OpCodes.Ldelem, currentType);
 				
 			} else if(accessNode is PrimaryNode field) {
                 this.fieldInfo = currentType.GetField(field.Name());
