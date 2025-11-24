@@ -146,43 +146,9 @@ public class CodeGenContext {
 
 		// Size field
 		var sizeField = typeBuilder.DefineField(
-			"<Size>k_BackingField",
+			"Size",
 			typeof(int),
 			FieldAttributes.Private | FieldAttributes.Static);
-
-
-		var sizeGetter = typeBuilder.DefineMethod(
-			"get_Size",
-			MethodAttributes.Private | MethodAttributes.Static |
-			MethodAttributes.SpecialName | MethodAttributes.HideBySig,
-			typeof(int),
-			Type.EmptyTypes);
-
-		var GetSizeIL = sizeGetter.GetILGenerator();
-		GetSizeIL.Emit(OpCodes.Ldfld, sizeField);
-		GetSizeIL.Emit(OpCodes.Ret);
-
-
-		var sizeSetter = typeBuilder.DefineMethod(
-			"set_Size",
-			MethodAttributes.Private | MethodAttributes.Static |
-			MethodAttributes.SpecialName | MethodAttributes.HideBySig,
-			typeof(void),
-			new Type[]{typeof(int)});
-
-		var SetSizeIL = sizeGetter.GetILGenerator();
-		SetSizeIL.Emit(OpCodes.Ldarg_0);
-		SetSizeIL.Emit(OpCodes.Stfld, sizeField);
-		SetSizeIL.Emit(OpCodes.Ret);
-
-		var sizeProperty = typeBuilder.DefineProperty(
-			"size",
-			PropertyAttributes.None,
-			typeof(int),
-			null);
-		sizeProperty.SetGetMethod(sizeGetter);
-		sizeProperty.SetSetMethod(sizeSetter);
-
 
 		// Data field
 		var dataField = typeBuilder.DefineField(
