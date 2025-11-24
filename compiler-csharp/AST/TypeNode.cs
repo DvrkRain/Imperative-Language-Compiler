@@ -225,12 +225,6 @@ public class TypeNode : Node {
     private void GenerateArrayType(CodeGen.CodeGenContext ctx, string typeName) {
         // Get array size (childs[0] is size expression)
 		ArrayNode arr = (ArrayNode)this.childs[1];
-
-        int arraySize = -1;
-
-		if(arr.GetChilds()[0] is ExpressionNode expr
-			&& expr.Value() is PrimaryNode size) 
-			arraySize = (int)size.value;
         
         // Get element type (childs[1] is type)
         string elementTypeName = (string)((PrimaryNode)arr.GetChilds()[1]).value;
@@ -250,28 +244,15 @@ public class TypeNode : Node {
 		typeBuilder.SetCustomAttribute(defaultMemberAttr);
 		
 		// Size field
-		var sizeField = typeBuilder.DefineField(
+		var sizeStatField = typeBuilder.DefineField(
 			"Size",
 			typeof(int),
 			FieldAttributes.Private | FieldAttributes.Static);
 		
-		// `Size` property (GETTER only)
-		var getSizeMethod = typeBuilder.DefineMethod(
-			"get_size",
-			MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName,
-			typeof(int),
-			System.Type.EmptyTypes);
-        
-		var getSizeIL = getSizeMethod.GetILGenerator();
-		getSizeIL.Emit(OpCodes.Ldsfld, sizeField);
-		getSizeIL.Emit(OpCodes.Ret);
-        
-		var sizeProperty = typeBuilder.DefineProperty(
+		var sizeField = typeBuilder.DefineField(
 			"size",
-			PropertyAttributes.None,
 			typeof(int),
-			null);
-		sizeProperty.SetGetMethod(getSizeMethod);
+			FieldAttributes.Public);
 
 		// Data field
 		var dataField = typeBuilder.DefineField(
@@ -284,15 +265,26 @@ public class TypeNode : Node {
 			MethodAttributes.Public | MethodAttributes.HideBySig |
 			MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
 			CallingConventions.Standard,
-			new System.Type[]{typeof(int)});
+			System.Type.EmptyTypes);
 
 		var ctorIL = constructor.GetILGenerator();
 
+		// base()
 		ctorIL.Emit(OpCodes.Ldarg_0);
 		ctorIL.Emit(OpCodes.Call, typeof(object).GetConstructor(System.Type.EmptyTypes));
 
+		// Init Size
+		arr.Generate(ctx);
+		ctorIL.Emit(OpCodes.Stfld, sizeStatField);
+
+		// Init size
+		ctorIL.Emit(OpCodes.Ldfld, sizeStatField);
+		ctorIL.Emit(OpCodes.Stfld, sizeField);
+
+		// data = new <type>[size]
+		ctorIL.Emit(OpCodes.Ldfld, sizeStatField);
 		ctorIL.Emit(OpCodes.Ldarg_0);
-		ctorIL.Emit(OpCodes.Ldarg_1);
+		ctorIL.Emit(OpCodes.Ldfld, sizeStatField);
 		ctorIL.Emit(OpCodes.Newarr, elementType);
 		ctorIL.Emit(OpCodes.Stfld, dataField);
 		ctorIL.Emit(OpCodes.Ret);
