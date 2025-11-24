@@ -13,7 +13,4 @@ end
 var arr : IntArray;
 arr[1] := 10;
 
-var v : integer is 10;
-
 print arr[1];
-print v;

@@ -85,7 +85,23 @@ public class AssignmentNode : Node {
 		else if(target.GetChilds().Last() is PrimaryNode)
 			ctx.CurrentIL.Emit(OpCodes.Stfld, target.fieldInfo);
 		else if(target.GetChilds().Last() is ExpressionNode)
-			ctx.CurrentIL.Emit(OpCodes.Stelem_Ref);
+			switch (this._type) {
+				case "boolean":
+					ctx.CurrentIL.Emit(OpCodes.Stelem, typeof(bool));
+					break;
+				
+				case "integer":
+					ctx.CurrentIL.Emit(OpCodes.Stelem, typeof(int));
+					break;
+				
+				case "real":
+					ctx.CurrentIL.Emit(OpCodes.Stelem, typeof(float));
+					break;
+				
+				default:
+					ctx.CurrentIL.Emit(OpCodes.Stelem_Ref);
+					break;
+			}
     }
 
 
