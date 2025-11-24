@@ -277,16 +277,17 @@ public class TypeNode : Node {
 
 		// Init Size
 		arr.Generate(ctx);
-		ctorIL.Emit(OpCodes.Stfld, sizeStatField);
+		ctorIL.Emit(OpCodes.Stsfld, sizeStatField);
 
 		// Init size
-		ctorIL.Emit(OpCodes.Ldfld, sizeStatField);
+		ctorIL.Emit(OpCodes.Ldarg_0);
+		ctorIL.Emit(OpCodes.Ldsfld, sizeStatField);
 		ctorIL.Emit(OpCodes.Stfld, sizeField);
 
 		// data = new <type>[size]
-		ctorIL.Emit(OpCodes.Ldfld, sizeStatField);
 		ctorIL.Emit(OpCodes.Ldarg_0);
-		ctorIL.Emit(OpCodes.Ldfld, sizeStatField);
+		ctorIL.Emit(OpCodes.Ldarg_0);
+		ctorIL.Emit(OpCodes.Ldfld, sizeField);
 		ctorIL.Emit(OpCodes.Newarr, elementType);
 		ctorIL.Emit(OpCodes.Stfld, dataField);
 		ctorIL.Emit(OpCodes.Ret);
