@@ -12,6 +12,8 @@ namespace CodeGen
         public ModuleBuilder ModuleBuilder { get; private set; }
         public TypeBuilder ProgramTypeBuilder { get; private set; }
         
+        public TypeBuilder ArrayBuilder { get; private set; }
+        
         // Current method context
         public ILGenerator CurrentIL { get; set; }
         public MethodBuilder CurrentMethod { get; set; }
@@ -68,6 +70,8 @@ namespace CodeGen
             ProgramTypeBuilder = ModuleBuilder.DefineType(
                 "Program",
                 TypeAttributes.Public | TypeAttributes.Class);
+            
+            // Create array ...
         }
         
         public Type ResolveType(string typeName)

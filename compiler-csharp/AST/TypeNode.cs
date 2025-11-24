@@ -1,7 +1,9 @@
+using System.Reflection;
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
 using System.Reflection.Emit;
+using CodeGen;
 using SystemType = System.Type; 
 
 
@@ -232,12 +234,83 @@ public class TypeNode : Node {
         // Get element type (childs[1] is type)
         string elementTypeName = (string)((PrimaryNode)arr.GetChilds()[1]).value;
         SystemType elementType = ctx.ResolveType(elementTypeName);
+
+        // Create ArrayClass<elementType> specialization
+        SystemType arrayClassElementType = ctx.ArrayBuilder.MakeGenericType(elementType);
+
+        // Create new array class typeName : ArrayClass<elementType>
+        var newArrBuilder = ctx.ModuleBuilder.DefineType(
+	        typeName,
+	        TypeAttributes.Public | TypeAttributes.Class,
+	        arrayClassElementType);
         
-        // In .NET, arrays are built-in types: int[] for integer array
-        SystemType arrayType = elementType.MakeArrayType();
+        // Define static field `Size`
+        var sizeField = newArrBuilder.DefineField(
+	        "Size", 
+	        typeof(int), 
+	        FieldAttributes.Private | FieldAttributes.Static);
+        
+        // `Size` property (GETTER only)
+        var getSizeMethod = newArrBuilder.DefineMethod(
+	        "get_size",
+	        MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName,
+	        typeof(int),
+	        System.Type.EmptyTypes);
+        
+        var getSizeIL = getSizeMethod.GetILGenerator();
+        getSizeIL.Emit(OpCodes.Ldsfld, sizeField);
+        getSizeIL.Emit(OpCodes.Ret);
+        
+        var sizeProperty = newArrBuilder.DefineProperty(
+	        "size",
+	        PropertyAttributes.None,
+	        typeof(int),
+	        null);
+        sizeProperty.SetGetMethod(getSizeMethod);
+        
+        // Constructor
+        var constructor = newArrBuilder.DefineConstructor(
+	        MethodAttributes.Public |  MethodAttributes.HideBySig | 
+	        MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
+	        CallingConventions.Standard,
+	        System.Type.EmptyTypes);
+        
+        var ctorIL = constructor.GetILGenerator();
+        
+        // base(Size)
+        ctorIL.Emit(OpCodes.Ldarg_0);            // this
+        ctorIL.Emit(OpCodes.Ldsfld, sizeField);  // load Size
+        
+        // Receive base class ArrayClass<elementType>(elementType) constructor
+        // Need to use TypeBuilder.GetConstructor to get specified constructor
+        SystemType[] ctorParams = new SystemType[] {elementType};
+        var baseConstructorInfo = ctx.ArrayBuilder.GetConstructor(
+	        BindingFlags.Public | BindingFlags.Instance,
+	        null,
+	        ctorParams,
+	        null);
+
+        var baseConstructor = TypeBuilder.GetConstructor(
+	        arrayClassElementType,
+	        baseConstructorInfo);
+        
+        ctorIL.Emit(OpCodes.Call, baseConstructor);
+        ctorIL.Emit(OpCodes.Ret);
+        
+        // Static constructor
+        var staticCtor = newArrBuilder.DefineTypeInitializer();
+        var cctorIL = staticCtor.GetILGenerator();
+        
+        ILHelper.EmitLoadInt(cctorIL, arraySize);
+        cctorIL.Emit(OpCodes.Stsfld,  sizeField);
+        cctorIL.Emit(OpCodes.Ret);
+        
+        // Finalize
+        ctx.ArrayBuilder.CreateType();
+        newArrBuilder.CreateType();
         
         // Register array type with metadata about size
-        ctx.RegisterArrayType(typeName, arrayType, arraySize);
+        ctx.RegisterArrayType(typeName, elementType.MakeArrayType(), arraySize);
     }
 
     private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName) {
