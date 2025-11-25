@@ -79,17 +79,20 @@ public class ProgramNode : Node {
 
 				// Assignment
 				case TokenCode.identifier:
-					if(tokenQueue.ElementAt(1).Code() == TokenCode.bare_assignment) {
+					if(tokenQueue.ElementAt(1).Code() == TokenCode.left_parenthesis) {
+						ExpressionNode expr = new ExpressionNode(this.position);
+						expr.Parse(ref tokenQueue);
+						this.childs.Add(expr);
+					} else if(tokenQueue.ElementAt(1).Code() == TokenCode.bare_assignment
+							|| tokenQueue.ElementAt(1).Code() == TokenCode.left_bracket
+							|| tokenQueue.ElementAt(1).Code() == TokenCode.dot) {
+						tokenQueue.Dequeue();
 						FieldAccessNode access = new FieldAccessNode(token.Position(), new PrimaryNode(token.Position(), token.Value()));
 						access.Parse(ref tokenQueue);
 						tokenQueue.Dequeue();
 						AssignmentNode asgnmt = new AssignmentNode(token.Position(), access);
 						asgnmt.Parse(ref tokenQueue);
 						this.childs.Add(asgnmt);
-					} else if(tokenQueue.ElementAt(1).Code() == TokenCode.left_parenthesis) {
-						ExpressionNode expr = new ExpressionNode(this.position);
-						expr.Parse(ref tokenQueue);
-						this.childs.Add(expr);
 					} else {
 						HandleUnexpectedToken(ref tokenQueue, token.Position());
 						parsing = false;
