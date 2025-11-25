@@ -303,6 +303,7 @@ public class RoutineNode : Node {
 			{
 				ctx.ParameterIndices[paramNames[i]] = i;
 				ctx.ParameterTypes[paramNames[i]] = paramTypes[i];
+				ctx.LocalVariables[paramNames[i]] = ctx.CurrentIL.DeclareLocal(paramTypes[i]);
 			}
 		
 			// Generate body
