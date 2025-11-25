@@ -49,7 +49,7 @@ public class CodeGenContext {
 			{ "integer", typeof(int) },
 			{ "real", typeof(float) },
 			{ "boolean", typeof(bool) },
-			{ "void", typeof(void) }
+			{ "void", typeof(void) },
 		};
 		
 		// Create assembly and module

@@ -256,9 +256,14 @@ public class RoutineNode : Node {
 		{
 			var param = (ParameterNode)this.childs[idx];
 			string pName = ((PrimaryNode)param.GetChilds()[0]).Name();
-			string pType = (string)((PrimaryNode)param.GetChilds()[1]).value;
+			System.Type pType;
+			if(param.GetChilds()[1] is PrimaryNode prime)
+				pType = ctx.ResolveType(prime.Name());
+			else if(param.GetChilds()[1] is ArrayNode arr)
+				pType = ctx.ResolveType(arr.Type().Split("_array")[1]).MakeArrayType();
+			else pType = typeof(void);
 			paramNames.Add(pName);
-			paramTypes.Add(ctx.ResolveType(pType));
+			paramTypes.Add(pType);
 			idx++;
 		}
 		

@@ -69,7 +69,7 @@ public class ParameterNode : Node {
                 break;
 
             case ArrayNode arrayNode:
-                this._type = $"%{arrayNode.Type()}array"; //i.e. %integerarray
+                this._type = $"_array{arrayNode.Type()}"; //i.e. %integerarray
                 Scope arrayScope = new Scope();
                 arrayScope.AddEntry(new Variable("size", "integer"));
                 arrayScope.AddEntry(new Variable("type", "void", arrayNode.Type()));
