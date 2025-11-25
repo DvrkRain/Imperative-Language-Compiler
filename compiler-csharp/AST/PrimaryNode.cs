@@ -1,4 +1,5 @@
 using Data.Objects;
+using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
 
 using CodeGen;
@@ -43,17 +44,24 @@ public class PrimaryNode : Node {
 				break;
 
 			case string id:
-				switch(SymbolTable.FindEntry(id)) {
-					case Variable vr:
-						this._type = vr.Type;
-						if(SymbolTable.IsInsideType(ScopeType.Loop)) return;
-						if(vr.Value is not null
-							&& vr.Value is not Scope)
-							this.value = vr.Value;
-						break;
+				try {
+					int val = int.Parse(id);
+					this.value = val;
+				} catch (FormatException) {
+					switch(SymbolTable.FindEntry(id)) {
+						case Variable vr:
+							this._type = vr.Type;
+							if(SymbolTable.IsInsideType(ScopeType.Loop)) return;
+							if(vr.Value is not null
+								&& vr.Value is not Scope)
+								this.value = vr.Value;
+							break;
 
-					default:
-						break;
+						default:
+							break;
+					}
+				} catch (OverflowException) {
+					ErrorHandling.Add("PrimaryNode", this.position, "Int overflow");
 				}
 				break;
 
