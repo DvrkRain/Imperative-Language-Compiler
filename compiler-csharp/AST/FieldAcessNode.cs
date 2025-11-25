@@ -168,7 +168,7 @@ public class FieldAccessNode : Node {
 	        this.fieldInfo = ctx.GlobalFields[baseName];
 	        currentType = this.fieldInfo.FieldType;
 	        if (this.childs.Count() > 1)
-		        ctx.CurrentIL.Emit(OpCodes.Ldloc, this.fieldInfo);
+		        ctx.CurrentIL.Emit(OpCodes.Ldsfld, this.fieldInfo);
 
         } else throw new Exception($"Undeclared variable {baseName}");
 
@@ -179,6 +179,7 @@ public class FieldAccessNode : Node {
 				index.Generate(ctx); // Load array index
 				if (ctx.UserTypes.ContainsKey(currentType.FullName))
 					currentType = currentType.GetField("data").FieldType;
+				
 				this.elemInfo = currentType.GetElementType();
 				currentType = this.elemInfo;
 				

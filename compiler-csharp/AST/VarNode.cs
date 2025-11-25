@@ -151,7 +151,7 @@ public class VarNode : Node {
 			if (ctx.LocalVariables.ContainsKey(varName))
 				ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[varName]);
 			else
-				ctx.CurrentIL.Emit(OpCodes.Stfld, ctx.GlobalFields[varName]);
+				ctx.CurrentIL.Emit(OpCodes.Stsfld, ctx.GlobalFields[varName]);
 		}
 		else if (ctx.UserTypes.ContainsKey(varType.Name)) {
 			varType = ctx.UserTypes[varType.Name];
@@ -159,7 +159,7 @@ public class VarNode : Node {
 			if (ctx.LocalVariables.ContainsKey(varName))
 				ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[varName]);
 			else
-				ctx.CurrentIL.Emit(OpCodes.Stfld, ctx.GlobalFields[varName]);
+				ctx.CurrentIL.Emit(OpCodes.Stsfld, ctx.GlobalFields[varName]);
 		}
     }
 

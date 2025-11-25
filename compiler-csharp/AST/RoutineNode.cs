@@ -138,13 +138,13 @@ public class RoutineNode : Node {
 		this.has_body = this.childs.Count() == 2+param_number;
 		string identifier = (string)((PrimaryNode)this.childs[0]).value;
 
-        if (!VerifyParameters(param_number)) return;
-
 		foreach(var child in this.childs) {
 			if(child is not ExpressionNode
 				&& child is not ProgramNode)
 				child.Verify();
 		}
+		
+		if (!VerifyParameters(param_number)) return;
 
 		// Check redeclaration
 		switch(SymbolTable.FindEntry(identifier)) {
@@ -264,7 +264,7 @@ public class RoutineNode : Node {
 			if(param.GetChilds()[1] is PrimaryNode prime)
 				pType = ctx.ResolveType(prime.Name());
 			else if(param.GetChilds()[1] is ArrayNode arr)
-				pType = ctx.ResolveType(arr.Type().Split("_array")[1]).MakeArrayType();
+				pType = ctx.ResolveType(arr.Type().Split("_array")[0]).MakeArrayType();
 			else pType = typeof(void);
 			paramNames.Add(pName);
 			paramTypes.Add(pType);
@@ -313,6 +313,8 @@ public class RoutineNode : Node {
 				ctx.ParameterIndices[paramNames[i]] = i;
 				ctx.ParameterTypes[paramNames[i]] = paramTypes[i];
 				ctx.LocalVariables[paramNames[i]] = ctx.CurrentIL.DeclareLocal(paramTypes[i]);
+				ctx.CurrentIL.Emit(OpCodes.Ldarg, i);
+				ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[paramNames[i]]);
 			}
 		
 			// Generate body

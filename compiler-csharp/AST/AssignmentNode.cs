@@ -80,8 +80,16 @@ public class AssignmentNode : Node {
 		base.Generate(ctx);
 
 		FieldAccessNode target = (FieldAccessNode)this.childs[0];
-		if(target.GetChilds().Count() == 1)
-			ctx.CurrentIL.Emit(OpCodes.Stloc, target.variable.LocalIndex);
+		PrimaryNode targetName = (PrimaryNode)target.GetChilds()[0];
+
+		if (target.GetChilds().Count() == 1) {
+			if (ctx.LocalVariables.ContainsKey(targetName.Name())) {
+				ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[targetName.Name()]);
+			}
+			else if (ctx.GlobalFields.ContainsKey(targetName.Name())) {
+				ctx.CurrentIL.Emit(OpCodes.Stsfld, ctx.GlobalFields[targetName.Name()]);
+			}
+		} 
 		else if(target.GetChilds().Last() is PrimaryNode)
 			ctx.CurrentIL.Emit(OpCodes.Stfld, target.fieldInfo);
 		else if(target.GetChilds().Last() is ExpressionNode)

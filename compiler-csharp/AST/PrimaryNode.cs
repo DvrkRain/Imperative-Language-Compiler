@@ -94,27 +94,27 @@ public class PrimaryNode : Node {
                 break;
                 
             case string varName:
-                // Check in order: parameters -> locals -> globals
-                if (ctx.ParameterIndices.ContainsKey(varName)) {
-                    // Load parameter (argument)
-                    // TODO: Fix argument load
-                    int argIndex = ctx.ParameterIndices[varName];
-                    switch (argIndex) {
-                        case 0: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_0); break;
-                        case 1: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_1); break;
-                        case 2: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_2); break;
-                        case 3: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_3); break;
-                        default:
-                            if (argIndex <= 255)
-                                ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_S, (byte)argIndex);
-                            else
-                                ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg, argIndex);
-                            break;
-                    }
-                } else if (ctx.LocalVariables.ContainsKey(varName)) {
+                // Check in order: locals -> parameters -> globals
+	            if (ctx.LocalVariables.ContainsKey(varName)) {
                     // Load local variable
                     ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldloc, ctx.LocalVariables[varName]);
-                } else if (ctx.GlobalFields.ContainsKey(varName)) {
+                } else if (ctx.ParameterIndices.ContainsKey(varName)) {
+		            // Load parameter (argument)
+		            // TODO: Fix argument load
+		            int argIndex = ctx.ParameterIndices[varName];
+		            switch (argIndex) {
+			            case 0: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_0); break;
+			            case 1: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_1); break;
+			            case 2: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_2); break;
+			            case 3: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_3); break;
+			            default:
+				            if (argIndex <= 255)
+					            ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_S, (byte)argIndex);
+				            else
+					            ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg, argIndex);
+				            break;
+		            }
+	            } else if (ctx.GlobalFields.ContainsKey(varName)) {
                     // Load global field
                     ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldsfld, ctx.GlobalFields[varName]);
                 } else {

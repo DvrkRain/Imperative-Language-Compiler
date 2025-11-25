@@ -10,8 +10,7 @@ public class ParameterNode : Node {
 	}
 
 	public new string Type() {
-		if(this.childs[1] is PrimaryNode prime) return prime.Name();
-		return "unknown";
+		return this._type;
 	}
 
 	public ParameterNode(Position pos) : base(pos) { }
