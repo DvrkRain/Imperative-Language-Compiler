@@ -5,12 +5,17 @@ is
     a[1] := a[1] + 1;
 end
 
-routine inc_value(x : integer)
+routine inc_value(x : integer) : integer
 is
     x := x + 1;
+    return x;
 end
 
 var arr : IntArray;
 arr[1] := 10;
+arr[2] := 20;
+arr[3] := 30;
+inc_first(arr);
+arr[2] := inc_value(arr[3]);
 
-print arr[1];
+print arr[1], arr[2], arr[3];

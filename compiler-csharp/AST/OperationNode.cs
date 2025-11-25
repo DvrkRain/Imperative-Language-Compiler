@@ -461,19 +461,19 @@ public class OperationNode : Node {
 
 			case "or":
 				l1 = (bool)((PrimaryNode)this.childs[0]).value;
-				bool l2 = (bool)((PrimaryNode)this.childs[0]).value;
+				bool l2 = (bool)((PrimaryNode)this.childs[1]).value;
 				this.childs[0] = new PrimaryNode(this.position, l1||l2, true);
 				break;
 
 			case "and":
 				l1 = (bool)((PrimaryNode)this.childs[0]).value;
-				l2 = (bool)((PrimaryNode)this.childs[0]).value;
+				l2 = (bool)((PrimaryNode)this.childs[1]).value;
 				this.childs[0] = new PrimaryNode(this.position, l1&&l2, true);
 				break;
 
 			case "xor":
 				l1 = (bool)((PrimaryNode)this.childs[0]).value;
-				l2 = (bool)((PrimaryNode)this.childs[0]).value;
+				l2 = (bool)((PrimaryNode)this.childs[1]).value;
 				this.childs[0] = new PrimaryNode(this.position, l1^l2, true);
 				break;
 
