@@ -32,9 +32,6 @@ public class CodeGenContext {
 	// Parameter types for validation
 	public Dictionary<string, Type> ParameterTypes { get; private set; }
 	
-	// Array metadata: type name -> array builder
-	private Dictionary<string, TypeBuilder> arrayTypes;
-	
 	public CodeGenContext(string assemblyName)
 	{
 		// Initialize collections
@@ -45,7 +42,6 @@ public class CodeGenContext {
 		LoopStack = new Stack<LoopContext>();
 		ParameterIndices = new Dictionary<string, int>();
 		ParameterTypes = new Dictionary<string, Type>();
-		arrayTypes = new Dictionary<string, TypeBuilder>();
 		
 		// Type mapping for built-in types
 		typeMap = new Dictionary<string, Type>

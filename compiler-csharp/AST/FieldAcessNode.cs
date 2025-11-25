@@ -156,10 +156,23 @@ public class FieldAccessNode : Node {
     public override void Generate(CodeGen.CodeGenContext ctx) {
         // Load base object/variable
         string baseName = ((PrimaryNode)this.childs[0]).Name();
-		this.variable = ctx.LocalVariables[baseName];
-		var currentType = this.variable.LocalType;
-		if(this.childs.Count() > 1)
-			ctx.CurrentIL.Emit(OpCodes.Ldloc, this.variable);
+        System.Type currentType;
+        bool local = true;
+        if (ctx.LocalVariables.ContainsKey(baseName)) {
+	        this.variable = ctx.LocalVariables[baseName];
+	        currentType = this.variable.LocalType;
+	        if(this.childs.Count() > 1)
+		        ctx.CurrentIL.Emit(OpCodes.Ldloc, this.variable);
+        } else if (ctx.GlobalFields.ContainsKey(baseName)) {
+	        local = false;
+	        this.fieldInfo = ctx.GlobalFields[baseName];
+	        currentType = this.fieldInfo.FieldType;
+	        if (this.childs.Count() > 1)
+		        ctx.CurrentIL.Emit(OpCodes.Ldloc, this.fieldInfo);
+
+        } else throw new Exception($"Undeclared variable {baseName}");
+        
+		
 
 		for(int i=1; i<this.childs.Count(); i++) {
 			var accessNode = this.childs[i];

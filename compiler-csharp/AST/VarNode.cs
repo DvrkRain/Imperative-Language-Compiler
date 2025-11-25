@@ -133,20 +133,33 @@ public class VarNode : Node {
         string varName = ((PrimaryNode)this.childs[0]).Name();
         SystemType varType = ctx.ResolveType(this._type);
     
-		// Local variable
-		var local = ctx.CurrentIL.DeclareLocal(varType);
-		ctx.LocalVariables[varName] = local;
-	
+		
+		
+		// Global variable
+		if (ctx.CurrentMethod.Name == "Main") {
+			ctx.GlobalFields[varName] = ctx.ProgramTypeBuilder.DefineField(varName, varType, 
+				FieldAttributes.Public | FieldAttributes.Static);
+		} else {
+			// Local variable
+			ctx.LocalVariables[varName] = ctx.CurrentIL.DeclareLocal(varType);
+		}
+
 		if (this.childs.Count > 1)
 		{
 			// Initialize with expression
 			this.childs[1].Generate(ctx);
-			ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Stloc, local);
+			if (ctx.LocalVariables.ContainsKey(varName))
+				ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[varName]);
+			else
+				ctx.CurrentIL.Emit(OpCodes.Stfld, ctx.GlobalFields[varName]);
 		}
 		else if (ctx.UserTypes.ContainsKey(varType.Name)) {
 			varType = ctx.UserTypes[varType.Name];
 			ctx.CurrentIL.Emit(OpCodes.Newobj, varType.GetConstructor(System.Type.EmptyTypes));
-			ctx.CurrentIL.Emit(OpCodes.Stloc, local);
+			if (ctx.LocalVariables.ContainsKey(varName))
+				ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[varName]);
+			else
+				ctx.CurrentIL.Emit(OpCodes.Stfld, ctx.GlobalFields[varName]);
 		}
     }
 
