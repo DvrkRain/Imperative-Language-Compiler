@@ -1,0 +1,5 @@
+routine null(x : integer) is
+	print x;
+end
+
+null(4);

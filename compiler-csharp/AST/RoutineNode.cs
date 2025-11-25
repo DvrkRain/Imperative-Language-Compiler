@@ -25,6 +25,7 @@ public class RoutineNode : Node {
 		// Routine identifier
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.identifier) {
+			ErrorHandling.Add("Routine declaration", this.position, "Expected routine identifier");
 			HandleUnexpectedToken(ref tokenQueue, token.Position());
 			return;
 		}
