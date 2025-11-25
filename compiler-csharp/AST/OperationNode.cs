@@ -74,7 +74,7 @@ public class OperationNode : Node {
 								&& argT.BaseType == "array"
 								&& argT.TypeScope.LookupEntry("type") is Variable argTName
 								&& parT.TypeScope.LookupEntry("type") is Variable parTName
-								&& argTName.Value == parTName.Value) {
+								&& (string)argTName.Value == (string)parTName.Value) {
 						} else {
 							ErrorHandling.Add("Routine call", this.childs[i].Position(),
 								$"Wrong parameter type on {this._operation} node on position {i}: expected type {rout.Parameters[i].Type}, got {this.childs[i].Type()}.");
