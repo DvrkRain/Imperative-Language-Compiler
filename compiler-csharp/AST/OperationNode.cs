@@ -3,6 +3,7 @@ using SemanticAnalyzer.SymbolTable;
 using System.Reflection;
 using System.Reflection.Emit;
 using CodeGen;
+using Type = SemanticAnalyzer.SymbolTable.Type;
 namespace AST;
 public class OperationNode : Node {
 	protected TokenCode op_code;
@@ -67,9 +68,18 @@ public class OperationNode : Node {
 				}
 				for(int i=0; i<this.arg_number; i++) {
 					if(this.childs[i].Type() != rout.Parameters[i].Type) {
-						ErrorHandling.Add("Routine call", this.childs[i].Position(),
-							$"Wrong parameter type on {this._operation} node on position {i}: expected type {rout.Parameters[i].Type}, got {this.childs[i].Type()}.");
-						flag = true;
+						if(SymbolTable.FindEntry(this.childs[i].Type()) is Type argT
+								&& SymbolTable.FindEntry(rout.Parameters[i].Type) is Type parT
+								&& argT.BaseType == parT.BaseType 
+								&& argT.BaseType == "array"
+								&& argT.TypeScope.LookupEntry("type") is Variable argTName
+								&& parT.TypeScope.LookupEntry("type") is Variable parTName
+								&& argTName.Value == parTName.Value) {
+						} else {
+							ErrorHandling.Add("Routine call", this.childs[i].Position(),
+								$"Wrong parameter type on {this._operation} node on position {i}: expected type {rout.Parameters[i].Type}, got {this.childs[i].Type()}.");
+							flag = true;
+						}
 					}
 				}
 				if(flag) return;
