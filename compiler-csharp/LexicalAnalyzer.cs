@@ -212,7 +212,7 @@ namespace LexicalAnalyzer
 		}
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
-			tokenQueue.Enqueue(new Token(this.pos, TokenCode.constant_value, data));
+			tokenQueue.Enqueue(new Token(this.pos, TokenCode.constant_value, int.Parse(data)));
 		}
 	}
 

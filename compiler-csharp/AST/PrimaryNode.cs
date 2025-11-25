@@ -44,10 +44,10 @@ public class PrimaryNode : Node {
 				break;
 
 			case string id:
-				try {
-					int val = int.Parse(id);
-					this._type = "integer";
-				} catch (FormatException) {
+				// try {
+				// 	int val = int.Parse(id);
+				// 	this._type = "integer";
+				// } catch (FormatException) {
 					switch(SymbolTable.FindEntry(id)) {
 						case Variable vr:
 							this._type = vr.Type;
@@ -60,9 +60,9 @@ public class PrimaryNode : Node {
 						default:
 							break;
 					}
-				} catch (OverflowException) {
-					ErrorHandling.Add("PrimaryNode", this.position, "Int overflow");
-				}
+				// } catch (OverflowException) {
+				// 	ErrorHandling.Add("PrimaryNode", this.position, "Int overflow");
+				// }
 				break;
 
 			case Variable var:

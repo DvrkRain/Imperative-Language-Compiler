@@ -101,16 +101,16 @@ public class OperationNode : Node {
 		case TokenCode.dot:
 			if(this.childs[0].Type() == "integer" && this.childs[1].Type() == "integer") {
 				this._type = "real";
-				if(((PrimaryNode)this.childs[0]).Type() == "integer") {
-					string s1 = (string)((PrimaryNode)this.childs[0]).value;
-					string s2 = (string)((PrimaryNode)this.childs[1]).value;
-					string res = $"{s1},{s2}";
-					prime = new PrimaryNode(this.position, float.Parse(res), true);
-					prime.Type("real");
-					this.childs[0] = prime;
-				}
-				this.arg_number = 0;
-				flag = true;
+				// if(((PrimaryNode)this.childs[0]).Type() == "integer") {
+				// 	string s1 = (string)((PrimaryNode)this.childs[0]).value;
+				// 	string s2 = (string)((PrimaryNode)this.childs[1]).value;
+				// 	string res = $"{s1},{s2}";
+				// 	prime = new PrimaryNode(this.position, float.Parse(res), true);
+				// 	prime.Type("real");
+				// 	this.childs[0] = prime;
+				// }
+				// this.arg_number = 0;
+				// flag = true;
 			} else if (SymbolTable.FindEntry(this.childs[0].Type()) is SemanticAnalyzer.SymbolTable.Type rtype
 					&& rtype.BaseType == "record"
 					&& this.childs[1] is PrimaryNode fieldName
@@ -488,11 +488,15 @@ public class OperationNode : Node {
 				break;
 
 			case ".":
-				if(((PrimaryNode)this.childs[0]).Type() == "integer") {
-					string s1 = (string)((PrimaryNode)this.childs[0]).value;
-					string s2 = (string)((PrimaryNode)this.childs[1]).value;
-					string res = $"{s1},{s2}";
-					prime = new PrimaryNode(this.position, float.Parse(res), true);
+				if(((PrimaryNode)this.childs[0]).value is int) {
+					int i1 = (int)((PrimaryNode)this.childs[0]).value;
+					int i2 = (int)((PrimaryNode)this.childs[1]).value;
+					float res = (float)i1 + (float)i2 / (float)Math.Pow(10, Math.Log(i2, 10));
+					// string s1 = (string)((PrimaryNode)this.childs[0]).value;
+					// string s2 = (string)((PrimaryNode)this.childs[1]).value;
+					// string res = $"{s1},{s2}";
+					// prime = new PrimaryNode(this.position, float.Parse(res), true);
+					prime = new PrimaryNode(this.position, res, true);
 					prime.Type("real");
 					this.childs[0] = prime;
 				} else if(((PrimaryNode)this.childs[0]).value is Scope structure) {
