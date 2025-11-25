@@ -478,7 +478,7 @@ public class OperationNode : Node {
 				break;
 
 			case ".":
-				if(((PrimaryNode)this.childs[0]).value is int) {
+				if(((PrimaryNode)this.childs[0]).Type() == "integer") {
 					string s1 = (string)((PrimaryNode)this.childs[0]).value;
 					string s2 = (string)((PrimaryNode)this.childs[1]).value;
 					string res = $"{s1},{s2}";
