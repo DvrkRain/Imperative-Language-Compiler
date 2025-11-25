@@ -491,7 +491,9 @@ public class OperationNode : Node {
 				if(((PrimaryNode)this.childs[0]).value is int) {
 					int i1 = (int)((PrimaryNode)this.childs[0]).value;
 					int i2 = (int)((PrimaryNode)this.childs[1]).value;
-					float res = (float)i1 + (float)i2 / (float)Math.Pow(10, Math.Log(i2, 10));
+					float res = (float)i1;
+					if(i2 != 0)
+						res += (float)i2 / (float)Math.Pow(10, Math.Ceiling(Math.Log(i2, 10)));
 					// string s1 = (string)((PrimaryNode)this.childs[0]).value;
 					// string s2 = (string)((PrimaryNode)this.childs[1]).value;
 					// string res = $"{s1},{s2}";
