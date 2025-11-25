@@ -80,6 +80,7 @@ public class ProgramNode : Node {
 				// Assignment
 				case TokenCode.identifier:
 					if(tokenQueue.ElementAt(1).Code() == TokenCode.bare_assignment) {
+						tokenQueue.Dequeue();
 						FieldAccessNode access = new FieldAccessNode(token.Position(), new PrimaryNode(token.Position(), token.Value()));
 						access.Parse(ref tokenQueue);
 						tokenQueue.Dequeue();
