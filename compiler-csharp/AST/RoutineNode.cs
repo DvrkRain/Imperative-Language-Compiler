@@ -186,6 +186,10 @@ public class RoutineNode : Node {
 		if(this.has_body) {
 			SymbolTable.EnterScope(ScopeType.Routine);
 
+			foreach(var param in parameters) {
+				SymbolTable.DeclareEntry(param);
+			}
+
 			Returning.Push(new ReturningStatus(false, this._type));
 			this.childs.Last().Verify();
 			ReturningStatus stat = Returning.Pop();
