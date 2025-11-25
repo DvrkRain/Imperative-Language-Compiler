@@ -171,15 +171,15 @@ public class FieldAccessNode : Node {
 		        ctx.CurrentIL.Emit(OpCodes.Ldloc, this.fieldInfo);
 
         } else throw new Exception($"Undeclared variable {baseName}");
-        
-		
 
 		for(int i=1; i<this.childs.Count(); i++) {
 			var accessNode = this.childs[i];
 			if(accessNode is ExpressionNode index) {
 				// Array is already loaded
 				index.Generate(ctx); // Load array index
-				this.elemInfo = currentType.GetField("data").FieldType.GetElementType();
+				if (ctx.UserTypes.ContainsKey(currentType.FullName))
+					currentType = currentType.GetField("data").FieldType;
+				this.elemInfo = currentType.GetElementType();
 				currentType = this.elemInfo;
 				
 				if(i != this.childs.Count() - 1)
