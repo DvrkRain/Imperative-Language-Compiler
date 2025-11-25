@@ -479,14 +479,10 @@ public class OperationNode : Node {
 
 			case ".":
 				if(((PrimaryNode)this.childs[0]).value is int) {
-					int i1 = (int)((PrimaryNode)this.childs[0]).value;
-					int i2 = (int)((PrimaryNode)this.childs[1]).value;
-					float val;
-					if(i2 == 0)
-						val = (float)i1;
-					else
-						val = (float)i1 + (float)i2 / (float)Math.Pow(10, Math.Ceiling(Math.Log(i2, 10)));
-					prime = new PrimaryNode(this.position, val, true);
+					string s1 = (string)((PrimaryNode)this.childs[0]).value;
+					string s2 = (string)((PrimaryNode)this.childs[1]).value;
+					string res = $"{s1},{s2}";
+					prime = new PrimaryNode(this.position, float.Parse(res), true);
 					prime.Type("real");
 					this.childs[0] = prime;
 				} else if(((PrimaryNode)this.childs[0]).value is Scope structure) {
