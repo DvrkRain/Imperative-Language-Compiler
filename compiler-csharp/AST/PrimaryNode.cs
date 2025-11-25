@@ -46,7 +46,7 @@ public class PrimaryNode : Node {
 			case string id:
 				try {
 					int val = int.Parse(id);
-					this.value = val;
+					this._type = "integer";
 				} catch (FormatException) {
 					switch(SymbolTable.FindEntry(id)) {
 						case Variable vr:
