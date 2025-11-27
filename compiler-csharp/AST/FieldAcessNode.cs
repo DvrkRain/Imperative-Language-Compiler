@@ -183,6 +183,8 @@ public class FieldAccessNode : Node {
 			if(accessNode is ExpressionNode index) {
 				// Array is already loaded
 				index.Generate(ctx); // Load array index
+				ctx.CurrentIL.Emit(OpCodes.Ldc_I4_1);
+				ctx.CurrentIL.Emit(OpCodes.Sub);
 				if (ctx.UserTypes.ContainsKey(currentType.FullName))
 					currentType = currentType.GetField("data").FieldType;
 				
@@ -190,8 +192,6 @@ public class FieldAccessNode : Node {
 				currentType = this.elemInfo;
 				
 				if(i != this.childs.Count() - 1)
-					ctx.CurrentIL.Emit(OpCodes.Ldc_I4_1);
-					ctx.CurrentIL.Emit(OpCodes.Sub);
 					ctx.CurrentIL.Emit(OpCodes.Ldelem, currentType);
 				
 			} else if(accessNode is PrimaryNode field) {
