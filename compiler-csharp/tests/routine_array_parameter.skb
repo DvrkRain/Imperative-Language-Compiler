@@ -1,0 +1,17 @@
+﻿routine arrSum(some : array [] integer) : integer is
+    var sum is 0;
+    
+    for i in 1..some.size loop
+        sum := sum + some[i];
+    end
+    
+    return sum;
+end
+
+type IntArray is array [3] integer;
+var arr : IntArray;
+arr[1] := 10;
+arr[2] := 20;
+arr[3] := 30;
+
+print arrSum(arr);
