@@ -6,3 +6,4 @@ arr[3] := 30;
 print arr[1];
 print arr[2];
 print arr[3];
+print arr.size;
