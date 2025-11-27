@@ -144,8 +144,6 @@ public class RoutineNode : Node {
 				child.Verify();
 		}
 		
-		if (!VerifyParameters(param_number)) return;
-
 		// Check redeclaration
 		switch(SymbolTable.FindEntry(identifier)) {
 			case Routine routine when routine is {HasBody: true}:
@@ -159,6 +157,9 @@ public class RoutineNode : Node {
 				} else if(routine.ReturnType != this._type) {
 					ErrorHandling.Add("RoutineNode", this.position,
 							$"Redeclaring routine with unmatched type: expected {this._type}, got {routine.ReturnType}.");
+					return;
+				} else if(routine.Parameters.Count() == 0) {
+					ErrorHandling.Add("RoutineNode", this.position, "Parameter amount mismatch");
 					return;
 				}
                 routine.HasBody = true;
@@ -186,8 +187,31 @@ public class RoutineNode : Node {
 		if(this.has_body) {
 			SymbolTable.EnterScope(ScopeType.Routine);
 
-			foreach(var param in parameters) {
-				SymbolTable.DeclareEntry(param);
+			// Check parameter match
+			HashSet<string> paramNames = new HashSet<string>();
+
+			for(int i=1; i<1+param_number; i++) {
+				ParameterNode param = (ParameterNode)this.childs[i];
+				string paramName = param.Name();
+				string paramType = param.Type();
+
+				if(!paramNames.Add(paramName)) {
+					ErrorHandling.Add("RoutineNode", this.position, $"Parameter names must be unique, got {paramName} twice");
+					return;
+				}
+
+				if(parameters[i-1].Name != paramName) {
+					ErrorHandling.Add("RoutineNode", this.position,
+						$"Parameter name mismatch, expected {parameters[i-1].Name}, got {paramName}.");
+				}
+
+				if (parameters[i-1].Type != paramType) {
+					ErrorHandling.Add("RoutineNode", this.position,
+						$"Parameter type mismatch, expected {parameters[i-1].Type}, got {paramType}.");
+					return;
+				}
+
+				SymbolTable.DeclareEntry(parameters[i-1]);
 			}
 
 			Returning.Push(new ReturningStatus(false, this._type));
@@ -205,47 +229,6 @@ public class RoutineNode : Node {
 		}
     }
 
-    private bool VerifyParameters(int param_num) {
-        PrimaryNode identifier = (PrimaryNode)this.childs[0];
-        List<Variable> prevRoutineParams = null;
-        HashSet<string> paramNames = new HashSet<string>();
-
-        if (SymbolTable.FindEntry((string)identifier.value) is Routine prevRoutine) {
-            prevRoutineParams = prevRoutine.Parameters;
-            if (param_num != prevRoutineParams.Count) {
-                ErrorHandling.Add("RoutineNode", this.position, "Parameter amount mismatch");
-                return false;
-            }
-        }
-        
-        for(int i=1; i<1+param_num; i++) {
-            ParameterNode param = (ParameterNode)this.childs[i];
-            string paramName = param.Name();
-
-            if (!paramNames.Add(paramName)) {
-                ErrorHandling.Add("RoutineNode", this.position, $"Parameter names must be unique, got {paramName}");
-                return false;
-            }
-
-            if (prevRoutineParams is null) continue;
-
-            if (prevRoutineParams[i - 1].Name != paramName) {
-                ErrorHandling.Add("RoutineNode", this.position,
-						$"Parameter name mismatch, expected {prevRoutineParams[i - 1].Name}, got {paramName}.");
-                return false;
-            }
-            
-            string paramType = param.Type();
-
-            if (prevRoutineParams[i - 1].Type != paramType) {
-                ErrorHandling.Add("RoutineNode", this.position,
-						$"Parameter type mismatch, expected {prevRoutineParams[i - 1].Type}, got {paramType}.");
-                return false;
-            }
-        }
-
-        return true;
-    }
     
     public override void Generate(CodeGenContext ctx) {
 		string routineName = (string)((PrimaryNode)this.childs[0]).value;
