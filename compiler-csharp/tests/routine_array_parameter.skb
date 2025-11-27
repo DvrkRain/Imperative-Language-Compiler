@@ -1,8 +1,8 @@
-﻿routine arrSum(arr : array [] integer) : integer is
+﻿routine arrSum(some : array [] integer) : integer is
     var sum is 0;
     
-    for i in 1 .. arr.size loop
-        sum := sum + arr[i];
+    for i in 1..some.size loop
+        sum := sum + some[i];
     end
     
     return sum;

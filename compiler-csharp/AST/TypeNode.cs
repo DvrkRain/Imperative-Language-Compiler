@@ -1,8 +1,10 @@
+using System.Drawing;
 using System.Reflection;
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
 using System.Reflection.Emit;
+using CodeGen;
 using SystemType = System.Type; 
 
 
@@ -242,6 +244,11 @@ public class TypeNode : Node {
 		typeBuilder.SetCustomAttribute(defaultMemberAttr);
 		
 		// Size field
+		var sizeStatField = typeBuilder.DefineField(
+			"Size",
+			typeof(int),
+			FieldAttributes.Private | FieldAttributes.Static);
+		
 		var sizeField = typeBuilder.DefineField(
 			"size",
 			typeof(int),
@@ -252,20 +259,6 @@ public class TypeNode : Node {
 			"data",
 			elementType.MakeArrayType(),
 			FieldAttributes.Public);
-		
-	    // cast operator
-	    var explicitOperator = typeBuilder.DefineMethod(
-		    "op_Explicit",
-		    MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.SpecialName | MethodAttributes.HideBySig,
-		    elementType.MakeArrayType(),
-		    new  System.Type[] { typeBuilder });
-	    
-	    var opIL  = explicitOperator.GetILGenerator();
-	    
-	    // return data;
-	    opIL.Emit(OpCodes.Ldarg_0);
-	    opIL.Emit(OpCodes.Ldfld, dataField);
-	    opIL.Emit(OpCodes.Ret);
 
 		// Constructor
 		var constructor = typeBuilder.DefineConstructor(
@@ -283,8 +276,12 @@ public class TypeNode : Node {
 		ctorIL.Emit(OpCodes.Call, typeof(object).GetConstructor(System.Type.EmptyTypes));
 
 		// Init Size
-		ctorIL.Emit(OpCodes.Ldarg_0);
 		arr.Generate(ctx);
+		ctorIL.Emit(OpCodes.Stsfld, sizeStatField);
+
+		// Init size
+		ctorIL.Emit(OpCodes.Ldarg_0);
+		ctorIL.Emit(OpCodes.Ldsfld, sizeStatField);
 		ctorIL.Emit(OpCodes.Stfld, sizeField);
 
 		// data = new <type>[size]
