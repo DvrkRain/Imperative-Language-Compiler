@@ -99,12 +99,6 @@ public class FieldAccessNode : Node {
 
 		for(int i=1; i<this.childs.Count(); i++) {
 		if(this.childs[i] is PrimaryNode prime) {
-		if(SymbolTable.FindEntry(this._type) is Type typeId
-			&& typeId.BaseType == "array"
-			&& prime.Name() == "size") {
-			ErrorHandling.Add("Assignment", this.position, "Size of array is read-only value defined in type declaration");
-			break;
-		}
 		if(this.value is Scope scope) {
 			switch(scope.LookupEntry(prime.Name())) {
 				case Variable vr:
