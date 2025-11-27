@@ -87,12 +87,5 @@ public class ParameterNode : Node {
             ErrorHandling.Add("ParameterNode", this.position, $"Parameter type not declared, got {this._type}");
             return;
         }
-
-        SemanticAnalyzer.SymbolTable.Type paramType = (SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(this._type);
-
-        Scope? typeScope = paramType.BaseType == "record" ? paramType.TypeScope : null;
-        Variable variable = new Variable(((PrimaryNode)this.childs[0]).Name(), this._type, typeScope);
-        SymbolTable.DeclareEntry(variable);
     }
-
 }
