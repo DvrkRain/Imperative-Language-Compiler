@@ -305,21 +305,24 @@ public class TypeNode : Node {
 		var getIL = getItem.GetILGenerator();
 		var throw_label = getIL.DefineLabel();
 
-		// index < 0
+		// index < 1
 		getIL.Emit(OpCodes.Ldarg_1);
-		getIL.Emit(OpCodes.Ldc_I4_0);
+		getIL.Emit(OpCodes.Ldc_I4_1);
 		getIL.Emit(OpCodes.Blt, throw_label);
 
-		// index >= len
+		// index > len
 		getIL.Emit(OpCodes.Ldarg_1);
 		getIL.Emit(OpCodes.Ldarg_0);
-		getIL.Emit(OpCodes.Ldfld, sizeField);
-		getIL.Emit(OpCodes.Bge, throw_label);
+		getIL.Emit(OpCodes.Ldfld, dataField);
+		getIL.Emit(OpCodes.Ldlen);
+		getIL.Emit(OpCodes.Bgt, throw_label);
 
-		// return data[index]
+		// return data[index-1]
 		getIL.Emit(OpCodes.Ldarg_0);
 		getIL.Emit(OpCodes.Ldfld, dataField);
 		getIL.Emit(OpCodes.Ldarg_1);
+		getIL.Emit(OpCodes.Ldc_I4_1);
+		getIL.Emit(OpCodes.Sub);
 		getIL.Emit(OpCodes.Ldelem, elementType);
 		getIL.Emit(OpCodes.Ret);
 
@@ -340,22 +343,24 @@ public class TypeNode : Node {
 		var setIL = setItem.GetILGenerator();
 		throw_label = setIL.DefineLabel();
 
-		// index < 0
+		// index < 1
 		setIL.Emit(OpCodes.Ldarg_1);
-		setIL.Emit(OpCodes.Ldc_I4_0);
+		setIL.Emit(OpCodes.Ldc_I4_1);
 		setIL.Emit(OpCodes.Blt, throw_label);
 
-		// index >= len
+		// index > len
 		setIL.Emit(OpCodes.Ldarg_1);
 		setIL.Emit(OpCodes.Ldarg_0);
 		setIL.Emit(OpCodes.Ldfld, dataField);
 		setIL.Emit(OpCodes.Ldlen);
-		setIL.Emit(OpCodes.Bge, throw_label);
+		setIL.Emit(OpCodes.Bgt, throw_label);
 
-		// data[index] = value
+		// data[index-1] = value
 		setIL.Emit(OpCodes.Ldarg_0);
 		setIL.Emit(OpCodes.Ldfld, dataField);
 		setIL.Emit(OpCodes.Ldarg_1);
+		setIL.Emit(OpCodes.Ldc_I4_1);
+		setIL.Emit(OpCodes.Sub);
 		setIL.Emit(OpCodes.Ldarg_2);
 		setIL.Emit(OpCodes.Stelem, elementType);
 		setIL.Emit(OpCodes.Ret);

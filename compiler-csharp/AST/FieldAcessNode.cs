@@ -190,8 +190,6 @@ public class FieldAccessNode : Node {
 				currentType = this.elemInfo;
 				
 				if(i != this.childs.Count() - 1)
-					ctx.CurrentIL.Emit(OpCodes.Ldc_I4_1);
-					ctx.CurrentIL.Emit(OpCodes.Sub);
 					ctx.CurrentIL.Emit(OpCodes.Ldelem, currentType);
 				
 			} else if(accessNode is PrimaryNode field) {
