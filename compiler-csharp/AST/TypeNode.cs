@@ -243,12 +243,7 @@ public class TypeNode : Node {
 			new object[] { "Item" });
 		typeBuilder.SetCustomAttribute(defaultMemberAttr);
 		
-		// Size field
-		var sizeStatField = typeBuilder.DefineField(
-			"Size",
-			typeof(int),
-			FieldAttributes.Private | FieldAttributes.Static);
-		
+		// size field
 		var sizeField = typeBuilder.DefineField(
 			"size",
 			typeof(int),
@@ -275,13 +270,9 @@ public class TypeNode : Node {
 		ctorIL.Emit(OpCodes.Ldarg_0);
 		ctorIL.Emit(OpCodes.Call, typeof(object).GetConstructor(System.Type.EmptyTypes));
 
-		// Init Size
-		arr.Generate(ctx);
-		ctorIL.Emit(OpCodes.Stsfld, sizeStatField);
-
 		// Init size
 		ctorIL.Emit(OpCodes.Ldarg_0);
-		ctorIL.Emit(OpCodes.Ldsfld, sizeStatField);
+		arr.Generate(ctx);
 		ctorIL.Emit(OpCodes.Stfld, sizeField);
 
 		// data = new <type>[size]
@@ -291,6 +282,19 @@ public class TypeNode : Node {
 		ctorIL.Emit(OpCodes.Newarr, elementType);
 		ctorIL.Emit(OpCodes.Stfld, dataField);
 		ctorIL.Emit(OpCodes.Ret);
+
+		var explicitOperator = typeBuilder.DefineMethod(
+			"op_Explicit",
+			MethodAttributes.Public | MethodAttributes.Static |
+			MethodAttributes.SpecialName | MethodAttributes.HideBySig,
+			elementType.MakeArrayType(),
+			new System.Type[] { typeBuilder });
+		
+		var opIL = explicitOperator.GetILGenerator();
+
+		opIL.Emit(OpCodes.Ldarg_0);
+		opIL.Emit(OpCodes.Ldfld, dataField);
+		opIL.Emit(OpCodes.Ret);
 		
 		ctx.CurrentIL = oldIL;
 
