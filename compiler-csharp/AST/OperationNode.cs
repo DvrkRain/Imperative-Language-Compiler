@@ -548,7 +548,7 @@ public class OperationNode : Node {
 	public override void Generate(CodeGenContext ctx) {
 		if(this._operation == ".")
 			this.childs[0].Generate(ctx);
-		else if (this.op_code != TokenCode.identifier)
+		else
 			base.Generate(ctx);
 
 		switch(this._operation) {
@@ -624,7 +624,7 @@ public class OperationNode : Node {
 				break;
 
 			case ".":
-				if (ctx.CurrentMethod.Name != "_Main" && this.childs[0].Type().Contains("_array") &&
+				if ((ctx.ArrayTypes.ContainsKey(this.childs[0].Type()) || this.childs[0].Type().Contains("_array")) && 
 				    ((PrimaryNode)this.childs[1]).Name() == "size") {
 					ctx.CurrentIL.Emit(OpCodes.Ldlen);
 					ctx.CurrentIL.Emit(OpCodes.Conv_I4);
@@ -644,14 +644,6 @@ public class OperationNode : Node {
 				break;
 
 			case string id:
-				foreach (var child in this.childs) {
-					child.Generate(ctx);
-					if (SymbolTable.FindEntry(child.Type()) is Type type &&
-					    type.BaseType == "array") {
-						var explicitOp = ctx.ResolveType(child.Type()).GetMethod("op_Explicit");
-						ctx.CurrentIL.Emit(OpCodes.Call, explicitOp);
-					}
-				}
 				MethodInfo method = ctx.Methods[id];
 				ctx.CurrentIL.Emit(OpCodes.Call, method);
 				break;

@@ -223,170 +223,32 @@ public class TypeNode : Node {
     }
 
     private void GenerateArrayType(CodeGen.CodeGenContext ctx, string typeName) {
-        // Get array size (childs[0] is size expression)
 		ArrayNode arr = (ArrayNode)this.childs[1];
+		
+		// Get array size
+		ExpressionNode arraySize = (ExpressionNode)arr.GetChilds()[0];
         
         // Get element type (childs[1] is type)
         string elementTypeName = (string)((PrimaryNode)arr.GetChilds()[1]).value;
-        SystemType elementType = ctx.ResolveType(elementTypeName);
-
-        var typeBuilder = ctx.ModuleBuilder.DefineType(
-			typeName,
-			System.Reflection.TypeAttributes.Public |
-			System.Reflection.TypeAttributes.Class);
-		
-        // Specify custom index property
-		var defaultMemberCtor = typeof(System.Reflection.DefaultMemberAttribute)
-			.GetConstructor(new System.Type[] { typeof(string) });
-		var defaultMemberAttr = new CustomAttributeBuilder(
-			defaultMemberCtor,
-			new object[] { "Item" });
-		typeBuilder.SetCustomAttribute(defaultMemberAttr);
-		
-		// size field
-		var sizeField = typeBuilder.DefineField(
-			"size",
-			typeof(int),
-			FieldAttributes.Public);
-
-		// Data field
-		var dataField = typeBuilder.DefineField(
-			"data",
-			elementType.MakeArrayType(),
-			FieldAttributes.Public);
-
-		// Constructor
-		var constructor = typeBuilder.DefineConstructor(
-			MethodAttributes.Public | MethodAttributes.HideBySig |
-			MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
-			CallingConventions.Standard,
-			System.Type.EmptyTypes);
-
-		var ctorIL = constructor.GetILGenerator();
-		var oldIL = ctx.CurrentIL;
-		ctx.CurrentIL = ctorIL;
-
-		// base()
-		ctorIL.Emit(OpCodes.Ldarg_0);
-		ctorIL.Emit(OpCodes.Call, typeof(object).GetConstructor(System.Type.EmptyTypes));
-
-		// Init size
-		ctorIL.Emit(OpCodes.Ldarg_0);
-		arr.Generate(ctx);
-		ctorIL.Emit(OpCodes.Stfld, sizeField);
-
-		// data = new <type>[size]
-		ctorIL.Emit(OpCodes.Ldarg_0);
-		ctorIL.Emit(OpCodes.Ldarg_0);
-		ctorIL.Emit(OpCodes.Ldfld, sizeField);
-		ctorIL.Emit(OpCodes.Newarr, elementType);
-		ctorIL.Emit(OpCodes.Stfld, dataField);
-		ctorIL.Emit(OpCodes.Ret);
-
-		var explicitOperator = typeBuilder.DefineMethod(
-			"op_Explicit",
-			MethodAttributes.Public | MethodAttributes.Static |
-			MethodAttributes.SpecialName | MethodAttributes.HideBySig,
-			elementType.MakeArrayType(),
-			new System.Type[] { typeBuilder });
-		
-		var opIL = explicitOperator.GetILGenerator();
-
-		opIL.Emit(OpCodes.Ldarg_0);
-		opIL.Emit(OpCodes.Ldfld, dataField);
-		opIL.Emit(OpCodes.Ret);
-		
-		ctx.CurrentIL = oldIL;
-
-		// Indexer get item
-		var getItem = typeBuilder.DefineMethod(
-			"get_Item",
-			MethodAttributes.Public | MethodAttributes.HideBySig |
-			MethodAttributes.SpecialName,
-			elementType,
-			new System.Type[]{typeof(int)});
-
-		var getIL = getItem.GetILGenerator();
-		var throw_label = getIL.DefineLabel();
-
-		// index < 1
-		getIL.Emit(OpCodes.Ldarg_1);
-		getIL.Emit(OpCodes.Ldc_I4_1);
-		getIL.Emit(OpCodes.Blt, throw_label);
-
-		// index > len
-		getIL.Emit(OpCodes.Ldarg_1);
-		getIL.Emit(OpCodes.Ldarg_0);
-		getIL.Emit(OpCodes.Ldfld, dataField);
-		getIL.Emit(OpCodes.Ldlen);
-		getIL.Emit(OpCodes.Bgt, throw_label);
-
-		// return data[index-1]
-		getIL.Emit(OpCodes.Ldarg_0);
-		getIL.Emit(OpCodes.Ldfld, dataField);
-		getIL.Emit(OpCodes.Ldarg_1);
-		getIL.Emit(OpCodes.Ldc_I4_1);
-		getIL.Emit(OpCodes.Sub);
-		getIL.Emit(OpCodes.Ldelem, elementType);
-		getIL.Emit(OpCodes.Ret);
-
-		// Index out of range
-		getIL.MarkLabel(throw_label);
-		var exceptionCtor = typeof(IndexOutOfRangeException).GetConstructor(System.Type.EmptyTypes);
-		getIL.Emit(OpCodes.Newobj, exceptionCtor);
-		getIL.Emit(OpCodes.Throw);
-
-		// Indexer set item
-		var setItem = typeBuilder.DefineMethod(
-			"set_Item",
-			MethodAttributes.Public | MethodAttributes.HideBySig |
-			MethodAttributes.SpecialName,
-			typeof(void),
-			new System.Type[]{typeof(int), elementType});
-
-		var setIL = setItem.GetILGenerator();
-		throw_label = setIL.DefineLabel();
-
-		// index < 1
-		setIL.Emit(OpCodes.Ldarg_1);
-		setIL.Emit(OpCodes.Ldc_I4_1);
-		setIL.Emit(OpCodes.Blt, throw_label);
-
-		// index > len
-		setIL.Emit(OpCodes.Ldarg_1);
-		setIL.Emit(OpCodes.Ldarg_0);
-		setIL.Emit(OpCodes.Ldfld, dataField);
-		setIL.Emit(OpCodes.Ldlen);
-		setIL.Emit(OpCodes.Bgt, throw_label);
-
-		// data[index-1] = value
-		setIL.Emit(OpCodes.Ldarg_0);
-		setIL.Emit(OpCodes.Ldfld, dataField);
-		setIL.Emit(OpCodes.Ldarg_1);
-		setIL.Emit(OpCodes.Ldc_I4_1);
-		setIL.Emit(OpCodes.Sub);
-		setIL.Emit(OpCodes.Ldarg_2);
-		setIL.Emit(OpCodes.Stelem, elementType);
-		setIL.Emit(OpCodes.Ret);
-
-		// Index out of range
-		setIL.MarkLabel(throw_label);
-		setIL.Emit(OpCodes.Newobj, exceptionCtor);
-		setIL.Emit(OpCodes.Throw);
-
-		// Indexer
-		var itemProperty = typeBuilder.DefineProperty(
-			"Item",
-			PropertyAttributes.None,
-			elementType,
-			new System.Type[]{typeof(int)});
-		itemProperty.SetGetMethod(getItem);
-		itemProperty.SetSetMethod(setItem);
-
-		typeBuilder.CreateType();
+        System.Type elementType = ctx.ResolveType(elementTypeName);
+        
+        arraySize.Generate(ctx); // Put array size into stack
+        
+        if (ctx.CurrentMethod.Name == "_Main") { // Define global field
+	        ctx.GlobalFields[typeName] = ctx.ProgramTypeBuilder.DefineField(
+		        typeName,
+		        typeof(int),
+		        FieldAttributes.Public | FieldAttributes.Static);
+	        
+	        ctx.CurrentIL.Emit(OpCodes.Stsfld, ctx.GlobalFields[typeName]);
+	        
+        } else { // Define local var (type)
+	        ctx.LocalVariables[typeName] = ctx.CurrentIL.DeclareLocal(typeof(int));
+	        ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[typeName]);
+        }
         
         // Register array type with metadata about size
-        ctx.RegisterUserType(typeName, typeBuilder);
+        ctx.RegisterArrayType(typeName, elementType);
     }
 
     private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName) {

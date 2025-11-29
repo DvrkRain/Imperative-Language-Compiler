@@ -74,7 +74,7 @@ class Program {
 		var asmPath = Path.GetFullPath(outputFileName);
 		var asm = AssemblyLoadContext.Default.LoadFromAssemblyPath(asmPath);
 		var programType = asm.GetType("Program");
-		var mainMethod = programType.GetMethod("Main",
+		var mainMethod = programType.GetMethod("_Main",
 			BindingFlags.Public | BindingFlags.Static);
 		
 		Console.WriteLine($"Running Program.Main from {outputFileName}:");

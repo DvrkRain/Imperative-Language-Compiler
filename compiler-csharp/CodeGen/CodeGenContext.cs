@@ -68,10 +68,12 @@ public class CodeGenContext {
 	
 	public Type ResolveType(string typeName)
 	{
-		if (typeMap.ContainsKey(typeName))
-			return typeMap[typeName];
+		if (ArrayTypes.ContainsKey(typeName))
+			return ArrayTypes[typeName].MakeArrayType();
 		if (UserTypes.ContainsKey(typeName))
 			return UserTypes[typeName];
+		if (typeMap.ContainsKey(typeName))
+			return typeMap[typeName];
 		return typeof(object);
 	}
 	
@@ -102,7 +104,7 @@ public class CodeGenContext {
 		ParameterTypes.Clear();
 	}
 	
-	public void RegisterTypeAlias(string aliasName, Type baseType)
+	public void RegisterTypeAlias(string aliasName, System.Type baseType)
 	{
 		typeMap[aliasName] = baseType;
 	}
@@ -111,6 +113,11 @@ public class CodeGenContext {
 	{
 		UserTypes[typeName] = typeBuilder;
 		typeMap[typeName] = typeBuilder;
+	}
+
+	public void RegisterArrayType(string typeName, System.Type elementType) {
+		ArrayTypes[typeName] = elementType;
+		typeMap[typeName] = elementType;
 	}
 }
 

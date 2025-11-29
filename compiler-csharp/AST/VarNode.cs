@@ -132,9 +132,7 @@ public class VarNode : Node {
     public override void Generate(CodeGenContext ctx) {
         string varName = ((PrimaryNode)this.childs[0]).Name();
         SystemType varType = ctx.ResolveType(this._type);
-    
-		
-		
+        
 		// Global variable
 		if (ctx.CurrentMethod.Name == "_Main") {
 			ctx.GlobalFields[varName] = ctx.ProgramTypeBuilder.DefineField(varName, varType, 
@@ -160,6 +158,18 @@ public class VarNode : Node {
 				ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[varName]);
 			else
 				ctx.CurrentIL.Emit(OpCodes.Stsfld, ctx.GlobalFields[varName]);
+		}
+		else if (ctx.ArrayTypes.ContainsKey(this._type)) {
+			// Put array size into stack
+			if (ctx.LocalVariables.ContainsKey(this._type)) ctx.CurrentIL.Emit(OpCodes.Ldloc, ctx.LocalVariables[this._type]);
+			else ctx.CurrentIL.Emit(OpCodes.Ldsfld, ctx.GlobalFields[this._type]);
+			
+			// Call newarr with requested type
+			ctx.CurrentIL.Emit(OpCodes.Newarr, varType);
+			
+			// Store into variable
+			if (ctx.LocalVariables.ContainsKey(varName)) ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[varName]);
+			else  ctx.CurrentIL.Emit(OpCodes.Stsfld, ctx.GlobalFields[varName]);
 		}
     }
 
