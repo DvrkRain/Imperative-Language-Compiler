@@ -122,8 +122,7 @@ namespace Data.Objects {
 				{"routine", 	TokenCode.routine_declaration},
 				{"return",		TokenCode.return_statement},
 				{"break",		TokenCode.break_statement},
-				{"continue",	TokenCode.continue_statement},
-				{"Main",		TokenCode.error},
+				{"continue",	TokenCode.continue_statement}
 			};
 
 		public static bool Keys(string key) =>

@@ -19,6 +19,7 @@ public class CodeGenContext {
 	public Dictionary<string, FieldBuilder> GlobalFields { get; private set; }
 	public Dictionary<string, MethodBuilder> Methods { get; private set; }
 	public Dictionary<string, TypeBuilder> UserTypes { get; private set; }
+	public Dictionary<string, System.Type> ArrayTypes { get; private set; }
 	
 	// Loop context for break/continue
 	public Stack<LoopContext> LoopStack { get; private set; }
@@ -42,6 +43,7 @@ public class CodeGenContext {
 		LoopStack = new Stack<LoopContext>();
 		ParameterIndices = new Dictionary<string, int>();
 		ParameterTypes = new Dictionary<string, Type>();
+		ArrayTypes = new Dictionary<string, Type>();
 		
 		// Type mapping for built-in types
 		typeMap = new Dictionary<string, Type>

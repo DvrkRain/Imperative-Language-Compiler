@@ -624,9 +624,10 @@ public class OperationNode : Node {
 				break;
 
 			case ".":
-				if (ctx.CurrentMethod.Name != "Main" && this.childs[0].Type().Contains("_array") &&
+				if (ctx.CurrentMethod.Name != "_Main" && this.childs[0].Type().Contains("_array") &&
 				    ((PrimaryNode)this.childs[1]).Name() == "size") {
 					ctx.CurrentIL.Emit(OpCodes.Ldlen);
+					ctx.CurrentIL.Emit(OpCodes.Conv_I4);
 					break;
 				}
 

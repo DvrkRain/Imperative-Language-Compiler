@@ -182,7 +182,7 @@ public class ProgramNode : Node {
         {
             // Create Main method
             var mainMethod = ctx.ProgramTypeBuilder.DefineMethod(
-                "Main",
+                "_Main",
                 MethodAttributes.Public | MethodAttributes.Static,
                 typeof(void),
                 System.Type.EmptyTypes);

@@ -136,7 +136,7 @@ public class VarNode : Node {
 		
 		
 		// Global variable
-		if (ctx.CurrentMethod.Name == "Main") {
+		if (ctx.CurrentMethod.Name == "_Main") {
 			ctx.GlobalFields[varName] = ctx.ProgramTypeBuilder.DefineField(varName, varType, 
 				FieldAttributes.Public | FieldAttributes.Static);
 		} else {
