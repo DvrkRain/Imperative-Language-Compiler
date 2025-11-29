@@ -1,7 +1,6 @@
 ﻿using Data.Objects;
 
 namespace Data.ErrorHandling;
-
 public static class ErrorHandling {
 	private static string _stage = "Lexic analysis";
     private static List<string> _errorList = new();
@@ -18,6 +17,15 @@ public static class ErrorHandling {
     public static int Count() =>
         _errorList.Count;
     
+	public static void Checkpoint() {
+		if(_errorList.Count != 0) {
+			Console.WriteLine($"There are errors on {_stage} stage.");
+			foreach (string error in _errorList) {
+				Console.WriteLine(error);
+			}
+			Environment.Exit(2);
+		}
+	}
 
 	// Specialized error messages
     public static void UnexpectedEOF(string invoker, Position pos) =>
@@ -37,12 +45,4 @@ public static class ErrorHandling {
 
     public static void MismatchedParenthesis(string invoker, Position pos) =>
         ErrorHandling.Error(invoker, pos, "Mismatched parenthesis");
-
-
-    public static void PrintErrors() {
-		Console.WriteLine($"There are errors on {_stage} stage.");
-        foreach (string error in _errorList) {
-            Console.WriteLine(error);
-        }
-    }
 }

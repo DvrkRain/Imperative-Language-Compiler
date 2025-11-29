@@ -10,103 +10,74 @@ using SemanticAnalyzer.SymbolTable;
 
 #pragma warning disable
 
-namespace Compiler
-{
-	class Program
-	{
-        static void Main(string[] args) {
-            if (Environment.GetCommandLineArgs().Contains("--auto")) {
-                args = new string[] {"test.skb", "3", "main.dll"};
-            }
-            if (args.Length < 3) {
-                Console.WriteLine("Usage: compiler-csharp <source-file-path> <tree-option>");
-                return;
-            }
+namespace Compiler;
+class Program {
+	static void Main(string[] args) {
+		Arguments arguments = CLIParser.ParseArgs(args);
+		// Console.WriteLine(arguments.ToString());
+		if(!arguments.valid) return;
 
-            // Read args[0] file
-            string filepath = args[0];
-            FileReader reader = new FileReader(filepath);
-            Console.WriteLine("Filename: " + reader.filename);
+		string filepath = arguments.inputFile;
+		FileReader reader = new FileReader(filepath);
+		Console.WriteLine("Filename: " + reader.filename);
 
-            // Lexic analysis
-            ErrorHandling.ChangeStage("Lexical analysis");
-            Queue<Token> stream = new Queue<Token>();
-            Lexer lexer = new Lexer(reader);
-            lexer.ParseFile(ref stream);
+		// Lexic analysis
+		ErrorHandling.ChangeStage("Lexical analysis");
+		Queue<Token> stream = new Queue<Token>();
+		Lexer lexer = new Lexer(reader);
+		lexer.ParseFile(ref stream);
+		ErrorHandling.Checkpoint();
+		
+		// If args[1] == 0 print tokens
+		if (arguments.stage == 0) {
+			while (stream.Count > 0) {
+				Token token = stream.Dequeue();
+				token.PrintInfo();
+			}
+			return;
+		}
 
-            if (ErrorHandling.Count() > 0) {
-                ErrorHandling.PrintErrors();
-                Environment.Exit(1);
-                return;
-            }
+		// Syntax analysis
+		ErrorHandling.ChangeStage("Syntax analysis");
+		ProgramNode AST = new ProgramNode(new Position(0, 0), main: true);
+		AST.Parse(ref stream);
+		ErrorHandling.Checkpoint();
 
-            int treeOption = int.Parse(args[1]);
-            
-            // If args[1] == 0 print tokens
-            if (treeOption == 0) {
-                while (stream.Count > 0) {
-                    Token token = stream.Dequeue();
-                    token.PrintInfo();
-                }
+		// If args[1] == 1 print syntax ast tree
+		if (arguments.stage == 1) {
+			AST.PrintInfo(" ");
+			return;
+		}
 
-                return;
-            }
+		// Semantic analysis
+		SymbolTable.InitializeSymbolTable();
+		ErrorHandling.ChangeStage("Semantic analysis");
+		AST.Verify();
+		ErrorHandling.Checkpoint();
 
-            // Syntax analysis
-            ErrorHandling.ChangeStage("Syntax analysis");
-            ProgramNode AST = new ProgramNode(new Position(0, 0), main: true);
-            AST.Parse(ref stream);
+		// If args[1] == 2 print semantic ast tree
+		if (arguments.stage == 2) {
+			AST.PrintInfo("");
+			return;
+		}
+		
+		
+		// Code generation
+		ErrorHandling.ChangeStage("Code generation");
+		string outputFileName = arguments.outputFile;
+		var codeGen = new CodeGen.CodeGenContext("CompiledProgram");
+		AST.Generate(codeGen);
+		codeGen.Save(outputFileName);
+		ErrorHandling.Checkpoint();
 
-            if (ErrorHandling.Count() > 0) {
-                ErrorHandling.PrintErrors();
-                Environment.Exit(1);
-                return;
-            }
-
-            // If args[1] == 1 print syntax ast tree
-            if (treeOption == 1) {
-                AST.PrintInfo("");
-                return;
-            }
-
-            // Semantic analysis
-            SymbolTable.InitializeSymbolTable();
-            ErrorHandling.ChangeStage("Semantic analysis");
-            AST.Verify();
-            
-            if (ErrorHandling.Count() > 0) {
-                AST.PrintInfo("");
-                ErrorHandling.PrintErrors();
-                Environment.Exit(1);
-                return;
-            }
-
-            // If args[1] == 2 print semantic ast tree
-            if (treeOption == 2) {
-                AST.PrintInfo("");
-                return;
-            }
-            
-            
-            // Code generation
-            ErrorHandling.ChangeStage("Code generation");
-
-            string outputFileName = args.Length > 2 ? args[2] : "output.dll";
-
-            var codeGen = new CodeGen.CodeGenContext("CompiledProgram");
-            
-            AST.Generate(codeGen);
-            codeGen.Save(outputFileName);
-            Console.WriteLine($"Code generation successful. Output: {outputFileName}");
-            
-            var asmPath = Path.GetFullPath(outputFileName);
-            var asm = AssemblyLoadContext.Default.LoadFromAssemblyPath(asmPath);
-            var programType = asm.GetType("Program");
-            var mainMethod = programType.GetMethod("Main",
-                BindingFlags.Public | BindingFlags.Static);
-            
-            Console.WriteLine($"Running Program.Main from {outputFileName}:");
-            mainMethod.Invoke(null, null);
-        }
-    }
+		Console.WriteLine($"Code generation successful. Output: {outputFileName}");
+		var asmPath = Path.GetFullPath(outputFileName);
+		var asm = AssemblyLoadContext.Default.LoadFromAssemblyPath(asmPath);
+		var programType = asm.GetType("Program");
+		var mainMethod = programType.GetMethod("Main",
+			BindingFlags.Public | BindingFlags.Static);
+		
+		Console.WriteLine($"Running Program.Main from {outputFileName}:");
+		mainMethod.Invoke(null, null);
+	}
 }
