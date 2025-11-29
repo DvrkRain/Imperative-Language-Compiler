@@ -269,6 +269,7 @@ public class TypeNode : Node {
 		ctorIL.Emit(OpCodes.Ldarg_0);
         ctorIL.Emit(OpCodes.Call, 
             typeof(object).GetConstructor(SystemType.EmptyTypes));
+        
         // Add fields from record definition
         foreach (var child in this.childs[1].GetChilds()) {
             VarNode fieldNode = (VarNode)child;
@@ -282,6 +283,13 @@ public class TypeNode : Node {
                 ctorIL.Emit(OpCodes.Ldarg_0);
                 ctorIL.Emit(OpCodes.Newobj, fieldType.GetConstructor(System.Type.EmptyTypes));
                 ctorIL.Emit(OpCodes.Stfld, fieldInfo);
+            } else if (ctx.ArrayTypes.ContainsKey(fieldNode.Type())) {
+	            var arrayType = ctx.ArrayTypes[fieldNode.Type()];
+	            ctorIL.Emit(OpCodes.Ldarg_0);
+	            var arraySize = ctx.GlobalFields[fieldNode.Type()];
+	            ctorIL.Emit(OpCodes.Ldsfld, arraySize);
+	            ctorIL.Emit(OpCodes.Newarr, arrayType);
+	            ctorIL.Emit(OpCodes.Stfld, fieldInfo);
             }
         }
 

@@ -11,7 +11,7 @@ for test in tests/*.skb; do
     
     # Compile
     stage=$1
-    bin/Debug/net9.0/compiler-csharp.exe "$test" $stage "output.dll" > "$test.txt"
+    bin/Debug/net9.0/compiler-csharp.exe "$test" "-s" $stage > "$test.txt"
     
     if [ $? -eq 0 ]; then
         echo "✓ Compilation successful"
@@ -26,7 +26,7 @@ for test in tests/*.skb; do
     echo "---"
 done
 
-rm "output.dll"
+rm "main.dll"
 
 echo "$complete"
 echo "$failed"
