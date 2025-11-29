@@ -637,6 +637,8 @@ public class OperationNode : Node {
 
 			case "[":
 				currentType = ctx.ResolveType(this._type);
+				ctx.CurrentIL.Emit(OpCodes.Ldc_I4_1);
+				ctx.CurrentIL.Emit(OpCodes.Sub);
 				ctx.CurrentIL.Emit(OpCodes.Ldelem, currentType);
 				break;
 
