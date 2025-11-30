@@ -1,0 +1,18 @@
+routine ex1(x : integer) : integer;
+routine ex2(x : integer) : integer is
+    if x == 1 then
+        return 1;
+    end
+    
+    return x * ex1(x - 1);
+end
+
+routine ex1(x : integer) : integer is
+    if x == 1 then
+        return 1;
+    end
+    
+    return 2 * ex2(x - 1);
+end
+
+print ex1(4);

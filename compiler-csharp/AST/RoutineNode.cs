@@ -1,13 +1,18 @@
 using Data.Objects;
 using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
+using System.Reflection;
+using System.Reflection.Emit;
+using SystemType = System.Type;
 
 namespace AST;
 public class RoutineNode : Node {
+	bool has_body = false;
+	bool implementation = false;
 	public RoutineNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "RoutineNode") Console.WriteLine($"RoutineNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()})");
+		Console.WriteLine($"RoutineNode(childs={this.childs.Count}, pos={this.position.ToString()}");
 		base.PrintInfo(indent);
 	}
 
@@ -16,7 +21,8 @@ public class RoutineNode : Node {
 		// Routine identifier
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.identifier) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			ErrorHandling.Add("Routine declaration", this.position, "Expected routine identifier");
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "routine identifier");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -25,7 +31,7 @@ public class RoutineNode : Node {
 		// Left Parenthesis
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.left_parenthesis) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "left paranthesis");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -44,7 +50,7 @@ public class RoutineNode : Node {
 				tokenQueue.Dequeue();
 				continue;
 			} else {
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "right paranthesis or comma");
 				return;
 			}
 		}
@@ -57,7 +63,7 @@ public class RoutineNode : Node {
 			if(token.Code() == TokenCode.identifier || token.Code() == TokenCode.builtin_type)
 				this._type = (string)token.Value();
 			else
-				ErrorHandling.UnexpectedTokenException(this.GetType().Name, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "type identifier");
 			token = tokenQueue.Peek();
 		}
 
@@ -82,7 +88,7 @@ public class RoutineNode : Node {
 				break;
 
 			default:
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "end of forward declaration or function body");
 				return;
 		}
 	}
@@ -125,27 +131,15 @@ public class RoutineNode : Node {
         }
 
         List<Variable> parameters = new List<Variable>();
-		bool has_body = this.childs.Count() == 2+param_number;
+		this.has_body = this.childs.Count() == 2+param_number;
 		string identifier = (string)((PrimaryNode)this.childs[0]).value;
 
-        if (!VerifyParameters(param_number)) return;
-
-        SymbolTable.EnterScope(ScopeType.Routine);
-        Routine thisRoutine = (Routine)SymbolTable.FindEntry(identifier);
-
-		Returning.Push(new ReturningStatus(false, this._type));
-        base.Verify();
-		ReturningStatus stat = Returning.Pop();
-		if(this._type != "void" && has_body && this.childs.Last() is not ExpressionNode && !stat.returned) {
-			ErrorHandling.Add("RoutineNode", this.position, "Routine has returning type, but return is not guaranteed");
-			SymbolTable.ExitScope();
-			return;
+		foreach(var child in this.childs) {
+			if(child is not ExpressionNode
+				&& child is not ProgramNode)
+				child.Verify();
 		}
-
-        Scope curScope = SymbolTable.GetCurrentScope();
-        SymbolTable.ExitScope();
-        curScope.Parent = null;
-
+		
 		// Check redeclaration
 		switch(SymbolTable.FindEntry(identifier)) {
 			case Routine routine when routine is {HasBody: true}:
@@ -153,16 +147,20 @@ public class RoutineNode : Node {
 				return;
 
 			case Routine routine:
-				if(!has_body) {
+				if(!this.has_body) {
 					ErrorHandling.Add("RoutineNode", this.position, "Forward routine redeclaration");
 					return;
 				} else if(routine.ReturnType != this._type) {
 					ErrorHandling.Add("RoutineNode", this.position,
 							$"Redeclaring routine with unmatched type: expected {this._type}, got {routine.ReturnType}.");
 					return;
+				} else if(routine.Parameters.Count() == 0) {
+					ErrorHandling.Add("RoutineNode", this.position, "Parameter amount mismatch");
+					return;
 				}
                 routine.HasBody = true;
                 parameters = routine.Parameters;
+				this.implementation = true;
 				break;
 
 			case null:
@@ -172,7 +170,7 @@ public class RoutineNode : Node {
                 }
 
                 Routine newRoutine = new Routine(identifier, parameters, this._type);
-                newRoutine.HasBody = has_body;
+                newRoutine.HasBody = this.has_body;
 
                 SymbolTable.DeclareEntry(newRoutine);
 				break;
@@ -181,49 +179,146 @@ public class RoutineNode : Node {
 				ErrorHandling.Add("RoutineNode", this.position, $"Identifier '{identifier}' already exists and is not a routine");
 				return;
 		}
-        
-        if(thisRoutine != null) thisRoutine.BodyScope = curScope;
+
+		if(this.has_body) {
+			SymbolTable.EnterScope(ScopeType.Routine);
+
+			// Check parameter match
+			HashSet<string> paramNames = new HashSet<string>();
+
+			for(int i=1; i<1+param_number; i++) {
+				ParameterNode param = (ParameterNode)this.childs[i];
+				string paramName = param.Name();
+				string paramType = param.Type();
+
+				if(!paramNames.Add(paramName)) {
+					ErrorHandling.Add("RoutineNode", this.position, $"Parameter names must be unique, got {paramName} twice");
+					return;
+				}
+
+				if(parameters[i-1].Name != paramName) {
+					ErrorHandling.Add("RoutineNode", this.position,
+						$"Parameter name mismatch, expected {parameters[i-1].Name}, got {paramName}.");
+				}
+
+				if (parameters[i-1].Type != paramType) {
+					ErrorHandling.Add("RoutineNode", this.position,
+						$"Parameter type mismatch, expected {parameters[i-1].Type}, got {paramType}.");
+					return;
+				}
+
+				SymbolTable.DeclareEntry(parameters[i-1]);
+			}
+
+			Returning.Push(new ReturningStatus(false, this._type));
+			this.childs.Last().Verify();
+			ReturningStatus stat = Returning.Pop();
+			if(this._type != "void" && this.has_body && this.childs.Last() is not ExpressionNode && !stat.returned) {
+				ErrorHandling.Add("RoutineNode", this.position, "Routine has returning type, but return is not guaranteed");
+				SymbolTable.ExitScope();
+				return;
+			}
+
+			Scope curScope = SymbolTable.GetCurrentScope();
+			SymbolTable.ExitScope();
+			curScope.Parent = null;
+		}
     }
 
-    private bool VerifyParameters(int param_num) {
-        PrimaryNode identifier = (PrimaryNode)this.childs[0];
-        List<Variable> prevRoutineParams = null;
-        HashSet<string> paramNames = new HashSet<string>();
+    
+    public override void Generate(CodeGen.CodeGenContext ctx) {
+		string routineName = (string)((PrimaryNode)this.childs[0]).value;
 
-        if (SymbolTable.FindEntry((string)identifier.value) is Routine prevRoutine) {
-            prevRoutineParams = prevRoutine.Parameters;
-            if (param_num != prevRoutineParams.Count) {
-                ErrorHandling.Add("RoutineNode", this.position, "Parameter amount mismatch");
-                return false;
-            }
-        }
-        
-        for(int i=1; i<1+param_num; i++) {
-            ParameterNode param = (ParameterNode)this.childs[i];
-            string paramName = param.Name();
+		var paramTypes = new List<SystemType>();
+		var paramNames = new List<string>();
+		int idx = 1;
+		SystemType returnType = ctx.ResolveType(this._type);
 
-            if (!paramNames.Add(paramName)) {
-                ErrorHandling.Add("RoutineNode", this.position, $"Parameter names must be unique, got {paramName}");
-                return false;
-            }
+		// Collect parameters
+		while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
+		{
+			var param = (ParameterNode)this.childs[idx];
+			string pName = ((PrimaryNode)param.GetChilds()[0]).Name();
+			System.Type pType;
+			if(param.GetChilds()[1] is PrimaryNode prime)
+				pType = ctx.ResolveType(prime.Name());
+			else if(param.GetChilds()[1] is ArrayNode arr)
+				pType = ctx.ResolveType(arr.Type().Split("_array")[0]).MakeArrayType();
+			else pType = typeof(void);
+			paramNames.Add(pName);
+			paramTypes.Add(pType);
+			idx++;
+		}
+		
+		if(!this.has_body) {
+			// Create method
+			var method = ctx.ProgramTypeBuilder.DefineMethod(
+				routineName,
+				MethodAttributes.Public | MethodAttributes.Static,
+				returnType,
+				paramTypes.ToArray());
+		
+			ctx.Methods[routineName] = method;
+		} else {
+			if(!this.implementation) {
+				// Create method
+				ctx.Methods[routineName] = ctx.ProgramTypeBuilder.DefineMethod(
+					routineName,
+					MethodAttributes.Public | MethodAttributes.Static,
+					returnType,
+					paramTypes.ToArray());
 
-            if (prevRoutineParams is null) continue;
+			}
+			var method = ctx.Methods[routineName];
 
-            if (prevRoutineParams[i - 1].Name != paramName) {
-                ErrorHandling.Add("RoutineNode", this.position,
-						$"Parameter name mismatch, expected {prevRoutineParams[i - 1].Name}, got {paramName}.");
-                return false;
-            }
-            
-            string paramType = param.Type();
-
-            if (prevRoutineParams[i - 1].Type != paramType) {
-                ErrorHandling.Add("RoutineNode", this.position,
-						$"Parameter type mismatch, expected {prevRoutineParams[i - 1].Type}, got {paramType}.");
-                return false;
-            }
-        }
-
-        return true;
+			// Save context
+			var prevMethod = ctx.CurrentMethod;
+			var prevIL = ctx.CurrentIL;
+			var prevLocals = new Dictionary<string, System.Reflection.Emit.LocalBuilder>(ctx.LocalVariables);
+			var prevParamIndices = new Dictionary<string, int>(ctx.ParameterIndices);
+			var prevParamTypes = new Dictionary<string, SystemType>(ctx.ParameterTypes);
+		
+			returnType = ctx.ResolveType(this._type);
+		
+			// New context for routine body
+			ctx.CurrentMethod = method;
+			ctx.CurrentIL = method.GetILGenerator();
+			ctx.LocalVariables.Clear();
+			ctx.ClearParameters();
+		
+			// Map parameters to arguments
+			for (int i = 0; i < paramNames.Count; i++)
+			{
+				ctx.ParameterIndices[paramNames[i]] = i;
+				ctx.ParameterTypes[paramNames[i]] = paramTypes[i];
+				ctx.LocalVariables[paramNames[i]] = ctx.CurrentIL.DeclareLocal(paramTypes[i]);
+				ctx.CurrentIL.Emit(OpCodes.Ldarg, i);
+				ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[paramNames[i]]);
+			}
+		
+			// Generate body
+			Node body = this.childs[idx]; // Last child is body
+			body.Generate(ctx);
+		
+			// Ensure return
+			if(this.childs.Last() is ExpressionNode)
+				ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
+			else if (returnType == typeof(void))
+				ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
+		
+			// Restore context
+			ctx.CurrentMethod = prevMethod;
+			ctx.CurrentIL = prevIL;
+			ctx.LocalVariables.Clear();
+			foreach (var kvp in prevLocals)
+				ctx.LocalVariables[kvp.Key] = kvp.Value;
+			
+			ctx.ClearParameters();
+			foreach (var kvp in prevParamIndices)
+				ctx.ParameterIndices[kvp.Key] = kvp.Value;
+			foreach (var kvp in prevParamTypes)
+				ctx.ParameterTypes[kvp.Key] = kvp.Value;
+		}
     }
+
 }

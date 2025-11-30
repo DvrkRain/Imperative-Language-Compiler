@@ -1,0 +1,7 @@
+﻿routine sqr(x : integer) : integer
+is
+    return x * x;
+end
+
+var a : integer is sqr(5);
+print a;

@@ -1,11 +1,13 @@
 using Data.ErrorHandling;
 using Data.Objects;
+using System.Reflection.Emit;
+
 namespace AST;
 public class IfNode : Node {
 	public IfNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"IfNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -20,7 +22,7 @@ public class IfNode : Node {
 		// 'then' keyword
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.then_statement) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "then branch");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -57,11 +59,35 @@ public class IfNode : Node {
 		if(this.childs.Count == 3) this.childs[2].Verify();
 		if(check) ret = ret && Returning.Pop().returned;
 
-		Returning.Push(new ReturningStatus(Returning.Peek().returned || ret, Returning.Pop().ret_type));
+		if(check) Returning.Push(new ReturningStatus(Returning.Peek().returned || ret, Returning.Pop().ret_type));
 
         if (this.childs[0].Type() != "boolean") {
             ErrorHandling.Add("IfNode", this.position, $"'if' statement should have a boolean expression");
             return;
         }
     }
+    
+
+    public override void Generate(CodeGen.CodeGenContext ctx) {
+        Label elseLabel = ctx.CurrentIL.DefineLabel();
+        Label endLabel = ctx.CurrentIL.DefineLabel();
+    
+        // Condition
+        this.childs[0].Generate(ctx);
+        ctx.CurrentIL.Emit(OpCodes.Brfalse, this.childs.Count > 2 ? elseLabel : endLabel);
+    
+        // Then branch
+        this.childs[1].Generate(ctx);
+        if (this.childs.Count > 2)
+            ctx.CurrentIL.Emit(OpCodes.Br, endLabel);
+    
+        // Else branch (optional)
+        if (this.childs.Count > 2) {
+            ctx.CurrentIL.MarkLabel(elseLabel);
+            this.childs[2].Generate(ctx);
+        }
+    
+        ctx.CurrentIL.MarkLabel(endLabel);
+    }
+
 }

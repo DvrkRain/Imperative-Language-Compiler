@@ -1,14 +1,15 @@
-using System.Security.Cryptography;
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
+using System.Reflection.Emit;
+
 
 namespace AST;
 public class WhileNode : Node {
 	public WhileNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "WhileNode") Console.WriteLine($"WhileNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"WhileNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -22,7 +23,7 @@ public class WhileNode : Node {
 		// 'loop' keyword
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.loop_start) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "loop keyword");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -38,9 +39,11 @@ public class WhileNode : Node {
     {
         SymbolTable.EnterScope(ScopeType.Loop);
 
-		Returning.Push(ReturningStatus.Copy(Returning.Peek()));
+		if(Returning.Count() > 0)
+			Returning.Push(ReturningStatus.Copy(Returning.Peek()));
         base.Verify();
-		Returning.Pop();
+		if(Returning.Count() > 0)
+			Returning.Pop();
 
         
         // WhileLoop declaration looks like
@@ -88,4 +91,27 @@ public class WhileNode : Node {
         
         return true;
     }
+    
+    public override void Generate(CodeGen.CodeGenContext ctx)
+    {
+        Label startLabel = ctx.CurrentIL.DefineLabel();
+        Label endLabel = ctx.CurrentIL.DefineLabel();
+    
+        ctx.EnterLoop(endLabel, startLabel);
+    
+        ctx.CurrentIL.MarkLabel(startLabel);
+    
+        // Condition
+        this.childs[0].Generate(ctx);
+        ctx.CurrentIL.Emit(OpCodes.Brfalse, endLabel);
+    
+        // Body
+        this.childs[1].Generate(ctx);
+        ctx.CurrentIL.Emit(OpCodes.Br, startLabel);
+    
+        ctx.CurrentIL.MarkLabel(endLabel);
+    
+        ctx.ExitLoop();
+    }
+
 }

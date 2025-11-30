@@ -1,0 +1,6 @@
+﻿routine add(x : integer, y : integer) : integer is
+    return x + y;
+end
+
+var result : integer is add(5, 3);
+print result;

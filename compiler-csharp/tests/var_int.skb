@@ -1,0 +1,3 @@
+﻿var x : integer;
+x := 42;
+print x;

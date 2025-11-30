@@ -1,14 +1,14 @@
 ﻿using Data.Objects;
 using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
+using System.Reflection.Emit;
 
 namespace AST;
-
 public class BreakNode : Node {
     public BreakNode(Position pos) : base(pos) {}
 
     public override void PrintInfo(string indent) {
-        if (this.GetType().Name == "BreakNode") Console.WriteLine($"BreakNode(pos=({this.position.Row()}, {this.position.Col()}))");
+        Console.WriteLine($"BreakNode(pos={this.position.ToString()})");
         base.PrintInfo(indent);
     }
 
@@ -17,7 +17,7 @@ public class BreakNode : Node {
         Token token = tokenQueue.Peek();
 
         if (token.Code() != TokenCode.semicolon) {
-            HandleUnexpectedToken(ref tokenQueue, this.position);
+            HandleUnexpectedToken(ref tokenQueue, this.position, token.Code(), "semicolon");
             return;
         }
         
@@ -32,4 +32,7 @@ public class BreakNode : Node {
 
         base.Verify();
     }
+    
+    public override void Generate(CodeGen.CodeGenContext ctx) =>
+        ctx.CurrentIL.Emit(OpCodes.Br, ctx.CurrentLoop.BreakLabel);
 }

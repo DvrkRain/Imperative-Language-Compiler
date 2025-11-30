@@ -1,17 +1,25 @@
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
+using System.Reflection;
+using System.Reflection.Emit;
+using SystemType = System.Type; 
 
 namespace AST;
 public class TypeNode : Node {
-	
 	public TypeNode(Position pos) : base(pos) { }
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		base.PrintInfo(indent);
+	}
+
 
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		// Identifier
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.identifier) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "identifier");
 			return;
 		}
 		this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
@@ -20,7 +28,7 @@ public class TypeNode : Node {
 		// 'is' keyword
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.is_assignment) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "is keyword");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -53,37 +61,21 @@ public class TypeNode : Node {
 				break;
 
 			default:
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "array, record or type identifier");
 				return;
 		}
 
 		// Check if declaration ends with ';'
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.semicolon) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "semicolon");
 		}
 		tokenQueue.Dequeue();
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "TypeNode") Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
 
     public override void Verify() {
         this.childs[0].Verify(); // check identifier
-        // Type declaration looks as follows:
-        // type `Identifier` is `Type`
-        
-        // `Identifier` ->  PrimaryNode
-        
-        // Type can be
-        // - PrimitiveType (integer, real, boolean) -> PrimaryNode
-        // - UserType (ArrayType, RecordType)-> ArrayNode, RecordNode
-        // - Identifier -> PrimaryNode
-        
-        // Thus, we expect childs to be
-        // PrimaryNode + (PrimaryNode/ArrayNode/RecordNode)
 
         if (this.childs.Count() != 2) {
             ErrorHandling.Add("TypeNode", this.position, $"Expected to have 2 childs, got {this.childs.Count()}");
@@ -98,19 +90,20 @@ public class TypeNode : Node {
 
         switch (this.childs[1]) {
             case PrimaryNode primaryNode:
-                baseType = (string)primaryNode.value;
-                this.childs[1].Verify();
+                primaryNode.Verify();
+                baseType = primaryNode.Name();
 
                 while (!DedicatedWords.BuiltIn(baseType))
                     baseType = ((SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(baseType)).BaseType;
 
                 break;
             
-            case ArrayNode:
+            case ArrayNode arr:
                 baseType = "array";
-                this.childs[1].Verify();
+                arr.Verify();
                 typeScope = new Scope();
                 typeScope.AddEntry(new Variable("size", "integer"));
+                typeScope.AddEntry(new Variable("type", "void", arr.Type()));
                 
                 break;
             
@@ -130,7 +123,7 @@ public class TypeNode : Node {
         }
 
         SemanticAnalyzer.SymbolTable.Type newType =
-            new SemanticAnalyzer.SymbolTable.Type((string)identifier.value, baseType);
+            new SemanticAnalyzer.SymbolTable.Type((string)identifier.value, baseType, typeScope);
 
         if (baseType == "record") newType.TypeScope = typeScope;
 
@@ -183,11 +176,112 @@ public class TypeNode : Node {
             case RecordNode recordNode:
                 // TODO: Create a way to check if record is alright
                 break;
+
             default:
                 ErrorHandling.Add("TypeNode", this.position, $"Unexpected type '{this.childs[1].GetType().Name}'");
                 return false;
         }
         
         return true;
+    }
+    
+    public override void Generate(CodeGen.CodeGenContext ctx)
+    {
+        string typeName = (string)((PrimaryNode)this.childs[0]).value;
+        Node typeDefinition = this.childs[1];
+        
+        if (typeDefinition is PrimaryNode aliasNode) {
+            // Type alias: type MyInt is integer
+            string baseTypeName = aliasNode.Name();
+            SystemType baseType = ctx.ResolveType(baseTypeName);
+            
+            // Register alias in context (add to type mapping)
+            ctx.RegisterTypeAlias(typeName, baseType);
+
+        } else if (typeDefinition is ArrayNode arrayNode)
+            // Array type: type intarr is array [5] integer
+            GenerateArrayType(ctx, typeName);
+
+        else if (typeDefinition is RecordNode recordNode)
+            // Record type: type Person is record ... end
+            GenerateRecordType(ctx, typeName);
+    }
+
+    private void GenerateArrayType(CodeGen.CodeGenContext ctx, string typeName) {
+		ArrayNode arr = (ArrayNode)this.childs[1];
+		
+		// Get array size
+		ExpressionNode arraySize = (ExpressionNode)arr.GetChilds()[0];
+        
+        // Get element type (childs[1] is type)
+        string elementTypeName = (string)((PrimaryNode)arr.GetChilds()[1]).value;
+        System.Type elementType = ctx.ResolveType(elementTypeName);
+        
+        arraySize.Generate(ctx); // Put array size into stack
+        
+        if (ctx.CurrentMethod.Name == "_Main") { // Define global field
+	        ctx.GlobalFields[typeName] = ctx.ProgramTypeBuilder.DefineField(
+		        typeName,
+		        typeof(int),
+		        FieldAttributes.Public | FieldAttributes.Static);
+	        
+	        ctx.CurrentIL.Emit(OpCodes.Stsfld, ctx.GlobalFields[typeName]);
+	        
+        } else { // Define local var (type)
+	        ctx.LocalVariables[typeName] = ctx.CurrentIL.DeclareLocal(typeof(int));
+	        ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[typeName]);
+        }
+        
+        // Register array type with metadata about size
+        ctx.RegisterArrayType(typeName, elementType);
+    }
+
+    private void GenerateRecordType(CodeGen.CodeGenContext ctx, string typeName) {
+        // Create a new class type for the record
+        var recordType = ctx.ModuleBuilder.DefineType(
+            typeName,
+            System.Reflection.TypeAttributes.Public | 
+            System.Reflection.TypeAttributes.Class |
+            System.Reflection.TypeAttributes.Sealed);
+        
+        // Create default constructor
+        var ctor = recordType.DefineConstructor(
+            System.Reflection.MethodAttributes.Public,
+            System.Reflection.CallingConventions.Standard,
+            SystemType.EmptyTypes);
+        
+        var ctorIL = ctor.GetILGenerator();
+		ctorIL.Emit(OpCodes.Ldarg_0);
+        ctorIL.Emit(OpCodes.Call, 
+            typeof(object).GetConstructor(SystemType.EmptyTypes));
+        
+        // Add fields from record definition
+        foreach (var child in this.childs[1].GetChilds()) {
+            VarNode fieldNode = (VarNode)child;
+            var fieldInfo = recordType.DefineField(
+                ((PrimaryNode)fieldNode.GetChilds()[0]).Name(),
+                ctx.ResolveType(fieldNode.Type()),
+                System.Reflection.FieldAttributes.Public);
+
+            if (ctx.UserTypes.ContainsKey(fieldNode.Type())) {
+                var fieldType = ctx.UserTypes[fieldNode.Type()];
+                ctorIL.Emit(OpCodes.Ldarg_0);
+                ctorIL.Emit(OpCodes.Newobj, fieldType.GetConstructor(System.Type.EmptyTypes));
+                ctorIL.Emit(OpCodes.Stfld, fieldInfo);
+            } else if (ctx.ArrayTypes.ContainsKey(fieldNode.Type())) {
+	            var arrayType = ctx.ArrayTypes[fieldNode.Type()];
+	            ctorIL.Emit(OpCodes.Ldarg_0);
+	            var arraySize = ctx.GlobalFields[fieldNode.Type()];
+	            ctorIL.Emit(OpCodes.Ldsfld, arraySize);
+	            ctorIL.Emit(OpCodes.Newarr, arrayType);
+	            ctorIL.Emit(OpCodes.Stfld, fieldInfo);
+            }
+        }
+
+        ctorIL.Emit(OpCodes.Ret);
+        
+        // Register the type
+        ctx.RegisterUserType(typeName, recordType);
+		recordType.CreateType();
     }
 }

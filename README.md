@@ -18,30 +18,34 @@ Compiler for Imperative Language written on C#
 ## Features
 
 - Lexical Analysis
-- Syntax Analysis (New!)
+- Syntax Analysis
+- Semantic Analysis
+- CodeGen into IL code (in progress)
 
 ## Expected language examples
 
+More examples you can find in [tests](./compiler-csharp/tests/) directory
+
 ```skb
-var a : integer;            // int a;
-var a : integer is 10;      // int a = 10;
-var a is 10;                // var a = 10;  a is of type int id induced from 10
+var a : integer;
+var a : integer is 10;
+var a is 10;
 
-type int is integer;        // Alias for integer type
-var a : int;                // Same as var a : integer
+type int is integer;
+var a : int;
 
-type point is record        // Declaring struct with two integer fields
+type point is record
 	int x;
 	int y;
 end;
 
 var p1 : point;
-var arr : array [3] int;    // int arr[3];
+var arr : array [3] int;
 ```
 
 ```skb
 var a : integer;
-a := 10;                    // Assignment
+a := 10;
 
 for i in 10..20 loop
 	print i, 2*i;

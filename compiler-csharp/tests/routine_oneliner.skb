@@ -1,0 +1,4 @@
+﻿routine sqr(x : integer) : integer => x * x
+
+var a : integer is sqr(6);
+print a;

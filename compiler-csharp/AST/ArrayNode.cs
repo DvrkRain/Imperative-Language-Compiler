@@ -1,13 +1,13 @@
 using Data.Objects;
 using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
+
 namespace AST;
 public class ArrayNode : Node {
 	public ArrayNode(Position pos) : base(pos) {}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ArrayNode")
-			Console.WriteLine($"ArrayNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"ArrayNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -16,7 +16,7 @@ public class ArrayNode : Node {
 		// Left bracket
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.left_bracket) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "left bracket");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -29,7 +29,7 @@ public class ArrayNode : Node {
 			this.childs.Add(expr);
 			token = tokenQueue.Dequeue();
 			if(token.Code() != TokenCode.right_bracket) {
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "right bracket");
 				return;
 			}
 		} else tokenQueue.Dequeue();
@@ -40,7 +40,7 @@ public class ArrayNode : Node {
 			this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
 			tokenQueue.Dequeue();
 		} else {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "type identifier");
 			return;
 		}
 	}

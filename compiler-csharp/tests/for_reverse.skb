@@ -1,0 +1,7 @@
+﻿var s : integer is 0;
+
+for i in 1 .. 3 reverse loop
+    s := s + i;
+end
+
+print s;

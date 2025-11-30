@@ -1,15 +1,20 @@
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
+using System.Reflection;
+using System.Reflection.Emit;
 
 namespace AST;
 public class ProgramNode : Node {
 	public bool main;
 
-    public ProgramNode(Position pos) : base(pos) { }
-
+    public ProgramNode(Position pos, string returnType = "void", bool main = false) : base(pos) {
+        this._type = returnType;
+        this.main = main;
+    }
+        
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ProgramNode") Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), main={this.main})");
+		Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos={this.position.ToString()}, main={this.main})");
 		base.PrintInfo(indent);
 	}
 
@@ -69,19 +74,25 @@ public class ProgramNode : Node {
 
 				// Assignment
 				case TokenCode.identifier:
-					tokenQueue.Dequeue();
-					FieldAccessNode access = new FieldAccessNode(token.Position());
-					access.Parse(ref tokenQueue);
-					token = tokenQueue.Peek();
-					if(token.Code() != TokenCode.bare_assignment) {
-						HandleUnexpectedToken(ref tokenQueue, token.Position());
+					if(tokenQueue.ElementAt(1).Code() == TokenCode.left_parenthesis) {
+						ExpressionNode expr = new ExpressionNode(this.position);
+						expr.Parse(ref tokenQueue);
+						this.childs.Add(expr);
+					} else if(tokenQueue.ElementAt(1).Code() == TokenCode.bare_assignment
+							|| tokenQueue.ElementAt(1).Code() == TokenCode.left_bracket
+							|| tokenQueue.ElementAt(1).Code() == TokenCode.dot) {
+						tokenQueue.Dequeue();
+						FieldAccessNode access = new FieldAccessNode(token.Position(), new PrimaryNode(token.Position(), token.Value()));
+						access.Parse(ref tokenQueue);
+						tokenQueue.Dequeue();
+						AssignmentNode asgnmt = new AssignmentNode(token.Position(), access);
+						asgnmt.Parse(ref tokenQueue);
+						this.childs.Add(asgnmt);
+					} else {
+						HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "funtcion call or assignment");
 						parsing = false;
                         break;
-                    }
-					tokenQueue.Dequeue();
-					AssignmentNode asgnmt = new AssignmentNode(token.Position(), access);
-					asgnmt.Parse(ref tokenQueue);
-					this.childs.Add(asgnmt);
+					}
 					break;
 					
 				// Sequence break
@@ -126,6 +137,7 @@ public class ProgramNode : Node {
 
 				case TokenCode.end_of_file:
 					tokenQueue.Dequeue();
+					if(!this.main) ErrorHandling.UnexpectedEOF("ProgramNode", this.position);
 					parsing = false;
 					break;
 
@@ -134,7 +146,7 @@ public class ProgramNode : Node {
 					break;
 
 				default:
-					HandleUnexpectedToken(ref tokenQueue, token.Position());
+					HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "command");
 					break;
 			}
 		}
@@ -158,4 +170,28 @@ public class ProgramNode : Node {
         
         this.childs.RemoveRange(lastIndex + 1, this.childs.Count() - (lastIndex + 1));
     }
+
+    public override void Generate(CodeGen.CodeGenContext ctx)
+    {
+        if (this.main)
+        {
+            // Create Main method
+            var mainMethod = ctx.ProgramTypeBuilder.DefineMethod(
+                "_Main",
+                MethodAttributes.Public | MethodAttributes.Static,
+                typeof(void),
+                System.Type.EmptyTypes);
+        
+            ctx.CurrentMethod = mainMethod;
+            ctx.CurrentIL = mainMethod.GetILGenerator();
+            ctx.LocalVariables.Clear();
+        }
+    
+        // Process children
+        foreach (var child in this.childs) child.Generate(ctx);
+    
+        if (this.main && ctx.CurrentIL != null)
+            ctx.CurrentIL.Emit(OpCodes.Ret);
+    }
+
 }

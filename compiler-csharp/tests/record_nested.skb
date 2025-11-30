@@ -1,0 +1,19 @@
+type Point is record
+    var x : integer;
+    var y : integer;
+end;
+
+type Circle is record
+    var center : Point;
+    var radius : real;
+end;
+
+var circle : Circle;
+circle.center.x := 0;
+circle.center.y := 0;
+circle.radius := 5;
+
+print circle.center.x;
+print circle.center.y;
+print circle.radius;
+

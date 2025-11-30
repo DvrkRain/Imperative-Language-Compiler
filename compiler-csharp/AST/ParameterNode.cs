@@ -4,20 +4,17 @@ using SemanticAnalyzer.SymbolTable;
 
 namespace AST;
 public class ParameterNode : Node {
+	public new string Type() => this._type;
+
 	public string Name() {
 		if(this.childs[0] is PrimaryNode prime) return prime.Name();
-		return "unknown";
-	}
-
-	public new string Type() {
-		if(this.childs[1] is PrimaryNode prime) return prime.Name();
 		return "unknown";
 	}
 
 	public ParameterNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ParameterNode") Console.WriteLine($"ParameterNode(childs={this.childs.Count}, , pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"ParameterNode(childs={this.childs.Count}, , pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 	
@@ -28,7 +25,7 @@ public class ParameterNode : Node {
 		if(token.Code() == TokenCode.identifier) {
 			this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
 		} else {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "parameter identifier");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -36,7 +33,7 @@ public class ParameterNode : Node {
 		// Type assignment
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.type_assignment) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "type assignment with ':'");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -51,7 +48,7 @@ public class ParameterNode : Node {
             ArrayNode arrayNode = new ArrayNode(token.Position());
             arrayNode.Parse(ref tokenQueue);
             this.childs.Add(arrayNode);
-        } else HandleUnexpectedToken(ref tokenQueue, token.Position());
+        } else HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "type identifier or array type");
     }
 
 
@@ -69,7 +66,13 @@ public class ParameterNode : Node {
                 break;
 
             case ArrayNode arrayNode:
-                this._type = arrayNode.Type();
+                this._type = $"_array{arrayNode.Type()}"; //i.e. %integerarray
+                Scope arrayScope = new Scope();
+                arrayScope.AddEntry(new Variable("size", "integer"));
+                arrayScope.AddEntry(new Variable("type", "void", arrayNode.Type()));
+                SemanticAnalyzer.SymbolTable.Type newArrayType = new SemanticAnalyzer.SymbolTable.Type(this._type, "array");
+                newArrayType.TypeScope = arrayScope;
+                SymbolTable.DeclareEntry(newArrayType);
                 break;
 
             default:
@@ -82,12 +85,5 @@ public class ParameterNode : Node {
             ErrorHandling.Add("ParameterNode", this.position, $"Parameter type not declared, got {this._type}");
             return;
         }
-
-        SemanticAnalyzer.SymbolTable.Type paramType = (SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(this._type);
-
-        Scope? typeScope = paramType.BaseType == "record" ? paramType.TypeScope : null;
-        Variable variable = new Variable(((PrimaryNode)this.childs[0]).Name(), this._type, typeScope);
-        SymbolTable.DeclareEntry(variable);
     }
-
 }

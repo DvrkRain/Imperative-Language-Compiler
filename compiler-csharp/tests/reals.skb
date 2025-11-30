@@ -1,0 +1,2 @@
+﻿var r : real is 3.01401;
+print r;

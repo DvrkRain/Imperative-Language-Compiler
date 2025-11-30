@@ -79,12 +79,12 @@ namespace Data.Objects {
 		private static Dictionary<TokenCode, int> _precedence =
 			new Dictionary<TokenCode, int>() {
 				{TokenCode.dot				, 0},
+				{TokenCode.left_bracket		, 0},
 				{TokenCode.factor_op		, 1},
 				{TokenCode.term_op			, 2},
 				{TokenCode.relation_op		, 3},
 				{TokenCode.logic_op			, 4},
 				{TokenCode.left_parenthesis	, 5},
-				{TokenCode.left_bracket		, 5},
 			};
 
 		public static int Order(TokenCode key) => _precedence[key];
@@ -122,7 +122,7 @@ namespace Data.Objects {
 				{"routine", 	TokenCode.routine_declaration},
 				{"return",		TokenCode.return_statement},
 				{"break",		TokenCode.break_statement},
-				{"continue",	TokenCode.continue_statement},
+				{"continue",	TokenCode.continue_statement}
 			};
 
 		public static bool Keys(string key) =>
@@ -131,8 +131,13 @@ namespace Data.Objects {
 		public static bool Vals(TokenCode code) =>
 			_dedicatedWords.ContainsValue(code);
 
-		public static TokenCode Code(string key) =>
-			_dedicatedWords[key];
+		public static TokenCode Code(string key) {
+			if(!DedicatedWords.Keys(key)) return TokenCode.error;
+			return _dedicatedWords[key];
+			}
+
+		public static bool BuiltInStrict(string type) =>
+			DedicatedWords.Code(type) == TokenCode.builtin_type;
 
 		public static bool BuiltIn(string type) =>
 			_baseTypes.Contains(type);
@@ -202,21 +207,18 @@ namespace Data.Objects {
 		public void Value(object val) => this.value = val;
 
 		// Construction
-		public Token(Position pos, TokenCode code) {
+		public Token(Position pos, TokenCode code, object? val = null) {
 			this.position = pos;
 			this.tokenCode = code;
 			this.value = "";
-		}
-		public Token(Position pos, TokenCode code, object val) {
-			this.position = pos;
-			this.tokenCode = code;
-			this.value = val;
+			if(val != null)
+				this.value = val;
 		}
 
 		public void PrintInfo() {
-			Console.Write($"Token of type {this.tokenCode}\tin position ({this.position.Row()}, {this.position.Col()}).\t");
+			Console.Write($"{this.position.ToString()}\t{this.tokenCode}\t\t");
 			if(!(this.value is null))
-				Console.Write($"Value in Token is {this.value}.");
+				Console.Write($"Value: {this.value}");
 			Console.Write("\n");
 		}
 	}
