@@ -10,7 +10,7 @@ namespace LexicalAnalyzer
     {
         Start,
         Identifier,
-        Integer,
+        Numeric,
         Less,
         Greater,
 		EqualOrOneliner,
@@ -24,24 +24,22 @@ namespace LexicalAnalyzer
     {
         private State currentState;
         private StateCode currentStateCode;
-		private FileReader reader;
 
-		public Lexer(FileReader reader) {
+		public Lexer() {
             this.currentState = new StartState();
             this.currentStateCode = StateCode.Start;
-			this.reader = reader;
 		}
 
         public void ParseFile(ref Queue<Token> TokenStream)
         {
 			Position cursor = new Position(1,1);
-			while(!reader.Empty()) {
-				char nextChar = reader.GetNextChar();
-				StateCode nextStateCode = StateCode.Start;
+			while(!FileReader.Empty()) {
+				char nextChar = FileReader.Get();
+                StateCode nextStateCode = StateCode.Start;
 
 				if(SeparatorList.Contains(nextChar)) {
 					this.currentState.AddToken(ref TokenStream);
-					Token separatorToken = new Token(cursor, SeparatorList.Code(nextChar), char.ToString(nextChar));
+                    Token separatorToken = new Token(cursor, SeparatorList.Code(nextChar), char.ToString(nextChar));
 					TokenStream.Enqueue(separatorToken);
 
 				} else if (nextChar == '\n') {
@@ -61,7 +59,9 @@ namespace LexicalAnalyzer
 						this.currentState.AddToken(ref TokenStream);
 					nextStateCode = StateCode.DivOrNotEqual;
 
-				} else if (nextChar == '.' && this.currentStateCode != StateCode.DotOrRange) {
+				} else if (nextChar == '.'
+						&& this.currentStateCode != StateCode.DotOrRange
+						&& this.currentStateCode != StateCode.Numeric) {
 					nextStateCode = StateCode.DotOrRange;
 
 				} else
@@ -83,8 +83,8 @@ namespace LexicalAnalyzer
                                 this.currentState = new IdentifierState(cursor, nextChar);
                                 break;
 
-                            case StateCode.Integer:
-                                this.currentState = new IntegerState(cursor, nextChar);
+                            case StateCode.Numeric:
+                                this.currentState = new NumeralState(cursor, nextChar);
                                 break;
 
                             case StateCode.Less:
@@ -114,7 +114,7 @@ namespace LexicalAnalyzer
                             case StateCode.Error:
                                 this.currentState = new StartState();
                                 this.currentStateCode = StateCode.Start;
-                                
+
                                 ErrorHandling.UnexpectedTokenException("LexicalAnalyzer", cursor);
                                 break;
                         }
@@ -131,9 +131,9 @@ namespace LexicalAnalyzer
     }
 
     public abstract class State {
-		protected Position pos{get;}
+		protected Position position{get;}
 		public State(Position pos) =>
-			this.pos = pos;
+			this.position = pos;
 
         public abstract StateCode ProccessSymbol(char symbol);
 		public abstract void AddToken(ref Queue<Token> tokenQueue);
@@ -145,7 +145,7 @@ namespace LexicalAnalyzer
         public override StateCode ProccessSymbol(char symbol) {
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
 
-			if (char.IsDigit(symbol)) return StateCode.Integer;
+			if (char.IsDigit(symbol)) return StateCode.Numeric;
 
 			if (symbol == '<') return StateCode.Less;
 			if (symbol == '>') return StateCode.Greater;
@@ -181,25 +181,36 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if(this.data == "true") 
-				token = new Token(this.pos, DedicatedWords.Code(this.data), true);
+				token = new Token(this.position, DedicatedWords.Code(this.data), true);
 			else if(this.data == "false") 
-				token = new Token(this.pos, DedicatedWords.Code(this.data), false);
+				token = new Token(this.position, DedicatedWords.Code(this.data), false);
 			else if(DedicatedWords.Keys(this.data))
-				token = new Token(this.pos, DedicatedWords.Code(this.data), this.data);
+				token = new Token(this.position, DedicatedWords.Code(this.data), this.data);
 			else
-				token = new Token(this.pos, TokenCode.identifier, this.data);
+				token = new Token(this.position, TokenCode.identifier, this.data);
 
 			tokenQueue.Enqueue(token);
 		}
 	}
 
-	public class IntegerState : StoringState {
-		public IntegerState(Position pos, char symbol) : base(pos) => this.data += symbol;
+	public class NumeralState : StoringState {
+		protected bool real = false;
+		public NumeralState(Position pos, char symbol) : base(pos) => this.data += symbol;
 
 		public override StateCode ProccessSymbol(char symbol) {
 			if (char.IsDigit(symbol)) {
 				this.data += symbol;
-				return StateCode.Integer;
+				return StateCode.Numeric;
+			}
+
+			if (symbol == '.') {
+				if(this.real)
+					return StateCode.DotOrRange;
+				else {
+					this.data += symbol;
+					this.real = true;
+					return StateCode.Numeric;
+				}
 			}
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
@@ -212,7 +223,12 @@ namespace LexicalAnalyzer
 		}
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
-			tokenQueue.Enqueue(new Token(this.pos, TokenCode.constant_value, int.Parse(data)));
+			if(this.real && float.TryParse(this.data, out float f)) 
+				tokenQueue.Enqueue(new Token(this.position, TokenCode.constant_value, f));
+			else if(int.TryParse(this.data, out int i))
+				tokenQueue.Enqueue(new Token(this.position, TokenCode.constant_value, i));
+			else
+				ErrorHandling.Add("LexicalAnalyser", this.position, "Cannot parse numeric token");
 		}
 	}
 
@@ -229,7 +245,7 @@ namespace LexicalAnalyzer
 				this.single = false;
 				return StateCode.Start;
 			}
-			if (char.IsDigit(symbol)) return StateCode.Integer;
+			if (char.IsDigit(symbol)) return StateCode.Numeric;
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
 
@@ -240,7 +256,7 @@ namespace LexicalAnalyzer
 		}
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
-			Token token = new Token(this.pos, TokenCode.relation_op);
+			Token token = new Token(this.position, TokenCode.relation_op);
 			if (single)
 				token.Value("<");
 			else
@@ -257,7 +273,7 @@ namespace LexicalAnalyzer
 				this.single = false;
 				return StateCode.Start;
 			}
-			if (char.IsDigit(symbol)) return StateCode.Integer;
+			if (char.IsDigit(symbol)) return StateCode.Numeric;
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
 
@@ -268,7 +284,7 @@ namespace LexicalAnalyzer
 		}
 
 		public override void AddToken(ref Queue<Token> tokenQueue) {
-			Token token = new Token(this.pos, TokenCode.relation_op);
+			Token token = new Token(this.position, TokenCode.relation_op);
 			if (single)
 				token.Value(">");
 			else
@@ -291,7 +307,7 @@ namespace LexicalAnalyzer
 				this.state = true;
 				return StateCode.Start;
 			}
-			if (char.IsDigit(symbol)) return StateCode.Integer;
+			if (char.IsDigit(symbol)) return StateCode.Numeric;
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
 
@@ -303,12 +319,12 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-                ErrorHandling.UnexpectedTokenException("LexicalAnalyzer", this.pos);
+                ErrorHandling.UnexpectedTokenException("LexicalAnalyzer", this.position);
 			else {
 				if(state)
-					token = new Token(this.pos, TokenCode.relation_op, "==");
+					token = new Token(this.position, TokenCode.relation_op, "==");
 				else
-					token = new Token(this.pos, TokenCode.one_line_body);
+					token = new Token(this.position, TokenCode.one_line_body);
 				tokenQueue.Enqueue(token);
 			}
 		}
@@ -322,7 +338,7 @@ namespace LexicalAnalyzer
 				this.single = false;
 				return StateCode.Start;
 			}
-			if (char.IsDigit(symbol)) return StateCode.Integer;
+			if (char.IsDigit(symbol)) return StateCode.Numeric;
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
 
@@ -335,9 +351,9 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-				token = new Token(this.pos, TokenCode.factor_op, "/");
+				token = new Token(this.position, TokenCode.factor_op, "/");
 			else
-				token = new Token(this.pos, TokenCode.relation_op, "/=");
+				token = new Token(this.position, TokenCode.relation_op, "/=");
 			tokenQueue.Enqueue(token);
 		}
 	}
@@ -350,7 +366,7 @@ namespace LexicalAnalyzer
 				this.single = false;
 				return StateCode.Start;
 			}
-			if (char.IsDigit(symbol)) return StateCode.Integer;
+			if (char.IsDigit(symbol)) return StateCode.Numeric;
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
 
@@ -363,9 +379,9 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-				token = new Token(this.pos, TokenCode.type_assignment);
+				token = new Token(this.position, TokenCode.type_assignment);
 			else
-				token = new Token(this.pos, TokenCode.bare_assignment);
+				token = new Token(this.position, TokenCode.bare_assignment);
 			tokenQueue.Enqueue(token);
 		}
 	}
@@ -378,7 +394,7 @@ namespace LexicalAnalyzer
 				this.single = false;
 				return StateCode.Start;
 			}
-			if (char.IsDigit(symbol)) return StateCode.Integer;
+			if (char.IsDigit(symbol)) return StateCode.Numeric;
 
 			if (char.IsLetter(symbol)) return StateCode.Identifier;
 
@@ -392,9 +408,9 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-				token = new Token(this.pos, TokenCode.dot, ".");
+				token = new Token(this.position, TokenCode.dot, ".");
 			else
-				token = new Token(this.pos, TokenCode.range_sign, "..");
+				token = new Token(this.position, TokenCode.range_sign, "..");
 			tokenQueue.Enqueue(token);
 		}
 	}

@@ -17,14 +17,13 @@ class Program {
 		// Console.WriteLine(arguments.ToString());
 		if(!arguments.valid) return;
 
-		string filepath = arguments.inputFile;
-		FileReader reader = new FileReader(filepath);
-		Console.WriteLine("Filename: " + reader.filename);
+		FileReader.SetFile(arguments.inputFile);
+		Console.WriteLine("Filename: " + FileReader.filename);
 
 		// Lexic analysis
 		ErrorHandling.ChangeStage("Lexical analysis");
 		Queue<Token> stream = new Queue<Token>();
-		Lexer lexer = new Lexer(reader);
+		Lexer lexer = new Lexer();
 		lexer.ParseFile(ref stream);
 		ErrorHandling.Checkpoint();
 		
