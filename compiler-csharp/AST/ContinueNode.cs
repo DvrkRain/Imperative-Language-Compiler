@@ -1,9 +1,8 @@
 ﻿using Data.Objects;
 using Data.ErrorHandling;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection.Emit;
 
-namespace AST;
+namespace Compiler.AST;
 public class ContinueNode : Node {
     public ContinueNode(Position pos) : base(pos) {}
 
@@ -11,6 +10,7 @@ public class ContinueNode : Node {
         Console.WriteLine($"ContinueNode(pos={this.position.ToString()})");
         base.PrintInfo(indent);
     }
+
 
     public override void Parse(ref Queue<Token> tokenQueue) {
         // After continue there should be only ';'
@@ -24,6 +24,7 @@ public class ContinueNode : Node {
         tokenQueue.Dequeue();
     }
 
+
     public override void Verify() {
         if (!SymbolTable.IsInsideType(ScopeType.Loop)) {
             ErrorHandling.ContinueOutsideCycle("Continue", this.position);
@@ -33,6 +34,7 @@ public class ContinueNode : Node {
         base.Verify();
     }
     
+
     public override void Generate(CodeGen.CodeGenContext ctx) =>
         ctx.CurrentIL.Emit(OpCodes.Br, ctx.CurrentLoop.ContinueLabel);
 }

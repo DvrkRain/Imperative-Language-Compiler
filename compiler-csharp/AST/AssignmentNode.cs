@@ -1,15 +1,14 @@
 using Data.Objects;
 using Data.ErrorHandling;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection.Emit;
 
-namespace AST;
+namespace Compiler.AST;
 public class AssignmentNode : Node {
 	public AssignmentNode(Position pos, FieldAccessNode identifier) : base(pos) =>
 		this.childs.Add(identifier);
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"AssignmentNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		Console.WriteLine($"AssignmentNode(pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 

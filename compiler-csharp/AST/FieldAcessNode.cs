@@ -1,13 +1,12 @@
 using Data.Objects;
 using Data.ErrorHandling;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection;
 using System.Reflection.Emit;
 
-using Type = SemanticAnalyzer.SymbolTable.Type;
+using Type = Compiler.Type;
 using SystemType = System.Type;
 
-namespace AST;
+namespace Compiler.AST;
 public class FieldAccessNode : Node {
 	protected object value;
 	public LocalBuilder variable;
@@ -18,7 +17,7 @@ public class FieldAccessNode : Node {
 	public FieldAccessNode(Position pos, Node init) : this(pos) => this.childs.Add(init);
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"FieldAccessNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		Console.WriteLine($"FieldAccessNode(pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -97,7 +96,7 @@ public class FieldAccessNode : Node {
 			switch(scope.LookupEntry(prime.Name())) {
 				case Variable vr:
 					this._type = vr.Type;
-					if(SymbolTable.FindEntry(this._type) is SemanticAnalyzer.SymbolTable.Type type) {
+					if(SymbolTable.FindEntry(this._type) is Type type) {
 						this.value = type.TypeScope;
 					} else ErrorHandling.Add("Assignment", this.position, "Undeclared type or identifier is not a type alias");
 					break;

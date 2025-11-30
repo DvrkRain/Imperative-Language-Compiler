@@ -1,13 +1,12 @@
 using Data.Objects;
 using Data.ErrorHandling;
-using SemanticAnalyzer.SymbolTable;
 
-namespace AST;
+namespace Compiler.AST;
 public class ArrayNode : Node {
 	public ArrayNode(Position pos) : base(pos) {}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"ArrayNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		Console.WriteLine($"ArrayNode(pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -58,7 +57,7 @@ public class ArrayNode : Node {
 		}
 
 		if(this.childs[current_child_index] is PrimaryNode identifier) {
-			if(SymbolTable.FindEntry((string)identifier.value) is not SemanticAnalyzer.SymbolTable.Type)
+			if(SymbolTable.FindEntry((string)identifier.value) is not Compiler.Type)
 				ErrorHandling.Add("ArrayNode", this.childs[current_child_index].Position(), "Expected type identifier.");
 			this._type = identifier.Name();
 		} else

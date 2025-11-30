@@ -1,7 +1,7 @@
 using Data.ErrorHandling;
 using Data.Objects;
 
-namespace AST;
+namespace Compiler.AST;
 public class RecordNode : Node {
 	public RecordNode(Position pos) : base(pos) { }
 

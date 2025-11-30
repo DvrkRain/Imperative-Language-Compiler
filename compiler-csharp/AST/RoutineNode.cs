@@ -1,11 +1,10 @@
 using Data.Objects;
 using Data.ErrorHandling;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection;
 using System.Reflection.Emit;
 using SystemType = System.Type;
 
-namespace AST;
+namespace Compiler.AST;
 public class RoutineNode : Node {
 	bool has_body = false;
 	bool implementation = false;
@@ -119,7 +118,7 @@ public class RoutineNode : Node {
         }
 
 		// Check if returning type is declared
-        if (this._type != "void" && SymbolTable.FindEntry(this._type) is not SemanticAnalyzer.SymbolTable.Type) {
+        if (this._type != "void" && SymbolTable.FindEntry(this._type) is not Compiler.Type) {
             ErrorHandling.Add("RoutineNode", this.position, $"Return type not declared, got {this._type}");
             return;
         }

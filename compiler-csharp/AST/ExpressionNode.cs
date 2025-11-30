@@ -1,7 +1,7 @@
 using Data.Objects;
 using Data.ErrorHandling;
 
-namespace AST;
+namespace Compiler.AST;
 public class ExpressionNode : Node {
 	protected bool _index;
 
@@ -17,7 +17,7 @@ public class ExpressionNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, pos={this.position.ToString()}, type = {this._type}");
+		Console.WriteLine($"ExpressionNode(pos={this.position.ToString()}, type = {this._type})");
 		base.PrintInfo(indent);
 	}
 

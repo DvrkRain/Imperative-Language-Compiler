@@ -3,10 +3,7 @@ using System.Runtime.Loader;
 using Data.Objects;
 using Data.IO;
 using Data.ErrorHandling;
-
-using LexicalAnalyzer;
-using AST;
-using SemanticAnalyzer.SymbolTable;
+using Compiler.AST;
 
 #pragma warning disable
 

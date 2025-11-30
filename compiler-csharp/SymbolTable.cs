@@ -1,5 +1,4 @@
-namespace SemanticAnalyzer.SymbolTable;
-
+namespace Compiler;
 public enum ScopeType {
     Global,
     Loop,
@@ -8,50 +7,40 @@ public enum ScopeType {
     Record
 }
 
-public abstract class Entry
-{
+public abstract class Entry {
     public string Name { get; } // Each instance has its own name
     public int used = 0;
     
-    protected Entry(string name)
-    {
-        Name = name;
-    }
+    protected Entry(string name) => Name = name;
 }
 
-public class Variable : Entry
-{
+public class Variable : Entry {
     public string Type { get; } // Each variable has type
     public object? Value { get; set; } // Each variable might have value
     
-    public Variable(string name, string type, object? value = null) : base(name)
-    {
+    public Variable(string name, string type, object? value = null) : base(name) {
         this.Type = type;
         this.Value = value;
     }
 }
 
-public class Routine : Entry
-{
+public class Routine : Entry {
     public List<Variable> Parameters { get; } // Routine parameters contained in list to keep order
     public string ReturnType { get; } // Each routine might have a return type
 
     public bool HasBody = false;
     
-    public Routine(string name, List<Variable>? parameters = null, string returnType = "void") : base(name)
-    {
+    public Routine(string name, List<Variable>? parameters = null, string returnType = "void") : base(name) {
         Parameters = parameters ?? new List<Variable>();
         ReturnType = returnType;
     }
 }
 
-public class Type : Entry
-{
+public class Type : Entry {
     public string BaseType { get; } // Each type has a base type (integer, real, boolean, array, record), type == baseType -> baseType in builtInTypes
     public Scope? TypeScope; // Each type might have its scope
     
-    public Type(string name, string baseType, Scope? scope = null) : base(name)
-    {
+    public Type(string name, string baseType, Scope? scope = null) : base(name) {
 		this.TypeScope = scope;
         BaseType = baseType;
     }
@@ -66,19 +55,15 @@ public class Scope
 
     public Scope? Parent;
     
-    public Scope(Scope? parent = null, ScopeType? scopeType = null)
-    {
+    public Scope(Scope? parent = null, ScopeType? scopeType = null) {
         _entries = new Dictionary<string, Entry>();
         this.scopeType = scopeType;
         Parent = parent;
     }
 
-    public bool AddEntry(Entry entry)
-    {
+    public bool AddEntry(Entry entry) {
         if (_entries.ContainsKey(entry.Name))
-        {
             return false;
-        }
         _entries[entry.Name] = entry;
         return true;
     }
@@ -88,37 +73,28 @@ public class Scope
             _entries.Remove(name);
             return true;
         }
-
         return false;
     }
 
-    public Entry? LookupLocalEntry(string name) {
-        return _entries.TryGetValue(name, out Entry entry) ? entry : null;
-    }
+    public Entry? LookupLocalEntry(string name) =>
+        _entries.TryGetValue(name, out Entry entry) ? entry : null;
 
-    public Entry? LookupEntry(string name)
-    {
+    public Entry? LookupEntry(string name) {
         if (_entries.TryGetValue(name, out var entry))
-        {
             return entry;
-        }
-        
         return Parent?.LookupEntry(name);
     }
 
     public bool IsInsideType(ScopeType scopeType) {
         if (this.scopeType == scopeType) return true;
-
         if (Parent != null) return Parent.IsInsideType(scopeType);
-
         return false;
     }
 }
 
-public static class SymbolTable
-{
-    private static Scope _globalScope;
-    private static Scope _currentScope;
+public static class SymbolTable {
+    private static Scope _globalScope = new Scope(null, ScopeType.Global);
+    private static Scope _currentScope = _globalScope;
     
     public static void InitializeSymbolTable()
     {
@@ -144,43 +120,24 @@ public static class SymbolTable
         
     }
     
-    public static void EnterScope(ScopeType scopeType)
-    {
+    public static void EnterScope(ScopeType scopeType) =>
         _currentScope = new Scope(_currentScope, scopeType);
-    }
     
-    public static void ExitScope()
-    {
+    public static void ExitScope() {
         if (_currentScope.Parent != null)
-        {            
             _currentScope = _currentScope.Parent;
-        }
         else
-        {
             throw new InvalidOperationException("Cannot exit global scope");
-        }
     }
     
-    public static Scope GetCurrentScope()
-    {
-        return _currentScope;
-    }
+    public static Scope GetCurrentScope() => _currentScope;
     
+    public static Scope GetGlobalScope() => _globalScope;
 
-    public static Scope GetGlobalScope()
-    {
-        return _globalScope;
-    }
-    
+    public static bool DeclareEntry(Entry entry) => _currentScope.AddEntry(entry);
 
-    public static bool DeclareEntry(Entry entry)
-    {
-        return _currentScope.AddEntry(entry);
-    }
-
-    public static bool RemoveEntry(string identifier) {
-        return _currentScope.RemoveEntry(identifier);
-    }
+    public static bool RemoveEntry(string identifier) =>
+        _currentScope.RemoveEntry(identifier);
 
     public static Entry? FindEntry(string name, bool local = false) {
         if (local) return _currentScope.LookupLocalEntry(name);
