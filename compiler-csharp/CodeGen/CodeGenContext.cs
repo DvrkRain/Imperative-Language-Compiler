@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
 
-namespace CodeGen;
+namespace Compiler.CodeGen;
 public class CodeGenContext {
 	// Assembly and module builders for .NET 9
 	public PersistedAssemblyBuilder AssemblyBuilder { get; private set; }
@@ -25,13 +23,13 @@ public class CodeGenContext {
 	public Stack<LoopContext> LoopStack { get; private set; }
 	
 	// Type mapping helper
-	private Dictionary<string, Type> typeMap;
+	private Dictionary<string, System.Type> typeMap;
 	
 	// Parameter mappings: parameter name -> argument index
 	public Dictionary<string, int> ParameterIndices { get; private set; }
 
 	// Parameter types for validation
-	public Dictionary<string, Type> ParameterTypes { get; private set; }
+	public Dictionary<string, System.Type> ParameterTypes { get; private set; }
 	
 	public CodeGenContext(string assemblyName)
 	{
@@ -42,11 +40,11 @@ public class CodeGenContext {
 		UserTypes = new Dictionary<string, TypeBuilder>();
 		LoopStack = new Stack<LoopContext>();
 		ParameterIndices = new Dictionary<string, int>();
-		ParameterTypes = new Dictionary<string, Type>();
-		ArrayTypes = new Dictionary<string, Type>();
+		ParameterTypes = new Dictionary<string, System.Type>();
+		ArrayTypes = new Dictionary<string, System.Type>();
 		
 		// Type mapping for built-in types
-		typeMap = new Dictionary<string, Type>
+		typeMap = new Dictionary<string, System.Type>
 		{
 			{ "integer", typeof(int) },
 			{ "real", typeof(float) },
@@ -66,7 +64,7 @@ public class CodeGenContext {
 			TypeAttributes.Public | TypeAttributes.Class);
 	}
 	
-	public Type ResolveType(string typeName)
+	public System.Type ResolveType(string typeName)
 	{
 		if (ArrayTypes.ContainsKey(typeName))
 			return ArrayTypes[typeName].MakeArrayType();

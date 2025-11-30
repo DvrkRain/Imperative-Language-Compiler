@@ -1,7 +1,7 @@
 using Data.Objects;
 using Data.ErrorHandling;
 
-namespace AST;
+namespace Compiler.AST;
 public abstract class Node {
     protected Position position{get; set;}
 	protected string _type;

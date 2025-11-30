@@ -1,9 +1,8 @@
 ﻿using Data.Objects;
 using Data.ErrorHandling;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection.Emit;
 
-namespace AST;
+namespace Compiler.AST;
 public class BreakNode : Node {
     public BreakNode(Position pos) : base(pos) {}
 
@@ -11,6 +10,7 @@ public class BreakNode : Node {
         Console.WriteLine($"BreakNode(pos={this.position.ToString()})");
         base.PrintInfo(indent);
     }
+
 
     public override void Parse(ref Queue<Token> tokenQueue) {
         // After break there should be only ';'
@@ -24,6 +24,7 @@ public class BreakNode : Node {
         tokenQueue.Dequeue();
     }
 
+
     public override void Verify() {
         if (!SymbolTable.IsInsideType(ScopeType.Loop)) {
             ErrorHandling.Add("BreakNode", this.position, "'break' used outside loop");
@@ -33,6 +34,7 @@ public class BreakNode : Node {
         base.Verify();
     }
     
+
     public override void Generate(CodeGen.CodeGenContext ctx) =>
         ctx.CurrentIL.Emit(OpCodes.Br, ctx.CurrentLoop.BreakLabel);
 }

@@ -1,16 +1,14 @@
 using Data.ErrorHandling;
 using Data.Objects;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection.Emit;
 
-
-namespace AST;
+namespace Compiler.AST;
 public class ForNode : Node {
 	protected bool reversed;
 	public ForNode(Position pos) : base(pos) => this.reversed = false;
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"ForNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		Console.WriteLine($"ForNode(pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 

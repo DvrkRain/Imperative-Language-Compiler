@@ -1,8 +1,9 @@
 using Data.ErrorHandling;
 using Data.Objects;
+using System.Reflection;
 using System.Reflection.Emit;
 
-namespace AST;
+namespace Compiler.AST;
 public class PrintNode : Node {
 	public PrintNode(Position pos) : base(pos) { }
 	
@@ -55,7 +56,7 @@ public class PrintNode : Node {
             child.Generate(ctx); // Push value onto stack
         
             // Determine type and call appropriate WriteLine
-            Type exprType = ctx.ResolveType(child.Type());
+            System.Type exprType = ctx.ResolveType(child.Type());
             var writeLineMethod = typeof(Console).GetMethod(
                 "WriteLine",
                 new[] { exprType });

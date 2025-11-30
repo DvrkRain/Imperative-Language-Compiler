@@ -1,7 +1,6 @@
 using Data.Objects;
-using SemanticAnalyzer.SymbolTable;
 
-namespace AST;
+namespace Compiler.AST;
 public class PrimaryNode : Node {
 	private bool _inExpression;
 	public object value;

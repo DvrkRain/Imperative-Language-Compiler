@@ -1,11 +1,11 @@
 using Data.ErrorHandling;
 using Data.Objects;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection;
 using System.Reflection.Emit;
+
 using SystemType = System.Type;
 
-namespace AST;
+namespace Compiler.AST;
 public class VarNode : Node {
 	protected bool explicit_type;
 
@@ -105,7 +105,7 @@ public class VarNode : Node {
 				}
 				break;
 
-			case SemanticAnalyzer.SymbolTable.Type type:
+			case Type type:
 				if(DedicatedWords.Code(type.BaseType) == TokenCode.builtin_type)
 					this._type = type.BaseType;
 				break;

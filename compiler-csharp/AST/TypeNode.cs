@@ -1,11 +1,11 @@
 using Data.ErrorHandling;
 using Data.Objects;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection;
 using System.Reflection.Emit;
+
 using SystemType = System.Type; 
 
-namespace AST;
+namespace Compiler.AST;
 public class TypeNode : Node {
 	public TypeNode(Position pos) : base(pos) { }
 
@@ -94,7 +94,7 @@ public class TypeNode : Node {
                 baseType = primaryNode.Name();
 
                 while (!DedicatedWords.BuiltIn(baseType))
-                    baseType = ((SemanticAnalyzer.SymbolTable.Type)SymbolTable.FindEntry(baseType)).BaseType;
+                    baseType = ((Type)SymbolTable.FindEntry(baseType)).BaseType;
 
                 break;
             
@@ -122,8 +122,7 @@ public class TypeNode : Node {
                 break;
         }
 
-        SemanticAnalyzer.SymbolTable.Type newType =
-            new SemanticAnalyzer.SymbolTable.Type((string)identifier.value, baseType, typeScope);
+        Type newType = new Type((string)identifier.value, baseType, typeScope);
 
         if (baseType == "record") newType.TypeScope = typeScope;
 
@@ -157,7 +156,7 @@ public class TypeNode : Node {
         // Check child type
         switch (this.childs[1]) {
             case PrimaryNode primaryNode:
-                if (SymbolTable.FindEntry((string)primaryNode.value) is not SemanticAnalyzer.SymbolTable.Type) {
+                if (SymbolTable.FindEntry((string)primaryNode.value) is not Compiler.Type) {
                     ErrorHandling.Add("TypeNode", this.position, $"Type '{(string)primaryNode.value}' is not declared");
                     return false;
                 }
@@ -167,7 +166,7 @@ public class TypeNode : Node {
                 int arrayChilds = arrayNode.GetChilds().Count();
                 PrimaryNode arrayType = (PrimaryNode)arrayNode.GetChilds()[arrayChilds - 1];
 
-                if (SymbolTable.FindEntry((string)arrayType.value) is not SemanticAnalyzer.SymbolTable.Type) {
+                if (SymbolTable.FindEntry((string)arrayType.value) is not Compiler.Type) {
                     ErrorHandling.Add("TypeNode", this.position, $"Array type '{(string)arrayType.value}' is not declared");
                     return false;
                 }

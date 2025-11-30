@@ -1,8 +1,7 @@
 using Data.ErrorHandling;
 using Data.Objects;
-using SemanticAnalyzer.SymbolTable;
 
-namespace AST;
+namespace Compiler.AST;
 public class ParameterNode : Node {
 	public new string Type() => this._type;
 
@@ -14,7 +13,7 @@ public class ParameterNode : Node {
 	public ParameterNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"ParameterNode(childs={this.childs.Count}, , pos={this.position.ToString()})");
+		Console.WriteLine($"ParameterNode(pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 	
@@ -70,7 +69,7 @@ public class ParameterNode : Node {
                 Scope arrayScope = new Scope();
                 arrayScope.AddEntry(new Variable("size", "integer"));
                 arrayScope.AddEntry(new Variable("type", "void", arrayNode.Type()));
-                SemanticAnalyzer.SymbolTable.Type newArrayType = new SemanticAnalyzer.SymbolTable.Type(this._type, "array");
+                Type newArrayType = new Type(this._type, "array");
                 newArrayType.TypeScope = arrayScope;
                 SymbolTable.DeclareEntry(newArrayType);
                 break;
@@ -81,7 +80,7 @@ public class ParameterNode : Node {
                 return;
         }
 
-        if (SymbolTable.FindEntry(this._type) is not SemanticAnalyzer.SymbolTable.Type) {
+        if (SymbolTable.FindEntry(this._type) is not Compiler.Type) {
             ErrorHandling.Add("ParameterNode", this.position, $"Parameter type not declared, got {this._type}");
             return;
         }

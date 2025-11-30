@@ -1,10 +1,9 @@
 using Data.ErrorHandling;
 using Data.Objects;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace AST;
+namespace Compiler.AST;
 public class ProgramNode : Node {
 	public bool main;
 

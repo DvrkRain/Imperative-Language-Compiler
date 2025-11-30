@@ -1,12 +1,10 @@
 using Data.Objects; using Data.ErrorHandling;
-using SemanticAnalyzer.SymbolTable;
 using System.Reflection;
 using System.Reflection.Emit;
-using CodeGen;
 
-using Type = SemanticAnalyzer.SymbolTable.Type;
+using Type = Compiler.Type;
 
-namespace AST;
+namespace Compiler.AST;
 public class OperationNode : Node {
 	protected TokenCode op_code;
 	protected bool _constant;
@@ -28,7 +26,7 @@ public class OperationNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"OperationNode(childs={this.childs.Count}, operation_code={this.op_code}, operation={this._operation}, pos={this.position.ToString()}, type={this._type}");
+		Console.WriteLine($"OperationNode(childs={this.childs.Count}, operation_code={this.op_code}, operation={this._operation}, pos={this.position.ToString()}, type={this._type})");
 		base.PrintInfo(indent);
 	}
 
@@ -96,7 +94,7 @@ public class OperationNode : Node {
 
 		// If this operation is array index dereferencing
 		case TokenCode.left_bracket:
-			if (SymbolTable.FindEntry(this.childs[0].Type()) is SemanticAnalyzer.SymbolTable.Type atype
+			if (SymbolTable.FindEntry(this.childs[0].Type()) is Type atype
 					&& atype.BaseType == "array") {
 				if(this.childs[1].Type() != "integer")
 					ErrorHandling.Add("Array dereferencing", this.position, "Array index expected to be of integer type");
@@ -123,7 +121,7 @@ public class OperationNode : Node {
 				// }
 				// this.arg_number = 0;
 				// flag = true;
-			} else if (SymbolTable.FindEntry(this.childs[0].Type()) is SemanticAnalyzer.SymbolTable.Type rtype
+			} else if (SymbolTable.FindEntry(this.childs[0].Type()) is Type rtype
 					&& rtype.BaseType == "record"
 					&& this.childs[1] is PrimaryNode fieldName
 					&& fieldName.value is string id) {
@@ -136,7 +134,7 @@ public class OperationNode : Node {
 						ErrorHandling.Add("OperationNode", this.position, $"Record does not have a field named {id}.");
 					else ErrorHandling.Add("OperationNode", this.position, "Record cannot contain non-variable fields");
 				} else ErrorHandling.Add("OperationNode", this.position, "Record is not properly changed or not contain scope.");
-			} else if (SymbolTable.FindEntry(this.childs[0].Type()) is SemanticAnalyzer.SymbolTable.Type type
+			} else if (SymbolTable.FindEntry(this.childs[0].Type()) is Type type
 					&& type.BaseType == "array"
 					&& this.childs[1] is PrimaryNode identifier
 					&& (string)identifier.value == "size") {
@@ -547,7 +545,7 @@ public class OperationNode : Node {
 	}
 
 
-	public override void Generate(CodeGenContext ctx) {
+	public override void Generate(CodeGen.CodeGenContext ctx) {
 		if(this._operation == ".")
 			this.childs[0].Generate(ctx);
 		else

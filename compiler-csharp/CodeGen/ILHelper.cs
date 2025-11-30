@@ -1,10 +1,7 @@
-﻿using System;
-using System.Reflection.Emit;
+﻿using System.Reflection.Emit;
 
-namespace CodeGen
-{
-    public static class ILHelper
-    {
+namespace Compiler.CodeGen {
+    public static class ILHelper {
         public static void EmitLoadInt(ILGenerator il, int value) =>
 			il.Emit(OpCodes.Ldc_I4, value);
         

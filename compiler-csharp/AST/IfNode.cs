@@ -2,12 +2,12 @@ using Data.ErrorHandling;
 using Data.Objects;
 using System.Reflection.Emit;
 
-namespace AST;
+namespace Compiler.AST;
 public class IfNode : Node {
 	public IfNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"IfNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		Console.WriteLine($"IfNode(pos={this.position.ToString()}, type={this._type})");
 		base.PrintInfo(indent);
 	}
 
