@@ -1,4 +1,4 @@
-# LexicalAnalyzer namespace documentation
+# LexicalAnalyzer documentation
 
 ## Content
 
@@ -10,23 +10,27 @@
     - [`ChoosingState` Class](#abstract-choosingstate-class)
     - [Other states classes](#other-states-classes)
 
+## General Idea of Lexical Analyzer
+
+The main idea of our lexical analyzer is that we read the source file character by character. Depending on the received symbol, we change the state of our analysis.
+
 ## Transitions
 
 **Transitions** determines how the states change depending on the received symbol. With this transitions, the lexer understands how to properly tokenize the processed code
 
 States:
-- StartState
-- IdentifierState
-- IntegerState
-- LessState
-- GreaterState
-- EqualState
-- DotOrRangeState
-- DivOrNotEqualState
-- ColonOrAssignmentState
+- Start
+- Identifier
+- Numeric
+- Less
+- Greater
+- EqualOrOneliner
+- DotOrRange
+- DivOrNotEqual
+- ColonOrAssignment
 
 
-### Переходы из StartState:
+### Transitions from  `Start` state:
 ```
 Start --(letter)--> Identifier
 Start --(digit)--> Integer
@@ -39,7 +43,7 @@ Start --(.)--> DotOrRange
 Start --(other)--> Error
 ```
 
-### Переходы из IdentifierState:
+### Transitions from  `Identifier` state:
 ```
 Identifier --(letter/digit/_)--> Identifier
 Identifier --(<)--> Less
@@ -48,70 +52,70 @@ Identifier --(=)--> EqualOrOneliner
 Identifier --(other)--> Error
 ```
 
-### Переходы из IntegerState:
+### Transitions from  `Numeral` state:
 ```
-Integer --(digit)--> Integer
-Integer --(letter)--> Identifier
-Integer --(<)--> Less
-Integer --(>)--> Greater
-Integer --(=)--> EqualOrOneliner
-Integer --(other)--> Error
+Numeral --(digit)--> Numeral
+Numeral --(letter)--> Identifier
+Numeral --(<)--> Less
+Numeral --(>)--> Greater
+Numeral --(=)--> EqualOrOneliner
+Numeral --(other)--> Error
 ```
 
-### Переходы из LessState:
+### Transitions from  `Less` state:
 ```
 Less --(=)--> Start
-Less --(digit)--> Integer
+Less --(digit)--> Numeral
 Less --(letter)--> Identifier
 Less --(<)--> Less
 Less --(>)--> Greater
 Less --(other)--> Error
 ```
 
-### Переходы из GreaterState:
+### Transitions from  `Greater` state:
 ```
 Greater --(=)--> Start
-Greater --(digit)--> Integer
+Greater --(digit)--> Numeral
 Greater --(letter)--> Identifier
 Greater --(<)--> Less
 Greater --(>)--> Greater
 Greater --(other)--> Error
 ```
 
-### Переходы из EqualOrOnelinerState:
+### Transitions from  `EqualOrOneliner` state:
 ```
 EqualOrOneliner --(>)--> Start
 EqualOrOneliner --(=)--> Start
-EqualOrOneliner --(digit)--> Integer
+EqualOrOneliner --(digit)--> Numeral
 EqualOrOneliner --(letter)--> Identifier
 EqualOrOneliner --(<)--> Less
 EqualOrOneliner --(other)--> Error
 ```
 
-### Переходы из DivOrNotEqualState:
+### Transitions from  `DivOrNotEqual` state:
 ```
 DivOrNotEqual --(=)--> Start
-DivOrNotEqual --(digit)--> Integer
+DivOrNotEqual --(digit)--> Numeral
 DivOrNotEqual --(letter)--> Identifier
 DivOrNotEqual --(<)--> Less
 DivOrNotEqual --(>)--> Greater
 DivOrNotEqual --(other)--> Error
 ```
 
-### Переходы из ColonOrAssignmentState:
+### Transitions from  `ColonOrAssignment` state:
 ```
 ColonOrAssignment --(=)--> Start
-ColonOrAssignment --(digit)--> Integer
+ColonOrAssignment --(digit)--> Numeral
 ColonOrAssignment --(letter)--> Identifier
 ColonOrAssignment --(<)--> Less
 ColonOrAssignment --(>)--> Greater
 ColonOrAssignment --(other)--> Error
 ```
 
-### Переходы из DotOrRangeState:
+### Transitions from  `DotOrRange` state:
 ```
 DotOrRange --(.)--> Start
-DotOrRange --(digit)--> Integer
+DotOrRange --(digit)--> Numeral
 DotOrRange --(letter)--> Identifier
 DotOrRange --(=)--> EqualOrOneliner
 DotOrRange --(<)--> Less
@@ -222,7 +226,7 @@ Inherits from [`State`](#abstract-state-class) class
 Other states include:
 - StartState
 - IdentifierState
-- IntegerState
+- NumeralState
 - LessState
 - GreaterState
 - EqualState

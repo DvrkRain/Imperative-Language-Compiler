@@ -129,6 +129,7 @@ namespace LexicalAnalyzer
 
                 cursor.NextChar();
 			}
+			if (currentStateCode != StateCode.Start) currentState.AddToken(ref TokenStream);
 			TokenStream.Enqueue(new Token(cursor, TokenCode.end_of_file));
         }
     }
