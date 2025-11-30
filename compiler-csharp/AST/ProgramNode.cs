@@ -1,12 +1,8 @@
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
-
-using CodeGen;
-using System;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.Loader;
 
 namespace AST;
 public class ProgramNode : Node {
@@ -17,9 +13,8 @@ public class ProgramNode : Node {
         this.main = main;
     }
         
-
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ProgramNode") Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), main={this.main})");
+		Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos={this.position.ToString()}, main={this.main})");
 		base.PrintInfo(indent);
 	}
 
@@ -94,7 +89,7 @@ public class ProgramNode : Node {
 						asgnmt.Parse(ref tokenQueue);
 						this.childs.Add(asgnmt);
 					} else {
-						HandleUnexpectedToken(ref tokenQueue, token.Position());
+						HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "funtcion call or assignment");
 						parsing = false;
                         break;
 					}
@@ -151,7 +146,7 @@ public class ProgramNode : Node {
 					break;
 
 				default:
-					HandleUnexpectedToken(ref tokenQueue, token.Position());
+					HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "command");
 					break;
 			}
 		}
@@ -176,7 +171,7 @@ public class ProgramNode : Node {
         this.childs.RemoveRange(lastIndex + 1, this.childs.Count() - (lastIndex + 1));
     }
 
-    public override void Generate(CodeGenContext ctx)
+    public override void Generate(CodeGen.CodeGenContext ctx)
     {
         if (this.main)
         {

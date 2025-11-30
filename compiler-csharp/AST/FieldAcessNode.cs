@@ -1,9 +1,6 @@
 using Data.Objects;
 using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
-
-using CodeGen;
-using System;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -17,14 +14,11 @@ public class FieldAccessNode : Node {
 	public FieldInfo fieldInfo;
 	public SystemType elemInfo;
 
-	public FieldAccessNode(Position pos) : base(pos) =>
-	   this.value = "";
-
-	public FieldAccessNode(Position pos, Node init) : this(pos) =>
-		this.childs.Add(init);
+	public FieldAccessNode(Position pos) : base(pos) => this.value = "";
+	public FieldAccessNode(Position pos, Node init) : this(pos) => this.childs.Add(init);
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "FieldAccessNode") Console.WriteLine($"FieldAccessNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"FieldAccessNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -36,7 +30,7 @@ public class FieldAccessNode : Node {
 				tokenQueue.Dequeue();
 				token = tokenQueue.Peek();
 				if(token.Code() != TokenCode.identifier) {
-					HandleUnexpectedToken(ref tokenQueue, token.Position());
+					HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "identifier");
 					return;
 				}
 				tokenQueue.Dequeue();
@@ -50,7 +44,7 @@ public class FieldAccessNode : Node {
 				this.childs.Add(expr);
 				token = tokenQueue.Peek();
 				if(token.Code() != TokenCode.right_bracket) {
-					HandleUnexpectedToken(ref tokenQueue, token.Position());
+					HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "right bracket");
 					return;
 				}
 				tokenQueue.Dequeue();
@@ -195,25 +189,5 @@ public class FieldAccessNode : Node {
 					ctx.CurrentIL.Emit(OpCodes.Ldfld, this.fieldInfo);
 			}
 		}
-        
-        // Load base variable
-        // if (ctx.ParameterIndices.ContainsKey(baseName)) {
-        //     int argIndex = ctx.ParameterIndices[baseName];
-        //     currentType = ctx.ParameterTypes[baseName];
-        //
-        // } else if (ctx.LocalVariables.ContainsKey(baseName)) {
-		// }
-        
-            // if (accessNode is ExpressionNode indexExpr) {
-            //     // Array indexing: arr[index]
-            //     if (currentType.IsArray) {
-            //         // Generate index expression
-            //         indexExpr.Generate(ctx);
-            //
-            //         // Load element: ldelem
-            //         SystemType elementType = currentType.GetElementType();
-            //         EmitLoadElement(ctx.CurrentIL, elementType);
-            //         currentType = elementType;
-            //     }
     }
 }

@@ -1,10 +1,6 @@
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
-
-using CodeGen;
-using System;
-using System.Reflection;
 using System.Reflection.Emit;
 
 
@@ -13,7 +9,7 @@ public class WhileNode : Node {
 	public WhileNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "WhileNode") Console.WriteLine($"WhileNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"WhileNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -27,7 +23,7 @@ public class WhileNode : Node {
 		// 'loop' keyword
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.loop_start) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "loop keyword");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -96,7 +92,7 @@ public class WhileNode : Node {
         return true;
     }
     
-    public override void Generate(CodeGenContext ctx)
+    public override void Generate(CodeGen.CodeGenContext ctx)
     {
         Label startLabel = ctx.CurrentIL.DefineLabel();
         Label endLabel = ctx.CurrentIL.DefineLabel();

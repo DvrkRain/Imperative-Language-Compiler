@@ -1,12 +1,8 @@
 using Data.Objects;
 using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
-
-using CodeGen;
-using System;
 using System.Reflection;
 using System.Reflection.Emit;
-
 using SystemType = System.Type;
 
 namespace AST;
@@ -16,7 +12,7 @@ public class RoutineNode : Node {
 	public RoutineNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "RoutineNode") Console.WriteLine($"RoutineNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()})");
+		Console.WriteLine($"RoutineNode(childs={this.childs.Count}, pos={this.position.ToString()}");
 		base.PrintInfo(indent);
 	}
 
@@ -26,7 +22,7 @@ public class RoutineNode : Node {
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.identifier) {
 			ErrorHandling.Add("Routine declaration", this.position, "Expected routine identifier");
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "routine identifier");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -35,7 +31,7 @@ public class RoutineNode : Node {
 		// Left Parenthesis
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.left_parenthesis) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "left paranthesis");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -54,7 +50,7 @@ public class RoutineNode : Node {
 				tokenQueue.Dequeue();
 				continue;
 			} else {
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "right paranthesis or comma");
 				return;
 			}
 		}
@@ -67,7 +63,7 @@ public class RoutineNode : Node {
 			if(token.Code() == TokenCode.identifier || token.Code() == TokenCode.builtin_type)
 				this._type = (string)token.Value();
 			else
-				ErrorHandling.UnexpectedTokenException(this.GetType().Name, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "type identifier");
 			token = tokenQueue.Peek();
 		}
 
@@ -92,7 +88,7 @@ public class RoutineNode : Node {
 				break;
 
 			default:
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "end of forward declaration or function body");
 				return;
 		}
 	}
@@ -230,7 +226,7 @@ public class RoutineNode : Node {
     }
 
     
-    public override void Generate(CodeGenContext ctx) {
+    public override void Generate(CodeGen.CodeGenContext ctx) {
 		string routineName = (string)((PrimaryNode)this.childs[0]).value;
 
 		var paramTypes = new List<SystemType>();

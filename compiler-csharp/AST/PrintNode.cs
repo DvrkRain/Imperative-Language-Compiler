@@ -1,15 +1,17 @@
 using Data.ErrorHandling;
 using Data.Objects;
-
-using CodeGen;
-using System;
-using System.Reflection;
 using System.Reflection.Emit;
 
 namespace AST;
 public class PrintNode : Node {
 	public PrintNode(Position pos) : base(pos) { }
 	
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"PrintNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		base.PrintInfo(indent);
+	}
+
+
 	public override void Parse(ref Queue<Token> tokenQueue) {
 		ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position());
 		expr.Parse(ref tokenQueue);
@@ -26,15 +28,11 @@ public class PrintNode : Node {
 
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.semicolon) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "semicolon");
 			return;
 		}
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "PrintNode") Console.WriteLine($"PrintNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
-		base.PrintInfo(indent);
-	}
 
     public override void Verify() {
         base.Verify();
@@ -46,16 +44,14 @@ public class PrintNode : Node {
             }
 
             if (!DedicatedWords.BuiltIn(child.Type())) {
-                ErrorHandling.Add("PrintNode", this.position, $"PrintNode should receive only builtin_type");
+                ErrorHandling.Add("PrintNode", this.position, $"PrintNode should receive only builtin_type expressions");
                 return;
             }
         }
     }
     
-    public override void Generate(CodeGenContext ctx)
-    {
-        foreach (var child in this.childs)
-        {
+    public override void Generate(CodeGen.CodeGenContext ctx) {
+        foreach (var child in this.childs) {
             child.Generate(ctx); // Push value onto stack
         
             // Determine type and call appropriate WriteLine

@@ -1,10 +1,6 @@
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
-
-using CodeGen;
-using System;
-using System.Reflection;
 using System.Reflection.Emit;
 
 
@@ -13,7 +9,7 @@ public class ReturnNode : Node {
     public ReturnNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ReturnNode") Console.WriteLine($"ReturnNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"ReturnNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -30,7 +26,7 @@ public class ReturnNode : Node {
         token = tokenQueue.Peek();
 
         if (token.Code() != TokenCode.semicolon) {
-            HandleUnexpectedToken(ref tokenQueue, token.Position());
+            HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "semicolon");
             return;
         }
         
@@ -40,7 +36,7 @@ public class ReturnNode : Node {
 
     public override void Verify() {
         if (!SymbolTable.IsInsideType(ScopeType.Routine)) {
-            ErrorHandling.Add("ReturnNode", this.position, "'return' is used outside the routine");
+            ErrorHandling.ReturnOutsideFunction("Return", this.position);
             return;
         }
 
@@ -64,12 +60,8 @@ public class ReturnNode : Node {
 		Returning.Push(stat);
     }
     
-    public override void Generate(CodeGenContext ctx)
-    {
-        if (this.childs.Count > 0)
-        {
-            this.childs[0].Generate(ctx); // Push return value
-        }
+    public override void Generate(CodeGen.CodeGenContext ctx) {
+		base.Generate(ctx);
         ctx.CurrentIL.Emit(OpCodes.Ret);
     }
 

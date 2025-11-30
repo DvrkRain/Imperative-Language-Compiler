@@ -207,21 +207,18 @@ namespace Data.Objects {
 		public void Value(object val) => this.value = val;
 
 		// Construction
-		public Token(Position pos, TokenCode code) {
+		public Token(Position pos, TokenCode code, object? val = null) {
 			this.position = pos;
 			this.tokenCode = code;
 			this.value = "";
-		}
-		public Token(Position pos, TokenCode code, object val) {
-			this.position = pos;
-			this.tokenCode = code;
-			this.value = val;
+			if(val != null)
+				this.value = val;
 		}
 
 		public void PrintInfo() {
-			Console.Write($"Token of type {this.tokenCode}\tin position ({this.position.Row()}, {this.position.Col()}).\t");
+			Console.Write($"{this.position.ToString()}\t{this.tokenCode}\t\t");
 			if(!(this.value is null))
-				Console.Write($"Value in Token is {this.value}.");
+				Console.Write($"Value: {this.value}");
 			Console.Write("\n");
 		}
 	}

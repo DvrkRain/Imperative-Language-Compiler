@@ -1,10 +1,6 @@
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
-
-using CodeGen;
-using System;
-using System.Reflection;
 using System.Reflection.Emit;
 
 
@@ -14,7 +10,7 @@ public class ForNode : Node {
 	public ForNode(Position pos) : base(pos) => this.reversed = false;
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ForNode") Console.WriteLine($"ForNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"ForNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -23,7 +19,7 @@ public class ForNode : Node {
 		// Iterator identifier
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.identifier) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "iterator identifier");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -33,7 +29,7 @@ public class ForNode : Node {
 		// 'in' keyword
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.in_statement) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "'in' keyword");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -62,7 +58,7 @@ public class ForNode : Node {
 		}
 		// 'loop' keyword
 		if(token.Code() != TokenCode.loop_start) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "'loop' keyword");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -103,8 +99,7 @@ public class ForNode : Node {
     }
 
     
-    public override void Generate(CodeGenContext ctx)
-    {
+    public override void Generate(CodeGen.CodeGenContext ctx) {
         string iterName = (string)((PrimaryNode)this.childs[0]).value;
         var iterLocal = ctx.CurrentIL.DeclareLocal(typeof(int));
         ctx.LocalVariables[iterName] = iterLocal;

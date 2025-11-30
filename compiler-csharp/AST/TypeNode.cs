@@ -1,19 +1,16 @@
-using System.Drawing;
-using System.Reflection;
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
+using System.Reflection;
 using System.Reflection.Emit;
-using CodeGen;
 using SystemType = System.Type; 
-
 
 namespace AST;
 public class TypeNode : Node {
 	public TypeNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "TypeNode") Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -22,7 +19,7 @@ public class TypeNode : Node {
 		// Identifier
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.identifier) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "identifier");
 			return;
 		}
 		this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
@@ -31,7 +28,7 @@ public class TypeNode : Node {
 		// 'is' keyword
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.is_assignment) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "is keyword");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -64,14 +61,14 @@ public class TypeNode : Node {
 				break;
 
 			default:
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "array, record or type identifier");
 				return;
 		}
 
 		// Check if declaration ends with ';'
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.semicolon) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "semicolon");
 		}
 		tokenQueue.Dequeue();
 	}
@@ -79,18 +76,6 @@ public class TypeNode : Node {
 
     public override void Verify() {
         this.childs[0].Verify(); // check identifier
-        // Type declaration looks as follows:
-        // type `Identifier` is `Type`
-        
-        // `Identifier` ->  PrimaryNode
-        
-        // Type can be
-        // - PrimitiveType (integer, real, boolean) -> PrimaryNode
-        // - UserType (ArrayType, RecordType)-> ArrayNode, RecordNode
-        // - Identifier -> PrimaryNode
-        
-        // Thus, we expect childs to be
-        // PrimaryNode + (PrimaryNode/ArrayNode/RecordNode)
 
         if (this.childs.Count() != 2) {
             ErrorHandling.Add("TypeNode", this.position, $"Expected to have 2 childs, got {this.childs.Count()}");

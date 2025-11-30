@@ -1,13 +1,5 @@
 using Data.Objects;
-using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
-
-using CodeGen;
-using System;
-using System.Reflection;
-using System.Reflection.Emit;
-
-using SystemType = System.Type;
 
 namespace AST;
 public class PrimaryNode : Node {
@@ -25,12 +17,13 @@ public class PrimaryNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "PrimaryNode") Console.WriteLine($"PrimaryNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), value={this.value})");
+		Console.WriteLine($"PrimaryNode(childs={this.childs.Count}, pos={this.position.ToString()}, value={this.value})");
 		base.PrintInfo(indent);
 	}
 
 
 	public override void Parse(ref Queue<Token> tokenQueue) { }
+
 
 	public override void Verify() {
 		if(!this._inExpression) return;
@@ -75,6 +68,10 @@ public class PrimaryNode : Node {
 
 			case int val:
 				this._type = "integer";
+				break;
+
+			case float val:
+				this._type = "real";
 				break;
 
 			case bool val:

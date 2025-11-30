@@ -21,30 +21,60 @@ public static class CLIParser {
 		};
 
 		Option<string> oFile = new("-o"){
+			HelpName = "filepath",
 			Description = "Name of resulting file",
-			DefaultValueFactory = result => "main.dll"
+			DefaultValueFactory = result => "main.dll",
 		};
-		oFile.HelpName = "filepath";
+		
 
 		Option<int> stage = new("-s"){
+			HelpName = "stage number",
 			Description = "Stage to stop after (0-lexic, 1-syntax, 2-semantic, 3-codegen)",
 			DefaultValueFactory = result => {
 				if(result.Tokens.Count == 0) return 3;
 				if(int.TryParse(result.Tokens.Single().Value, out int stage)) return stage;
 				return 3;
-			}
+			},
 		};
-		stage.HelpName = "stage number";
+
+		Option<bool> lex = new("--lex"){
+			Description = "Stop after lexical analysis and print token queue",
+			DefaultValueFactory = result => false
+		};
+
+		Option<bool> syn = new("--syn"){
+			Description = "Stop after syntax analysis and print program AST",
+			DefaultValueFactory = result => false
+		};
+
+		Option<bool> sem = new("--sem"){
+			Description = "Stop after semantic analysis and print optimized program AST",
+			DefaultValueFactory = result => false
+		};
+
+		Option<bool> gen = new("--gen"){
+			Description = "Stop after code generation and do not run executable",
+			DefaultValueFactory = result => false
+		};
 
 		RootCommand command = new("Skebob language compiler.");
 		command.Arguments.Add(iFile);
 		command.Options.Add(oFile);
 		command.Options.Add(stage);
+		command.Options.Add(lex);
+		command.Options.Add(syn);
+		command.Options.Add(sem);
+		command.Options.Add(gen);
 
 		command.SetAction(result => {
+			arguments.stage = result.GetValue(stage);
+			if(result.GetValue(lex)) arguments.stage = 0;
+			else if(result.GetValue(syn)) arguments.stage = 1;
+			else if(result.GetValue(sem)) arguments.stage = 2;
+			else if(result.GetValue(gen)) arguments.stage = 3;
+
 			arguments.inputFile = result.GetValue(iFile);
 			arguments.outputFile = result.GetValue(oFile);
-			arguments.stage = result.GetValue(stage);
 			arguments.valid = true;
 		});
 		ParseResult res = command.Parse(args);

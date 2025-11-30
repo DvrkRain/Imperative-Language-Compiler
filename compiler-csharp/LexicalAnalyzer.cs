@@ -115,7 +115,7 @@ namespace LexicalAnalyzer
                                 this.currentState = new StartState();
                                 this.currentStateCode = StateCode.Start;
 
-                                ErrorHandling.UnexpectedTokenException("LexicalAnalyzer", cursor);
+                                ErrorHandling.UnknownSymbol(cursor);
                                 break;
                         }
                     }
@@ -207,7 +207,7 @@ namespace LexicalAnalyzer
 				if(this.real)
 					return StateCode.DotOrRange;
 				else {
-					this.data += symbol;
+					this.data += ',';
 					this.real = true;
 					return StateCode.Numeric;
 				}
@@ -228,7 +228,7 @@ namespace LexicalAnalyzer
 			else if(int.TryParse(this.data, out int i))
 				tokenQueue.Enqueue(new Token(this.position, TokenCode.constant_value, i));
 			else
-				ErrorHandling.Add("LexicalAnalyser", this.position, "Cannot parse numeric token");
+				ErrorHandling.UnknownToken(this.position);
 		}
 	}
 
@@ -319,7 +319,7 @@ namespace LexicalAnalyzer
 		public override void AddToken(ref Queue<Token> tokenQueue) {
 			Token token;
 			if (single)
-                ErrorHandling.UnexpectedTokenException("LexicalAnalyzer", this.position);
+                ErrorHandling.UnknownToken(this.position);
 			else {
 				if(state)
 					token = new Token(this.position, TokenCode.relation_op, "==");

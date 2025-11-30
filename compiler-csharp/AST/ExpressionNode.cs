@@ -1,11 +1,6 @@
 using Data.Objects;
 using Data.ErrorHandling;
 
-using CodeGen;
-using System;
-using System.Reflection;
-using System.Reflection.Emit;
-
 namespace AST;
 public class ExpressionNode : Node {
 	protected bool _index;
@@ -15,15 +10,15 @@ public class ExpressionNode : Node {
 		this._index = enclosed;
 	}
 
-	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "ExpressionNode") Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()})");
-		base.PrintInfo(indent);
-	}
-
 	public Node Value() {
 		if(this.childs[0] is PrimaryNode)
 			return this.childs[0];
 		return this;
+	}
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"ExpressionNode(childs={this.childs.Count}, pos={this.position.ToString()}, type = {this._type}");
+		base.PrintInfo(indent);
 	}
 
 	private void ParseOperation(ref Queue<Token> tokenQueue, ref Stack<Token> operatorStack, Token token) {
@@ -88,7 +83,7 @@ public class ExpressionNode : Node {
 						token = operatorStack.Pop();
 						this.childs.Add(new OperationNode(token.Position(), token.Code(), (string)token.Value()));
 						if(operatorStack.Count() == 0) {
-							ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
+							ErrorHandling.Mismatched(this.GetType().Name, token.Position());
 							return;
 						}
 					}
@@ -111,13 +106,13 @@ public class ExpressionNode : Node {
 					tokenQueue.Dequeue();
 					while(operatorStack.Peek().Code() != TokenCode.left_bracket) {
 						if(operatorStack.Peek().Code() == TokenCode.left_parenthesis) {
-							ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
+							ErrorHandling.Mismatched(this.GetType().Name, token.Position());
 							return;
 						}
 						token = operatorStack.Pop();
 						this.childs.Add(new OperationNode(token.Position(), token.Code(), (string)token.Value()));
 						if(operatorStack.Count() == 0) {
-							ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
+							ErrorHandling.Mismatched(this.GetType().Name, token.Position(), "bracket");
 							return;
 						}
 					}
@@ -153,7 +148,7 @@ public class ExpressionNode : Node {
 		}
 		while(operatorStack.Count() > 0) {
 			if((token = operatorStack.Peek()).Code() == TokenCode.left_parenthesis) {
-				ErrorHandling.MismatchedParenthesis(this.GetType().Name, token.Position());
+				ErrorHandling.Mismatched(this.GetType().Name, token.Position());
 				return;
 			}
 			token = operatorStack.Pop();
@@ -215,22 +210,4 @@ public class ExpressionNode : Node {
 				break;
 		}
 	}
-    
-    public override void Generate(CodeGenContext ctx)
-    {
-        if (this.childs.Count == 1 && this.childs[0] is PrimaryNode)
-        {
-            // Simple primary expression
-            this.childs[0].Generate(ctx);
-        }
-        else
-        {
-            // Complex expression with operations
-            foreach (var child in this.childs)
-            {
-                child.Generate(ctx);
-            }
-        }
-    }
-
 }

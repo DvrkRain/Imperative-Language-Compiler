@@ -1,22 +1,15 @@
 using Data.Objects;
 using Data.ErrorHandling;
 using SemanticAnalyzer.SymbolTable;
-
-using CodeGen;
-using System;
-using System.Reflection;
 using System.Reflection.Emit;
-
-using SystemType = System.Type;
 
 namespace AST;
 public class AssignmentNode : Node {
-
 	public AssignmentNode(Position pos, FieldAccessNode identifier) : base(pos) =>
 		this.childs.Add(identifier);
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "AssignmentNode") Console.WriteLine($"AssignmentNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"AssignmentNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -31,7 +24,7 @@ public class AssignmentNode : Node {
 		// Semicolon
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.semicolon) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "semicolon");
 			return;
 		}
 		tokenQueue.Dequeue();

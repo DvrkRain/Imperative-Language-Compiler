@@ -3,7 +3,9 @@ using SemanticAnalyzer.SymbolTable;
 using System.Reflection;
 using System.Reflection.Emit;
 using CodeGen;
+
 using Type = SemanticAnalyzer.SymbolTable.Type;
+
 namespace AST;
 public class OperationNode : Node {
 	protected TokenCode op_code;
@@ -26,7 +28,7 @@ public class OperationNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "OperationNode") Console.WriteLine($"OperationNode(childs={this.childs.Count}, operation_code={this.op_code}, operation={this._operation}, pos={this.position.ToString()}");
+		Console.WriteLine($"OperationNode(childs={this.childs.Count}, operation_code={this.op_code}, operation={this._operation}, pos={this.position.ToString()}, type={this._type}");
 		base.PrintInfo(indent);
 	}
 

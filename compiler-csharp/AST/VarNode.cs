@@ -1,12 +1,8 @@
 using Data.ErrorHandling;
 using Data.Objects;
 using SemanticAnalyzer.SymbolTable;
-
-using CodeGen;
-using System;
 using System.Reflection;
 using System.Reflection.Emit;
-
 using SystemType = System.Type;
 
 namespace AST;
@@ -19,7 +15,7 @@ public class VarNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "VarNode") Console.WriteLine($"VarNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}), type={this._type}, explicit={this.explicit_type})");
+		Console.WriteLine($"VarNode(childs={this.childs.Count}, pos={this.position.ToString()}, type={this._type}, explicit={this.explicit_type})");
 		base.PrintInfo(indent);
 	}
 
@@ -28,7 +24,7 @@ public class VarNode : Node {
 		// Search for identifier
 		Token token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.identifier) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "identifier");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -45,7 +41,7 @@ public class VarNode : Node {
 			if(token.Code() == TokenCode.builtin_type || token.Code() == TokenCode.identifier) {
 				this._type = (string)token.Value();
 			} else {
-				HandleUnexpectedToken(ref tokenQueue, token.Position());
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "type identifier");
 				return;
 			}
 			tokenQueue.Dequeue();
@@ -64,14 +60,14 @@ public class VarNode : Node {
 			this.childs.Add(expr);
 		} else if (!flag) {
 			tokenQueue.Dequeue();
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "initialization without explicit type");
 			return;
 		}
 
 		// Check if declaration ends with ';'
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.semicolon) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "semicolon");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -129,7 +125,7 @@ public class VarNode : Node {
 		SymbolTable.DeclareEntry(new Variable(identifier.Name(), this._type, val));
     }
     
-    public override void Generate(CodeGenContext ctx) {
+    public override void Generate(CodeGen.CodeGenContext ctx) {
         string varName = ((PrimaryNode)this.childs[0]).Name();
         SystemType varType = ctx.ResolveType(this._type);
         

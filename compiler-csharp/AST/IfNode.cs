@@ -1,9 +1,5 @@
 using Data.ErrorHandling;
 using Data.Objects;
-
-using CodeGen;
-using System;
-using System.Reflection;
 using System.Reflection.Emit;
 
 namespace AST;
@@ -11,7 +7,7 @@ public class IfNode : Node {
 	public IfNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		if (this.GetType().Name == "IfNode") Console.WriteLine($"IfNode(childs={this.childs.Count}, pos=({this.position.Row()}, {this.position.Col()}))");
+		Console.WriteLine($"IfNode(childs={this.childs.Count}, pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
@@ -26,7 +22,7 @@ public class IfNode : Node {
 		// 'then' keyword
 		token = tokenQueue.Peek();
 		if(token.Code() != TokenCode.then_statement) {
-			HandleUnexpectedToken(ref tokenQueue, token.Position());
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "then branch");
 			return;
 		}
 		tokenQueue.Dequeue();
@@ -71,8 +67,8 @@ public class IfNode : Node {
         }
     }
     
-    public override void Generate(CodeGenContext ctx)
-    {
+
+    public override void Generate(CodeGen.CodeGenContext ctx) {
         Label elseLabel = ctx.CurrentIL.DefineLabel();
         Label endLabel = ctx.CurrentIL.DefineLabel();
     
@@ -86,8 +82,7 @@ public class IfNode : Node {
             ctx.CurrentIL.Emit(OpCodes.Br, endLabel);
     
         // Else branch (optional)
-        if (this.childs.Count > 2)
-        {
+        if (this.childs.Count > 2) {
             ctx.CurrentIL.MarkLabel(elseLabel);
             this.childs[2].Generate(ctx);
         }
