@@ -60,8 +60,12 @@ namespace LexicalAnalyzer
 					nextStateCode = StateCode.DivOrNotEqual;
 
 				} else if (nextChar == '.'
-						&& this.currentStateCode != StateCode.DotOrRange
-						&& this.currentStateCode != StateCode.Numeric) {
+						&& this.currentStateCode == StateCode.Numeric
+							&& !((NumeralState)this.currentState).real) {
+					nextStateCode = this.currentState.ProccessSymbol(nextChar);
+
+				} else if (nextChar == '.'
+						&& this.currentStateCode != StateCode.DotOrRange) {
 					nextStateCode = StateCode.DotOrRange;
 
 				} else
@@ -194,7 +198,7 @@ namespace LexicalAnalyzer
 	}
 
 	public class NumeralState : StoringState {
-		protected bool real = false;
+		public bool real = false;
 		public NumeralState(Position pos, char symbol) : base(pos) => this.data += symbol;
 
 		public override StateCode ProccessSymbol(char symbol) {
