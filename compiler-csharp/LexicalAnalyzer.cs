@@ -59,13 +59,18 @@ namespace LexicalAnalyzer
 						this.currentState.AddToken(ref TokenStream);
 					nextStateCode = StateCode.DivOrNotEqual;
 
-				} else if (nextChar == '.'
-						&& this.currentStateCode == StateCode.Numeric
-							&& !((NumeralState)this.currentState).real) {
-					nextStateCode = this.currentState.ProccessSymbol(nextChar);
+				} else if (nextChar == '.' && FileReader.Peek() == '.') {
+					this.currentState.AddToken(ref TokenStream);
+					FileReader.Get();
+					DotOrRangeState rg = new(cursor, false);
+					rg.AddToken(ref TokenStream);
+					nextStateCode = StateCode.Start;
+					this.currentState = new StartState();
+					continue;
 
 				} else if (nextChar == '.'
-						&& this.currentStateCode != StateCode.DotOrRange) {
+						&& this.currentStateCode != StateCode.DotOrRange
+						&& this.currentStateCode != StateCode.Numeric) {
 					nextStateCode = StateCode.DotOrRange;
 
 				} else
@@ -391,7 +396,8 @@ namespace LexicalAnalyzer
 	}
 
 	public class DotOrRangeState : ChoosingState {
-		public DotOrRangeState(Position pos) : base(pos) { }
+		public DotOrRangeState(Position pos, bool sing = true) : base(pos) =>
+			this.single = sing;
 
 		public override StateCode ProccessSymbol(char symbol) {
 			if (symbol == '.') {
