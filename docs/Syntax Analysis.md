@@ -171,6 +171,25 @@ end
                     - Creates `OperationNode("+")` with two operands
 
 **Result:** Fully constructed AST tree with all nested nodes.
+```shell
+ProgramNode(childs=2, pos=(0,0), main=True)
+ +--VarNode(childs=2, pos=(1,1), type=integer, explicit=True)
+ |  +--PrimaryNode(childs=0, pos=(1,5), value=x)
+ |  L--ExpressionNode(pos=(1,17), type = void)
+ |     L--PrimaryNode(childs=0, pos=(1,20), value=5)
+ L--RoutineNode(childs=3, pos=(2,1)
+    +--PrimaryNode(childs=0, pos=(2,9), value=foo)
+    +--ParameterNode(pos=(2,13))
+    |  +--PrimaryNode(childs=0, pos=(2,13), value=a)
+    |  L--PrimaryNode(childs=0, pos=(2,17), value=integer)
+    L--ProgramNode(childs=1, pos=(3,5), main=False)
+       L--ReturnNode(childs=1, pos=(3,5))
+          L--ExpressionNode(pos=(3,12), type = void)
+             L--OperationNode(childs=2, operation_code=term_op, operation=+, pos=(3,14), type=void)
+                +--PrimaryNode(childs=0, pos=(3,16), value=x)
+                L--PrimaryNode(childs=0, pos=(3,12), value=a)
+
+```
 
 ## Key Features
 
