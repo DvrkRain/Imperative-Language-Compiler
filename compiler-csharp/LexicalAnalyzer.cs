@@ -60,13 +60,7 @@ namespace LexicalAnalyzer
 					nextStateCode = StateCode.DivOrNotEqual;
 
 				} else if (nextChar == '.' && FileReader.Peek() == '.') {
-					this.currentState.AddToken(ref TokenStream);
-					FileReader.Get();
-					DotOrRangeState rg = new(cursor, false);
-					rg.AddToken(ref TokenStream);
-					nextStateCode = StateCode.Start;
-					this.currentState = new StartState();
-					continue;
+					nextStateCode = StateCode.DotOrRange;
 
 				} else if (nextChar == '.'
 						&& this.currentStateCode != StateCode.DotOrRange
