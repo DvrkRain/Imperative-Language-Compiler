@@ -17,10 +17,10 @@ Compiler for Imperative Language written on C#
 
 ## Features
 
-- Lexical Analysis
-- Syntax Analysis
-- Semantic Analysis
-- CodeGen into IL code (in progress)
+- Lexical Analysis ([docs/Lexical-Analysis](./docs/Lexical-Analysis.md))
+- Syntax Analysis ([docs/Syntax-Analysis](./docs/Syntax-Analysis.md))
+- Semantic Analysis ([docs/Semantic-Analysis](./docs/Semantic-Analysis.md))
+- CodeGen into IL code ([docs/Code-Generation](./docs/CodeGen.md))
 
 ## Expected language examples
 
