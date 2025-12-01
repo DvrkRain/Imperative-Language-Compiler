@@ -8,7 +8,7 @@ public class PrintNode : Node {
 	public PrintNode(Position pos) : base(pos) { }
 	
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"PrintNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		Console.WriteLine($"PrintNode(pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 

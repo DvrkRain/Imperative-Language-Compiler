@@ -8,7 +8,7 @@ public class ReturnNode : Node {
     public ReturnNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"ReturnNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		Console.WriteLine($"ReturnNode(pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 
