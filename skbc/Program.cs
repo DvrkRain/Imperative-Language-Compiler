@@ -1,8 +1,6 @@
 ﻿using System.Reflection;
 using System.Runtime.Loader;
-using Data.Objects;
-using Data.IO;
-using Data.ErrorHandling;
+using Compiler.Data;
 using Compiler.AST;
 
 #pragma warning disable
@@ -13,9 +11,6 @@ class Program {
 		Arguments arguments = CLIParser.ParseArgs(args);
 		// Console.WriteLine(arguments.ToString());
 		if(!arguments.valid) return;
-
-		FileReader.SetFile(arguments.inputFile);
-		Console.WriteLine("Filename: " + FileReader.filename);
 
 		// Lexic analysis
 		ErrorHandling.ChangeStage("Lexical analysis");

@@ -1,5 +1,5 @@
 using System.Text;
-namespace Data.IO;
+namespace Compiler.Data;
 public static class FileReader {
 	private static string _filename;
 	private static StreamReader _fileStream;

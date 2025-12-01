@@ -1,4 +1,4 @@
-using Data.Objects;
+using Compiler.Data;
 
 namespace Compiler.AST;
 public class PrimaryNode : Node {

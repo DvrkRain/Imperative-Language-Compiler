@@ -1,6 +1,4 @@
-﻿using Data.Objects;
-
-namespace Data.ErrorHandling;
+﻿namespace Compiler.Data;
 public static class ErrorHandling {
 	private static string _stage = "Lexic analysis";
     private static List<string> _errorList = new();

@@ -1,8 +1,6 @@
-using Data.Objects; using Data.ErrorHandling;
+using Compiler.Data;
 using System.Reflection;
 using System.Reflection.Emit;
-
-using Type = Compiler.Type;
 
 namespace Compiler.AST;
 public class OperationNode : Node {

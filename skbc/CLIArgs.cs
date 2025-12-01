@@ -1,6 +1,7 @@
 using System.CommandLine;
-namespace Compiler;
+using Compiler.Data;
 
+namespace Compiler;
 public struct Arguments {
 	public string inputFile;
 	public string outputFile;
@@ -73,8 +74,15 @@ public static class CLIParser {
 			else if(result.GetValue(sem)) arguments.stage = 2;
 			else if(result.GetValue(gen)) arguments.stage = 3;
 
-			arguments.inputFile = result.GetValue(iFile);
-			arguments.outputFile = result.GetValue(oFile);
+			string? name = result.GetValue(iFile);
+			if(name != null)
+				arguments.inputFile = name;
+
+			name = result.GetValue(oFile);
+			if(name != null)
+				arguments.outputFile = name;
+
+			FileReader.SetFile(arguments.inputFile);
 			arguments.valid = true;
 		});
 		ParseResult res = command.Parse(args);

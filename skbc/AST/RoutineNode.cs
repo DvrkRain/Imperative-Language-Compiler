@@ -1,8 +1,6 @@
-using Data.Objects;
-using Data.ErrorHandling;
+using Compiler.Data;
 using System.Reflection;
 using System.Reflection.Emit;
-using SystemType = System.Type;
 
 namespace Compiler.AST;
 public class RoutineNode : Node {
@@ -228,10 +226,10 @@ public class RoutineNode : Node {
     public override void Generate(CodeGen.CodeGenContext ctx) {
 		string routineName = (string)((PrimaryNode)this.childs[0]).value;
 
-		var paramTypes = new List<SystemType>();
+		var paramTypes = new List<System.Type>();
 		var paramNames = new List<string>();
 		int idx = 1;
-		SystemType returnType = ctx.ResolveType(this._type);
+		System.Type returnType = ctx.ResolveType(this._type);
 
 		// Collect parameters
 		while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
@@ -275,7 +273,7 @@ public class RoutineNode : Node {
 			var prevIL = ctx.CurrentIL;
 			var prevLocals = new Dictionary<string, System.Reflection.Emit.LocalBuilder>(ctx.LocalVariables);
 			var prevParamIndices = new Dictionary<string, int>(ctx.ParameterIndices);
-			var prevParamTypes = new Dictionary<string, SystemType>(ctx.ParameterTypes);
+			var prevParamTypes = new Dictionary<string, System.Type>(ctx.ParameterTypes);
 		
 			returnType = ctx.ResolveType(this._type);
 		

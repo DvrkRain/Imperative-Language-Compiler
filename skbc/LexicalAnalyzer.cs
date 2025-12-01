@@ -1,11 +1,8 @@
-using Data.ErrorHandling;
-using Data.Objects;
-using Data.IO;
+using Compiler.Data;
 
 namespace Compiler;
 // Enum is needed to easy check state switching
-public enum StateCode
-{
+public enum StateCode {
 	Start,
 	Identifier,
 	Numeric,
@@ -18,8 +15,7 @@ public enum StateCode
 	Error
 }
 
-public class Lexer
-{
+public class Lexer {
 	private State currentState;
 	private StateCode currentStateCode;
 
@@ -28,8 +24,7 @@ public class Lexer
 		this.currentStateCode = StateCode.Start;
 	}
 
-	public void ParseFile(ref Queue<Token> TokenStream)
-	{
+	public void ParseFile(ref Queue<Token> TokenStream) {
 		Position cursor = new Position(1,1);
 		while(!FileReader.Empty()) {
 			char nextChar = FileReader.Get();

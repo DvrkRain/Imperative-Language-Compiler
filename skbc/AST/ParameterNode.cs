@@ -1,5 +1,4 @@
-using Data.ErrorHandling;
-using Data.Objects;
+using Compiler.Data;
 
 namespace Compiler.AST;
 public class ParameterNode : Node {

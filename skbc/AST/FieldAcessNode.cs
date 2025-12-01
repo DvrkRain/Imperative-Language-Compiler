@@ -1,17 +1,13 @@
-using Data.Objects;
-using Data.ErrorHandling;
+using Compiler.Data;
 using System.Reflection;
 using System.Reflection.Emit;
-
-using Type = Compiler.Type;
-using SystemType = System.Type;
 
 namespace Compiler.AST;
 public class FieldAccessNode : Node {
 	protected object value;
 	public LocalBuilder variable;
 	public FieldInfo fieldInfo;
-	public SystemType elemInfo;
+	public System.Type elemInfo;
 
 	public FieldAccessNode(Position pos) : base(pos) => this.value = "";
 	public FieldAccessNode(Position pos, Node init) : this(pos) => this.childs.Add(init);

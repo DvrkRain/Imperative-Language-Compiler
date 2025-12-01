@@ -1,7 +1,5 @@
-using Data.ErrorHandling;
-using Data.Objects;
+using Compiler.Data;
 using System.Reflection.Emit;
-
 
 namespace Compiler.AST;
 public class WhileNode : Node {

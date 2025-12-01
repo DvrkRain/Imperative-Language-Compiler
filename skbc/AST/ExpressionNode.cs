@@ -1,5 +1,4 @@
-using Data.Objects;
-using Data.ErrorHandling;
+using Compiler.Data;
 
 namespace Compiler.AST;
 public class ExpressionNode : Node {

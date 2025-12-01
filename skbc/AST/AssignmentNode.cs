@@ -1,5 +1,4 @@
-using Data.Objects;
-using Data.ErrorHandling;
+using Compiler.Data;
 using System.Reflection.Emit;
 
 namespace Compiler.AST;
