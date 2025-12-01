@@ -16,7 +16,7 @@ public class PrimaryNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"PrimaryNode(childs={this.childs.Count}, pos={this.position.ToString()}, value={this.value})");
+		Console.WriteLine($"PrimaryNode(pos={this.position.ToString()}, value={this.value})");
 		base.PrintInfo(indent);
 	}
 

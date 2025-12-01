@@ -13,7 +13,7 @@ public class ProgramNode : Node {
     }
         
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"ProgramNode(childs={this.childs.Count}, pos={this.position.ToString()}, main={this.main})");
+		Console.WriteLine($"ProgramNode(pos={this.position.ToString()}, main={this.main})");
 		base.PrintInfo(indent);
 	}
 

@@ -26,7 +26,7 @@ public class OperationNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"OperationNode(childs={this.childs.Count}, operation_code={this.op_code}, operation={this._operation}, pos={this.position.ToString()}, type={this._type})");
+		Console.WriteLine($"OperationNode(operation_code={this.op_code}, operation={this._operation}, pos={this.position.ToString()}, type={this._type})");
 		base.PrintInfo(indent);
 	}
 

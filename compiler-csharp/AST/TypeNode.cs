@@ -10,7 +10,7 @@ public class TypeNode : Node {
 	public TypeNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"TypeNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		Console.WriteLine($"TypeNode(pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 

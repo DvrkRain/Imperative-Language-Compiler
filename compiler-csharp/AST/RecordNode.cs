@@ -6,7 +6,7 @@ public class RecordNode : Node {
 	public RecordNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"RecordNode(childs={this.childs.Count}, pos={this.position.ToString()})");
+		Console.WriteLine($"RecordNode(pos={this.position.ToString()})");
 		base.PrintInfo(indent);
 	}
 

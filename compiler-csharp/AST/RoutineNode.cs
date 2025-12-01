@@ -11,7 +11,7 @@ public class RoutineNode : Node {
 	public RoutineNode(Position pos) : base(pos) { }
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"RoutineNode(childs={this.childs.Count}, pos={this.position.ToString()}");
+		Console.WriteLine($"RoutineNode(pos={this.position.ToString()}");
 		base.PrintInfo(indent);
 	}
 

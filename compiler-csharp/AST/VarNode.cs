@@ -15,7 +15,7 @@ public class VarNode : Node {
 	}
 
 	public override void PrintInfo(string indent) {
-		Console.WriteLine($"VarNode(childs={this.childs.Count}, pos={this.position.ToString()}, type={this._type}, explicit={this.explicit_type})");
+		Console.WriteLine($"VarNode(pos={this.position.ToString()}, type={this._type}, explicit={this.explicit_type})");
 		base.PrintInfo(indent);
 	}
 
