@@ -48,36 +48,26 @@ public class PrimaryNode : Node {
 								&& vr.Value is not Scope)
 								this.value = vr.Value;
 							break;
-
-						default:
-							break;
 					}
-				// } catch (OverflowException) {
-				// 	ErrorHandling.Add("PrimaryNode", this.position, "Int overflow");
-				// }
 				break;
 
 			case Variable var:
 				this._type = var.Type;
 				if(SymbolTable.IsInsideType(ScopeType.Loop)) return;
-				if(var.Value is not null)
-					this.value = var.Value;
-				else this.value = "unknown";
+				this.value = var.Value ?? "unknown";
 				break;
 
-			case int val:
+			case int:
 				this._type = "integer";
 				break;
 
-			case float val:
+			case float:
 				this._type = "real";
 				break;
 
-			case bool val:
+			case bool:
 				this._type = "boolean";
 				break;
-
-			default: break;
 		}
 	}
 
@@ -104,20 +94,8 @@ public class PrimaryNode : Node {
                     ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldloc, ctx.LocalVariables[varName]);
                 } else if (ctx.ParameterIndices.ContainsKey(varName)) {
 		            // Load parameter (argument)
-		            // TODO: Fix argument load
 		            int argIndex = ctx.ParameterIndices[varName];
-		            switch (argIndex) {
-			            case 0: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_0); break;
-			            case 1: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_1); break;
-			            case 2: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_2); break;
-			            case 3: ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_3); break;
-			            default:
-				            if (argIndex <= 255)
-					            ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg_S, (byte)argIndex);
-				            else
-					            ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg, argIndex);
-				            break;
-		            }
+		            ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldarg, argIndex);
 	            } else if (ctx.GlobalFields.ContainsKey(varName)) {
                     // Load global field
                     ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ldsfld, ctx.GlobalFields[varName]);

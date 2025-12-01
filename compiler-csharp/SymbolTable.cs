@@ -2,7 +2,6 @@ namespace Compiler;
 public enum ScopeType {
     Global,
     Loop,
-    Branch,
     Routine,
     Record
 }
