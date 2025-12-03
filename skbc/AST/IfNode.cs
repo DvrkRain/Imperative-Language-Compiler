@@ -77,7 +77,7 @@ public class IfNode : Node {
     
         // Then branch
         this.childs[1].Generate(ctx);
-        if (this.childs.Count > 2)
+        if (this.childs.Count > 2 && !((ProgramNode)this.childs[1]).returned)
             ctx.CurrentIL.Emit(OpCodes.Br, endLabel);
     
         // Else branch (optional)

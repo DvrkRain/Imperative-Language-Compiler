@@ -29,9 +29,21 @@ class Program {
 			DefaultValueFactory = result => "main.dll",
 		};
 
+		Option<int> stage = new("-s") {
+			HelpName = "stage number",
+			Description = "Stage to stop after (0-lexic, 1-syntax, 2-semantic, 3-codegen)",
+			Recursive = true,
+			DefaultValueFactory = result => {
+				if(result.Tokens.Count == 0) return 3;
+				if(int.TryParse(result.Tokens.Single().Value, out int stage)) return stage;
+				return 3;
+			},
+		};
+
 		Command build = new("build", "Build .dll assembly") {
 			oFile,
 			iFile,
+			stage,
 		};
 
 		// run
@@ -50,21 +62,9 @@ class Program {
 		};
 
 		// general
-		Option<int> stage = new("-s") {
-			HelpName = "stage number",
-			Description = "Stage to stop after (0-lexic, 1-syntax, 2-semantic, 3-codegen)",
-			Recursive = true,
-			DefaultValueFactory = result => {
-				if(result.Tokens.Count == 0) return 3;
-				if(int.TryParse(result.Tokens.Single().Value, out int stage)) return stage;
-				return 3;
-			},
-		};
-
 		RootCommand command = new("Skebob language compiler.");
 		command.Subcommands.Add(build);
 		command.Subcommands.Add(run);
-		command.Options.Add(stage);
 
 		build.SetAction(result => {
 			arguments.stage = result.GetValue(stage);

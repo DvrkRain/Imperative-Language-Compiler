@@ -5,6 +5,7 @@ using System.Reflection.Emit;
 namespace Compiler.AST;
 public class ProgramNode : Node {
 	public bool main;
+	public bool returned;
 
     public ProgramNode(Position pos, string returnType = "void", bool main = false) : base(pos) {
         this._type = returnType;
@@ -159,6 +160,7 @@ public class ProgramNode : Node {
             switch (this.childs[i]) {
                 case ReturnNode:
                     if (SymbolTable.IsInsideType(ScopeType.Routine)) lastIndex = i;
+					this.returned = true;
                     break;
                 case BreakNode or ContinueNode:
                     if (SymbolTable.IsInsideType(ScopeType.Loop)) lastIndex = i;

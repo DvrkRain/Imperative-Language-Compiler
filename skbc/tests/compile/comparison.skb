@@ -1,8 +1,9 @@
-﻿var a : integer is 5;
-var b : integer is 3;
-print a < b;
-print a <= b;
-print a == b;
-print a /= b;
-print a > b;
-print a >= b;
+﻿routine comparisons(a:integer, b:integer) is
+	print a < b;
+	print a <= b;
+	print a == b;
+	print a /= b;
+	print a > b;
+	print a >= b;
+end
+comparisons(5,3);
