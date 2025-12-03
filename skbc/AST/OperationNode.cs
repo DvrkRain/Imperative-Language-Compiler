@@ -578,8 +578,10 @@ public class OperationNode : Node {
 
 			// Relation operation
 			case "/=":
-				ctx.CurrentIL.Emit(OpCodes.Ceq);
-				ctx.CurrentIL.Emit(OpCodes.Neg);
+				ctx.CurrentIL.Emit(OpCodes.Clt);
+				base.Generate(ctx);
+				ctx.CurrentIL.Emit(OpCodes.Cgt);
+				ctx.CurrentIL.Emit(OpCodes.Or);
 				break;
 
 			case "<":
@@ -587,8 +589,10 @@ public class OperationNode : Node {
 				break;
 
 			case "<=":
-				ctx.CurrentIL.Emit(OpCodes.Cgt);
-				ctx.CurrentIL.Emit(OpCodes.Neg);
+				ctx.CurrentIL.Emit(OpCodes.Clt);
+				base.Generate(ctx);
+				ctx.CurrentIL.Emit(OpCodes.Ceq);
+				ctx.CurrentIL.Emit(OpCodes.Or);
 				break;
 
 			case "==":
@@ -596,8 +600,10 @@ public class OperationNode : Node {
 				break;
 
 			case ">=":
-				ctx.CurrentIL.Emit(OpCodes.Clt);
-				ctx.CurrentIL.Emit(OpCodes.Neg);
+				ctx.CurrentIL.Emit(OpCodes.Cgt);
+				base.Generate(ctx);
+				ctx.CurrentIL.Emit(OpCodes.Ceq);
+				ctx.CurrentIL.Emit(OpCodes.Or);
 				break;
 
 			case ">":
@@ -606,7 +612,8 @@ public class OperationNode : Node {
 
 			// Logic operation
 			case "not":
-				ctx.CurrentIL.Emit(OpCodes.Neg);
+				ctx.CurrentIL.Emit(OpCodes.Ldc_I4_0);
+				ctx.CurrentIL.Emit(OpCodes.Ceq);
 				break;
 
 			case "and":
