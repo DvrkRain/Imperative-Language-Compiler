@@ -1,14 +1,127 @@
 ﻿using System.Reflection;
 using System.Runtime.Loader;
+using System.CommandLine;
 using Compiler.Data;
 using Compiler.AST;
 
-#pragma warning disable
-
 namespace Compiler;
+public struct Arguments {
+	public string sourceFile;
+	public string assemblyFile;
+	public int stage;
+	public bool comOrRun;
+	public bool valid;
+
+	public override string ToString() => $"input file: {this.sourceFile}, output file: {this.assemblyFile}, stage code: {this.stage}.";
+}
+
 class Program {
 	static void Main(string[] args) {
-		Arguments arguments = CLIParser.ParseArgs(args);
+		Arguments arguments = new();
+		arguments.valid = false;
+
+		// build
+		Argument<string> iFile = new("filepath"){
+			Description = "Name of source code file"
+		};
+
+		Option<string> oFile = new("-o") {
+			HelpName = "filepath",
+			Description = "Name of resulting file",
+			DefaultValueFactory = result => "main.dll",
+		};
+
+		Command build = new("build", "Build .dll assembly") {
+			oFile,
+			iFile,
+		};
+
+		// run
+		Argument<string> aFile = new("filepath"){
+			Description = "Name of assembly file"
+		};
+
+		Option<string> sFile = new("--source") {
+			HelpName = "filepath",
+			Description = "Name of source code file",
+		};
+
+		Command run = new("run", "Run builded .dll assembly") {
+			aFile,
+			sFile
+		};
+
+		// general
+		Option<int> stage = new("-s") {
+			HelpName = "stage number",
+			Description = "Stage to stop after (0-lexic, 1-syntax, 2-semantic, 3-codegen)",
+			Recursive = true,
+			DefaultValueFactory = result => {
+				if(result.Tokens.Count == 0) return 3;
+				if(int.TryParse(result.Tokens.Single().Value, out int stage)) return stage;
+				return 3;
+			},
+		};
+
+		RootCommand command = new("Skebob language compiler.");
+		command.Subcommands.Add(build);
+		command.Subcommands.Add(run);
+		command.Options.Add(stage);
+
+		build.SetAction(result => {
+			arguments.stage = result.GetValue(stage);
+
+			string? name = result.GetValue(oFile);
+			if(name != null)
+				arguments.assemblyFile = name;
+
+			name = result.GetValue(iFile);
+			if(name != null) {
+				arguments.sourceFile = name;
+				FileReader.SetFile(name);
+			}
+			arguments.valid = true;
+			
+			Compile(arguments);
+		});
+
+		run.SetAction(result => {
+			arguments.stage = result.GetValue(stage);
+
+			string? name = result.GetValue(aFile);
+			if(name != null)
+				arguments.assemblyFile = name;
+
+			name = result.GetValue(sFile);
+			if(name != null) {
+				arguments.sourceFile = name;
+				FileReader.SetFile(name);
+			}
+			arguments.valid = true;
+
+			if(!File.Exists(arguments.assemblyFile)) {
+				if(arguments.sourceFile != null)
+					Compile(arguments);
+				else {
+					Console.WriteLine("If source file is not present, then --source option should be set for run command");
+					Environment.Exit(1);
+				}
+			}
+			
+			Run(arguments);
+		});
+
+		ParseResult res = command.Parse(args);
+
+		if(res.Errors.Count != 0) {
+			foreach(var err in res.Errors)
+				Console.Error.WriteLine(err.Message);
+			Environment.Exit(1);
+		}
+		res.Invoke();
+	}
+
+	static void Compile(Arguments arguments) {
 		// Console.WriteLine(arguments.ToString());
 		if(!arguments.valid) return;
 
@@ -55,20 +168,19 @@ class Program {
 		
 		// Code generation
 		ErrorHandling.ChangeStage("Code generation");
-		string outputFileName = arguments.outputFile;
+		string outputFileName = arguments.assemblyFile;
 		var codeGen = new CodeGen.CodeGenContext("CompiledProgram");
 		AST.Generate(codeGen);
 		codeGen.Save(outputFileName);
-		ErrorHandling.Checkpoint();
+	}
 
-		Console.WriteLine($"Code generation successful. Output: {outputFileName}");
-		var asmPath = Path.GetFullPath(outputFileName);
+	static void Run(Arguments arguments) {
+		var asmPath = Path.GetFullPath(arguments.assemblyFile);
 		var asm = AssemblyLoadContext.Default.LoadFromAssemblyPath(asmPath);
 		var programType = asm.GetType("Program");
 		var mainMethod = programType.GetMethod("_Main",
 			BindingFlags.Public | BindingFlags.Static);
 		
-		Console.WriteLine($"Running Program.Main from {outputFileName}:");
 		mainMethod.Invoke(null, null);
 	}
 }
