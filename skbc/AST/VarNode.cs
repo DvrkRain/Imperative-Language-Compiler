@@ -116,6 +116,10 @@ public class VarNode : Node {
 
 		// Expression (if present)
 		if(this.childs.Count() > 1) {
+			if (this.childs[1].Type() != this._type && this.explicit_type) {
+				ErrorHandling.Add("VarNode", this.position, $"Variable type match failed: expected {this._type}, got {this.childs[1].Type()}");
+				return;
+			}
 			this.childs[1] = ((ExpressionNode)this.childs[1]).Value();
 			if(!this.explicit_type) this._type = this.childs[1].Type();
 			if(this.childs[1] is PrimaryNode prime)
