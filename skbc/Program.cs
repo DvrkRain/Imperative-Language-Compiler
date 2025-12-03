@@ -83,8 +83,7 @@ class Program {
 		});
 
 		run.SetAction(result => {
-			arguments.stage = result.GetValue(stage);
-
+			arguments.stage = 3;
 			string? name = result.GetValue(aFile);
 			if(name != null)
 				arguments.assemblyFile = name;
