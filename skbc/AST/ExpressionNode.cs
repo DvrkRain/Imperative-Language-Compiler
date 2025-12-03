@@ -10,8 +10,10 @@ public class ExpressionNode : Node {
 	}
 
 	public Node Value() {
-		if(this.childs[0] is PrimaryNode)
-			return this.childs[0];
+		if(this.childs[0] is PrimaryNode prime) {
+			prime.Type(this._type);
+			return prime;
+		}
 		return this;
 	}
 
