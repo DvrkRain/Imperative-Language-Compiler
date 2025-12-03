@@ -7,8 +7,10 @@ public static class FileReader {
 
 	public static void SetFile(string filepath) {
 		// Check if file exists
-		if (!File.Exists(filepath))
-			throw new FileNotFoundException("File not found: " + filepath);
+		if (!File.Exists(filepath)) {
+			Console.WriteLine("File not found: " + filepath);
+			Environment.Exit(1);
+		}
 
 		// Remember filename
 		_filename = Path.GetFileName(filepath);

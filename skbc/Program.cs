@@ -10,7 +10,6 @@ public struct Arguments {
 	public string assemblyFile;
 	public int stage;
 	public bool comOrRun;
-	public bool valid;
 
 	public override string ToString() => $"input file: {this.sourceFile}, output file: {this.assemblyFile}, stage code: {this.stage}.";
 }
@@ -18,7 +17,6 @@ public struct Arguments {
 class Program {
 	static void Main(string[] args) {
 		Arguments arguments = new();
-		arguments.valid = false;
 
 		// build
 		Argument<string> iFile = new("filepath"){
@@ -80,7 +78,6 @@ class Program {
 				arguments.sourceFile = name;
 				FileReader.SetFile(name);
 			}
-			arguments.valid = true;
 			
 			Compile(arguments);
 		});
@@ -96,16 +93,12 @@ class Program {
 			if(name != null) {
 				arguments.sourceFile = name;
 				FileReader.SetFile(name);
+				Compile(arguments);
 			}
-			arguments.valid = true;
 
 			if(!File.Exists(arguments.assemblyFile)) {
-				if(arguments.sourceFile != null)
-					Compile(arguments);
-				else {
-					Console.WriteLine("If source file is not present, then --source option should be set for run command");
-					Environment.Exit(1);
-				}
+				Console.WriteLine("If source file is not present, then --source option should be set for run command");
+				Environment.Exit(1);
 			}
 			
 			Run(arguments);
@@ -123,7 +116,6 @@ class Program {
 
 	static void Compile(Arguments arguments) {
 		// Console.WriteLine(arguments.ToString());
-		if(!arguments.valid) return;
 
 		// Lexic analysis
 		ErrorHandling.ChangeStage("Lexical analysis");
