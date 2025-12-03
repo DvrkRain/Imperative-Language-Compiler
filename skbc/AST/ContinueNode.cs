@@ -1,0 +1,39 @@
+﻿using Compiler.Data;
+using System.Reflection.Emit;
+
+namespace Compiler.AST;
+public class ContinueNode : Node {
+    public ContinueNode(Position pos) : base(pos) {}
+
+    public override void PrintInfo(string indent) {
+        Console.WriteLine($"ContinueNode(pos={this.position.ToString()})");
+        base.PrintInfo(indent);
+    }
+
+
+    public override void Parse(ref Queue<Token> tokenQueue) {
+        // After continue there should be only ';'
+        Token token = tokenQueue.Peek();
+
+        if (token.Code() != TokenCode.semicolon) {
+            HandleUnexpectedToken(ref tokenQueue, this.position, token.Code(), "semicolon");
+            return;
+        }
+        
+        tokenQueue.Dequeue();
+    }
+
+
+    public override void Verify() {
+        if (!SymbolTable.IsInsideType(ScopeType.Loop)) {
+            ErrorHandling.ContinueOutsideCycle("Continue", this.position);
+            return;
+        }
+
+        base.Verify();
+    }
+    
+
+    public override void Generate(CodeGen.CodeGenContext ctx) =>
+        ctx.CurrentIL.Emit(OpCodes.Br, ctx.CurrentLoop.ContinueLabel);
+}

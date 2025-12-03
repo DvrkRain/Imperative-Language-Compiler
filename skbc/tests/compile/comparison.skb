@@ -1,0 +1,9 @@
+﻿routine comparisons(a:integer, b:integer) is
+	print a < b;
+	print a <= b;
+	print a == b;
+	print a /= b;
+	print a > b;
+	print a >= b;
+end
+comparisons(5,3);

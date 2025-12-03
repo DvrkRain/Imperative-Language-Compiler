@@ -1,0 +1,321 @@
+using Compiler.Data;
+using System.Reflection;
+using System.Reflection.Emit;
+
+namespace Compiler.AST;
+public class RoutineNode : Node {
+	bool has_body = false;
+	bool implementation = false;
+	public RoutineNode(Position pos) : base(pos) { }
+
+	public override void PrintInfo(string indent) {
+		Console.WriteLine($"RoutineNode(pos={this.position.ToString()}");
+		base.PrintInfo(indent);
+	}
+
+
+	public override void Parse(ref Queue<Token> tokenQueue) {
+		// Routine identifier
+		Token token = tokenQueue.Peek();
+		if(token.Code() != TokenCode.identifier) {
+			ErrorHandling.Add("Routine declaration", this.position, "Expected routine identifier");
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "routine identifier");
+			return;
+		}
+		tokenQueue.Dequeue();
+		this.childs.Add(new PrimaryNode(token.Position(), token.Value()));
+
+		// Left Parenthesis
+		token = tokenQueue.Peek();
+		if(token.Code() != TokenCode.left_parenthesis) {
+			HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "left paranthesis");
+			return;
+		}
+		tokenQueue.Dequeue();
+
+		// Parsing parameters
+		while(true) {
+			ParameterNode param = new ParameterNode(tokenQueue.Peek().Position());
+			param.Parse(ref tokenQueue);
+            this.childs.Add(param);
+
+			token = tokenQueue.Peek();
+			if(token.Code() == TokenCode.right_parenthesis) {
+				tokenQueue.Dequeue();
+				break;
+			} else if(token.Code() == TokenCode.comma) {
+				tokenQueue.Dequeue();
+				continue;
+			} else {
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "right paranthesis or comma");
+				return;
+			}
+		}
+
+		// Explicit type assignment (optional)
+		token = tokenQueue.Peek();
+		if(token.Code() == TokenCode.type_assignment) {
+			tokenQueue.Dequeue();
+			token = tokenQueue.Dequeue();
+			if(token.Code() == TokenCode.identifier || token.Code() == TokenCode.builtin_type)
+				this._type = (string)token.Value();
+			else
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "type identifier");
+			token = tokenQueue.Peek();
+		}
+
+		// Body, one-line expression or semicolon for forward declaration
+		switch(token.Code()) {
+			case TokenCode.semicolon:
+				tokenQueue.Dequeue();
+				return;
+
+			case TokenCode.is_assignment:
+				tokenQueue.Dequeue();
+				ProgramNode body = new ProgramNode(tokenQueue.Peek().Position());
+				body.Parse(ref tokenQueue);
+				this.childs.Add(body);
+				break;
+
+			case TokenCode.one_line_body:
+				tokenQueue.Dequeue();
+				ExpressionNode expr = new ExpressionNode(tokenQueue.Peek().Position());
+				expr.Parse(ref tokenQueue);
+				this.childs.Add(expr);
+				break;
+
+			default:
+				HandleUnexpectedToken(ref tokenQueue, token.Position(), token.Code(), "end of forward declaration or function body");
+				return;
+		}
+	}
+
+
+    public override void Verify() {
+        // Routine declaration looks like
+        // RoutineHeader [RoutineBody]
+        
+        // RoutineHeader looks like
+        // routine `Identifier` (`Parameters`) [:`Type`]
+        
+        // `Identifier` -> PrimaryNode
+        // `Parameters` -> ParameterNode (1-inf amount)
+        // `Type` -> PrimaryNode
+        
+        // RoutineBody -> ProgramNode
+
+		int param_number = 0;
+		foreach(var child in childs) {
+			if(child is ParameterNode) param_number++;
+		}
+
+        // Check child type
+        if (this.childs[0] is not PrimaryNode) {
+            ErrorHandling.Add("RoutineNode", this.position, $"Expected PrimaryNode as identifier, got {this.childs[0].GetType().Name}");
+            return;
+        }
+
+		// Check if returning type is declared
+        if (this._type != "void" && SymbolTable.FindEntry(this._type) is not Compiler.Type) {
+            ErrorHandling.Add("RoutineNode", this.position, $"Return type not declared, got {this._type}");
+            return;
+        }
+
+        // Routines are defined only in global scope
+        if (!SymbolTable.IsInsideType(ScopeType.Global, true)) {
+            ErrorHandling.Add("RoutineNode", this.position, "Routine can be defined only in global scope");
+            return;
+        }
+
+        List<Variable> parameters = new List<Variable>();
+		this.has_body = this.childs.Count() == 2+param_number;
+		string identifier = (string)((PrimaryNode)this.childs[0]).value;
+
+		foreach(var child in this.childs) {
+			if(child is not ExpressionNode
+				&& child is not ProgramNode)
+				child.Verify();
+		}
+		
+		// Check redeclaration
+		switch(SymbolTable.FindEntry(identifier)) {
+			case Routine routine when routine is {HasBody: true}:
+				ErrorHandling.Add("RoutineNode", this.position, "Routine redeclaration");
+				return;
+
+			case Routine routine:
+				if(!this.has_body) {
+					ErrorHandling.Add("RoutineNode", this.position, "Forward routine redeclaration");
+					return;
+				} else if(routine.ReturnType != this._type) {
+					ErrorHandling.Add("RoutineNode", this.position,
+							$"Redeclaring routine with unmatched type: expected {this._type}, got {routine.ReturnType}.");
+					return;
+				} else if(routine.Parameters.Count() == 0) {
+					ErrorHandling.Add("RoutineNode", this.position, "Parameter amount mismatch");
+					return;
+				}
+                routine.HasBody = true;
+                parameters = routine.Parameters;
+				this.implementation = true;
+				break;
+
+			case null:
+                for(int i=1; i<1+param_number; i++) {
+                    ParameterNode param = (ParameterNode)this.childs[i];
+                    parameters.Add(new Variable(param.Name(), param.Type()));
+                }
+
+                Routine newRoutine = new Routine(identifier, parameters, this._type);
+                newRoutine.HasBody = this.has_body;
+
+                SymbolTable.DeclareEntry(newRoutine);
+				break;
+
+			default:
+				ErrorHandling.Add("RoutineNode", this.position, $"Identifier '{identifier}' already exists and is not a routine");
+				return;
+		}
+
+		if(this.has_body) {
+			SymbolTable.EnterScope(ScopeType.Routine);
+
+			// Check parameter match
+			HashSet<string> paramNames = new HashSet<string>();
+
+			for(int i=1; i<1+param_number; i++) {
+				ParameterNode param = (ParameterNode)this.childs[i];
+				string paramName = param.Name();
+				string paramType = param.Type();
+
+				if(!paramNames.Add(paramName)) {
+					ErrorHandling.Add("RoutineNode", this.position, $"Parameter names must be unique, got {paramName} twice");
+					return;
+				}
+
+				if(parameters[i-1].Name != paramName) {
+					ErrorHandling.Add("RoutineNode", this.position,
+						$"Parameter name mismatch, expected {parameters[i-1].Name}, got {paramName}.");
+				}
+
+				if (parameters[i-1].Type != paramType) {
+					ErrorHandling.Add("RoutineNode", this.position,
+						$"Parameter type mismatch, expected {parameters[i-1].Type}, got {paramType}.");
+					return;
+				}
+
+				SymbolTable.DeclareEntry(parameters[i-1]);
+			}
+
+			Returning.Push(new ReturningStatus(false, this._type));
+			this.childs.Last().Verify();
+			ReturningStatus stat = Returning.Pop();
+			if(this._type != "void" && this.has_body && this.childs.Last() is not ExpressionNode && !stat.returned) {
+				ErrorHandling.Add("RoutineNode", this.position, "Routine has returning type, but return is not guaranteed");
+				SymbolTable.ExitScope();
+				return;
+			}
+
+			Scope curScope = SymbolTable.GetCurrentScope();
+			SymbolTable.ExitScope();
+			curScope.Parent = null;
+		}
+    }
+
+    
+    public override void Generate(CodeGen.CodeGenContext ctx) {
+		string routineName = (string)((PrimaryNode)this.childs[0]).value;
+
+		var paramTypes = new List<System.Type>();
+		var paramNames = new List<string>();
+		int idx = 1;
+		System.Type returnType = ctx.ResolveType(this._type);
+
+		// Collect parameters
+		while (idx < this.childs.Count && this.childs[idx] is ParameterNode)
+		{
+			var param = (ParameterNode)this.childs[idx];
+			string pName = ((PrimaryNode)param.GetChilds()[0]).Name();
+			System.Type pType;
+			if(param.GetChilds()[1] is PrimaryNode prime)
+				pType = ctx.ResolveType(prime.Name());
+			else if(param.GetChilds()[1] is ArrayNode arr)
+				pType = ctx.ResolveType(arr.Type().Split("_array")[0]).MakeArrayType();
+			else pType = typeof(void);
+			paramNames.Add(pName);
+			paramTypes.Add(pType);
+			idx++;
+		}
+		
+		if(!this.has_body) {
+			// Create method
+			var method = ctx.ProgramTypeBuilder.DefineMethod(
+				routineName,
+				MethodAttributes.Public | MethodAttributes.Static,
+				returnType,
+				paramTypes.ToArray());
+		
+			ctx.Methods[routineName] = method;
+		} else {
+			if(!this.implementation) {
+				// Create method
+				ctx.Methods[routineName] = ctx.ProgramTypeBuilder.DefineMethod(
+					routineName,
+					MethodAttributes.Public | MethodAttributes.Static,
+					returnType,
+					paramTypes.ToArray());
+
+			}
+			var method = ctx.Methods[routineName];
+
+			// Save context
+			var prevMethod = ctx.CurrentMethod;
+			var prevIL = ctx.CurrentIL;
+			var prevLocals = new Dictionary<string, System.Reflection.Emit.LocalBuilder>(ctx.LocalVariables);
+			var prevParamIndices = new Dictionary<string, int>(ctx.ParameterIndices);
+			var prevParamTypes = new Dictionary<string, System.Type>(ctx.ParameterTypes);
+		
+			returnType = ctx.ResolveType(this._type);
+		
+			// New context for routine body
+			ctx.CurrentMethod = method;
+			ctx.CurrentIL = method.GetILGenerator();
+			ctx.LocalVariables.Clear();
+			ctx.ClearParameters();
+		
+			// Map parameters to arguments
+			for (int i = 0; i < paramNames.Count; i++)
+			{
+				ctx.ParameterIndices[paramNames[i]] = i;
+				ctx.ParameterTypes[paramNames[i]] = paramTypes[i];
+				ctx.LocalVariables[paramNames[i]] = ctx.CurrentIL.DeclareLocal(paramTypes[i]);
+				ctx.CurrentIL.Emit(OpCodes.Ldarg, i);
+				ctx.CurrentIL.Emit(OpCodes.Stloc, ctx.LocalVariables[paramNames[i]]);
+			}
+		
+			// Generate body
+			Node body = this.childs[idx]; // Last child is body
+			body.Generate(ctx);
+		
+			// Ensure return
+			if(this.childs.Last() is ExpressionNode)
+				ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
+			else if (returnType == typeof(void))
+				ctx.CurrentIL.Emit(System.Reflection.Emit.OpCodes.Ret);
+		
+			// Restore context
+			ctx.CurrentMethod = prevMethod;
+			ctx.CurrentIL = prevIL;
+			ctx.LocalVariables.Clear();
+			foreach (var kvp in prevLocals)
+				ctx.LocalVariables[kvp.Key] = kvp.Value;
+			
+			ctx.ClearParameters();
+			foreach (var kvp in prevParamIndices)
+				ctx.ParameterIndices[kvp.Key] = kvp.Value;
+			foreach (var kvp in prevParamTypes)
+				ctx.ParameterTypes[kvp.Key] = kvp.Value;
+		}
+    }
+
+}
